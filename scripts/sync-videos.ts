@@ -1,9 +1,9 @@
-// Seed / refresh the video shelf: YouTube inventory, then the Dropbox manifest
-// (file + transcripts + the team's "Weak (Don't Use)" verdict), then tag, then
+// Seed / refresh the video shelf: YouTube inventory, then an optional file-storage
+// manifest (files + transcripts + a "do not use" verdict), then tag, then
 // match clips to the X posts that already used them.
 //
 // Run: node --env-file=.env scripts/sync-videos.ts [--no-tags] [--no-match] [--force-tags]
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { syncYouTubeVideos, ingestDropboxManifest, type DropboxVideoEntry } from "../lib/videos.ts";
@@ -21,21 +21,28 @@ console.log(
 );
 if (yt.errors.length) console.log(`  errors: ${yt.errors.slice(0, 3).join("; ")}`);
 
-const manifest = JSON.parse(
-  readFileSync(join(__dirname, "..", "db", "dropbox-shorts-manifest.json"), "utf8"),
-) as {
-  entries: (DropboxVideoEntry & { transcriptFileId?: string })[];
-  transcripts: Record<string, string>;
-};
-const entries: DropboxVideoEntry[] = manifest.entries.map((e) => ({
-  ...e,
-  transcript: e.transcriptFileId ? (manifest.transcripts[e.transcriptFileId] ?? null) : null,
-}));
-const dbx = await ingestDropboxManifest(entries);
-console.log(
-  `dropbox: ${dbx.entries} files · ${dbx.mergedIntoYouTube} merged into a YouTube clip · ` +
-    `${dbx.insertedNew} Dropbox-only · ${dbx.markedDoNotUse} marked do-not-use · ${dbx.transcripts} transcripts`,
-);
+// OPTIONAL file-storage manifest. If your clips also live in a shared drive
+// (files + transcripts + a "do not use" verdict), export a listing to
+// db/video-manifest.json and this step merges it into the YouTube inventory.
+// Without the file the step is skipped.
+const manifestPath = join(__dirname, "..", "db", "video-manifest.json");
+if (existsSync(manifestPath)) {
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as {
+    entries: (DropboxVideoEntry & { transcriptFileId?: string })[];
+    transcripts: Record<string, string>;
+  };
+  const entries: DropboxVideoEntry[] = manifest.entries.map((e) => ({
+    ...e,
+    transcript: e.transcriptFileId ? (manifest.transcripts[e.transcriptFileId] ?? null) : null,
+  }));
+  const dbx = await ingestDropboxManifest(entries);
+  console.log(
+    `manifest: ${dbx.entries} files · ${dbx.mergedIntoYouTube} merged into a YouTube clip · ` +
+      `${dbx.insertedNew} manifest-only · ${dbx.markedDoNotUse} marked do-not-use · ${dbx.transcripts} transcripts`,
+  );
+} else {
+  console.log("manifest: db/video-manifest.json not present, skipping");
+}
 
 const rec = await reconcileDropboxToYouTube();
 console.log(

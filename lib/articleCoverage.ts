@@ -16,7 +16,7 @@ import { TEMPLATE_BY_ID } from "./taxonomy.ts";
 // grouped by posts.chains), and it is not the same thing. A chain tag says the
 // post mentioned the chain — true of any market-data visual naming @base. An
 // ARTICLE link says the post ran our piece about it, which is what makes the
-// standalone announcement redundant for a while. Rob's read on the call was the
+// standalone announcement redundant for a while. The operator's read on the call was the
 // tighter one and it is the one implemented here: score off the shared article,
 // not the shared chain.
 //

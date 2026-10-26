@@ -18,7 +18,7 @@ Broad Educational alone is 7 of 85 (8%). At the account's ~10 posts/week, a real
 September, 1 so far in October. The trend is the opposite of the strategy.
 
 **The hand-worked step never happened.** `education_angles` has **zero rows**. The angle bank
-shipped 2 Sep (Jay: "work the frames by hand first, let the tracker keep score") and six weeks
+shipped (the CMO: "work the frames by hand first, let the tracker keep score") and six weeks
 later nothing has been banked. That is not a discipline failure; the form is seven blank fields
 with no inputs, sitting above two shelves that do not feed it.
 
@@ -56,7 +56,7 @@ Six audiences, which should replace the lane's two-value ICP dropdown
 (`institutional` / `developer`): **Agents, Asset Issuers, Onchain Builders, Payment & Treasury
 Platforms, Trading Platforms, Wallet Platforms.**
 
-Two things to flag to Ryne rather than resolve in the tool: the homepage uses "Move Money Smarter",
+Two things to flag to the CEO rather than resolve in the tool: the homepage uses "Move Money Smarter",
 which `lib/positioning.ts` lists as a commodity phrase to avoid; and the thesis now rests on Sauce,
 which is beta. Educational posts should imply the *property* (failsafe, no pre-funding,
 programmable rules) and never the unshipped product.
@@ -128,7 +128,7 @@ come back.
 
 ### Picked: the shortlist is the plan for the week
 
-Picking is the human step Jay asked for, kept deliberately: you read the pre-filled frame and the
+Picking is the human step the CMO asked for, kept deliberately: you read the pre-filled frame and the
 bridge, fix the bridge if it is wrong (it will be, often), set the audience. Thirty seconds, not
 seven fields. The picked column is the week's educational queue and its length is checked against
 the ratio meter (below).
@@ -190,7 +190,7 @@ weekly as the adjacency rubric's vocabulary.
 Out of scope on purpose: automating the pick. The operator chooses; the tool makes the choice a
 thirty-second read instead of a research project.
 
-## 6. Open questions for Rob / Jay / Ryne
+## 6. Open questions for the operator, CMO and CEO
 
 1. Bucket mapping for 4-1-1: are quote cards "educational" (external voice) or "soft" (Eco event)?
 2. Does the 4 have to be Eco-unnamed, as the pillar definition says, or can an educational post

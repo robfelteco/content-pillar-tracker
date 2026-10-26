@@ -176,7 +176,7 @@ function short(n: number | null): string {
 }
 
 // Turn the raw perf×overdue signals into a bounded 0..100 priority the operator
-// can actually read, plus the plain-English drivers behind it. Jay's ask: "does
+// can actually read, plus the plain-English drivers behind it. The CMO's ask: "does
 // this engine know it's a 90 out of 100 — and I should understand why."
 //   overdue component (0..1): how far past cadence we are (fresh/never → 0).
 //   perf component   (0..1): this pillar's baseline impressions vs the other
@@ -463,7 +463,7 @@ export type { DocShelfRow, HomepagePenalty } from "./docs.ts";
 export type { CurriculumRow, CurriculumMeta, CurriculumShelf } from "./curriculum.ts";
 export type { VideoShelfRow } from "./videos.ts";
 
-// Low-effort, high-frequency formats Jay flags as "easy wins" — a quick post
+// Low-effort, high-frequency formats the CMO flags as "easy wins" — a quick post
 // that doesn't need a big lift ("post a quote card, that'll take 10 minutes,
 // the last 10 ripped").
 const EASY_WIN_TEMPLATES = new Set<Template>(["quote_card", "data_motion_visual"]);
@@ -966,7 +966,7 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
   );
 
   // Clean performance baseline per pillar for scoring: ORGANIC posts only, with
-  // each pillar's FIRST-EVER post excluded. Jay: "don't count the first post —
+  // each pillar's FIRST-EVER post excluded. The CMO: "don't count the first post —
   // those are back-channeled with boosting, we were manufacturing success." So
   // the median a pillar is judged on never includes the amplified launch spike.
   const baselineRows = await sql<{ template: Template; baselineImpr: number | null }>`
@@ -1353,7 +1353,7 @@ async function buildPendingLanes(registry: LaneRegistry): Promise<PendingLane[]>
       id: l.id,
       label: l.label,
       handles: l.handles,
-      // The operator should see everything the lane matches on, hard or loose.
+      // the operator should see everything the lane matches on, hard or loose.
       terms: [...l.terms, ...l.looseTerms],
       brief: l.brief,
       why: l.evidenceNote,

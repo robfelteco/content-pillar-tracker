@@ -2,7 +2,7 @@ import { ANALOG_BY_ID, type AnalogDef } from "./analogs.ts";
 
 // Question mining — the demand side of the curriculum.
 //
-// Jay's instruction was not "go find topics." It was: "you need to dig deep and
+// The CMO's instruction was not "go find topics." It was: "you need to dig deep and
 // find more questions so then you can find ways to answer them," and "I would
 // honestly just youtube farm, keep searching key phrases relevant, and follow
 // the rabbithole." That is DEMAND discovery, and it is a different search from
@@ -108,7 +108,7 @@ export interface MineResult {
 }
 
 // One concept per call. Unlike discover()'s three-lens fan-out this is
-// deliberately narrow: the operator has already picked which mechanism they
+// deliberately narrow: The operator has already picked which mechanism they
 // want to teach, and a fan-out would just dilute the search across concepts
 // they did not ask about.
 export async function mineQuestions(

@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 // rarely, and so the page was mostly empty and the signal behind it too sparse
 // to move a score.
 //
-// What replaces it is the thing Jay asked for on the 2 Sep call: each pillar's
+// What replaces it is the thing the CMO asked for in review: each pillar's
 // last five posts against the five before them, so a format that is cooling is
 // visible before you have written ten more into it. Every post feeds it and
 // nothing has to be logged.

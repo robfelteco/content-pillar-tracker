@@ -48,7 +48,7 @@ export interface AnalogSource {
   ageDays: number | null;
 }
 
-// Retention for a 'current' source, per Rob. Deliberately long: nothing is
+// Retention for a 'current' source, per the operator. Deliberately long: nothing is
 // thrown away for a year. Freshness is expressed at the READ instead, by
 // ordering on recency and capping what the drafter sees.
 export const CURRENT_RETENTION_DAYS = 365;
@@ -351,7 +351,7 @@ export async function findSourcesFor(analogId: string, count = 4): Promise<FindS
 // ---------------------------------------------------------------------------
 // Seeding
 //
-// The hand-curated sources on AnalogDef — the pieces Rob and I actually read or
+// The hand-curated sources on AnalogDef — the pieces the operator and I actually read or
 // watched — go in as source_of='seed' and sort first everywhere. They are the
 // only ones we know first-hand are good.
 // ---------------------------------------------------------------------------

@@ -127,7 +127,7 @@ export interface CopyOption {
   // --- Citation, for curriculum posts ---
   // ONE POST. The link lives in the body, not a self-reply: no link penalty
   // exists in the August 2026 algorithm and open_link carries +0.2, so the
-  // earlier split was costing reach for nothing. Rob: "we are never doing that."
+  // earlier split was costing reach for nothing. The operator: "we are never doing that."
   sourceTitle?: string; // what the body credits, e.g. "the BIS quarterly review"
   sourceUrl?: string; // the URL, which must appear in `text`
   // Self-scored against the x-algo-optimizer rubric in the same call, so it
@@ -551,7 +551,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
   const icpId = docPage?.icp ?? video?.icp ?? audience?.icps[0] ?? analog?.icps[0] ?? null;
   const icp = icpId ? ICP_BY_ID[icpId] : null;
 
-  // No source, no draft. Rob's rule: "we can't just yolo copy without any
+  // No source, no draft. The operator's rule: "we can't just yolo copy without any
   // source material." Failing loudly here is deliberate — silently producing an
   // unsourced explainer is the outcome we are trying to make impossible, and
   // the UI turns this message into a "Find sources" prompt.
@@ -699,7 +699,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
     pillarShapeBlock(input.template, analog ? "curriculum" : input.template === "broad_educational" ? "news" : undefined),
 
     // Placed directly after the pillar shape and phrased as an override, because
-    // it contradicts what the pillars used to say. Threads are gone: Rob's rule
+    // it contradicts what the pillars used to say. Threads are gone: The operator's rule
     // is one post, always, with a healthy mix of lengths across the options.
     formBlock(),
 
@@ -814,7 +814,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
     // parallel earns the reader's attention, and the BREAK is the post. A draft
     // that only runs the parallel is the "we're the Stripe of stablecoins" slop
     // this registry exists to prevent — and it is also how a company
-    // accidentally adopts someone else's category, which is exactly what Ryne
+    // accidentally adopts someone else's category, which is exactly what the CEO
     // flagged about anchoring on payment orchestration.
     // ------------------------------------------------------------------
     analog
@@ -981,7 +981,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
         : null,
 
     // The pipeline's framing block, both lanes. The operator READ these fields
-    // and edited them before clicking Draft (Jay: the frame step stays human),
+    // and edited them before clicking Draft (the CMO: the frame step stays human),
     // so they outrank anything the model would infer from the piece.
     candidate ? candidateFrameBlock(candidate, audience?.label ?? null) : null,
 
@@ -1162,7 +1162,7 @@ async function runBackend(userPrompt: string): Promise<CopyOption[]> {
     }
     // The CLI could not deliver. Rather than lose the request, fall back to the
     // API when a key is configured: a draft that costs credits beats a red error
-    // after a four-minute wait. Rob hit exactly this on a Smart Order Routing
+    // after a four-minute wait. The operator hit exactly this on a Smart Order Routing
     // draft, which is what surfaced the thinking-token blowup above.
     const why = lastErr instanceof Error ? lastErr.message : "CLI copy generation failed.";
     if (process.env.ANTHROPIC_API_KEY) {
@@ -1252,7 +1252,7 @@ async function polish(
   });
 
   // A hard finding, OR a pile of soft structural ones (lib/antiSlop.ts,
-  // needsRepair). The second case is the one Rob kept seeing: nothing on the
+  // needsRepair). The second case is the one the operator kept seeing: nothing on the
   // draft individually wrong, and together it was model prose.
   const failing = fixed.filter((o) => needsRepair(o.slop ?? []));
   if (!failing.length || process.env.COPY_SLOP_REPAIR === "off") {
@@ -1360,7 +1360,7 @@ async function polish(
 // carrying an ungrounded claim after its repair round-trip does not come back
 // at all.
 //
-// Rob, on the drafts that prompted this: "i want to ensure that draft copies
+// The operator, on the drafts that prompted this: "i want to ensure that draft copies
 // never assume information or make claims that aren't 100% factual and backed
 // by the source material we're using for the post."
 const GROUNDING_RULES = new Set(["ungrounded-claim", "unbacked-attribution"]);

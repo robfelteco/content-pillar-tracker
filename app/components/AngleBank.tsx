@@ -10,7 +10,7 @@ import { SITE_AUDIENCES, siteAudienceLabel } from "@/lib/icp";
 // This is what replaced the pillar's drafter. The drafter was not broken so much
 // as pointed at the wrong step: it could turn a source into a post, and the
 // thing that was missing was the FRAME — what is this teaching, and how does it
-// get to what Eco does. Jay's call was to stop automating this one and work the
+// get to what Eco does. The CMO's call was to stop automating this one and work the
 // angles by hand first, using the tracker to keep score of what has been worked
 // out and what has been used.
 //

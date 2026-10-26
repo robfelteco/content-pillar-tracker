@@ -89,7 +89,7 @@ async function handle(req: NextRequest) {
     // catches clips published since the last run; tagging and post-matching are
     // capped so one sync can never turn into a huge Claude bill. The DROPBOX
     // side is deliberately absent — this runtime has no Dropbox credentials, so
-    // the file/transcript layer is seeded from db/dropbox-shorts-manifest.json
+    // the file/transcript layer is seeded from an optional db/video-manifest.json
     // by scripts/sync-videos.ts. See that file's header.
     const shelves: Record<string, unknown> = {};
     try {

@@ -7,7 +7,7 @@ import { CHAIN_ACCOUNTS } from "./chainAccounts.ts";
 //
 // The chain pillar has always known when WE last posted about a chain. It has
 // never known whether the chain is doing anything worth posting about, and both
-// halves are needed to pick a target. Jay, on the 2 Sep call:
+// halves are needed to pick a target. The CMO, in review:
 //
 //   "maybe you have an alert system that's in the app where it's like anytime
 //    Base, Unichain, whatever makes a big timeline splash somehow, ping the

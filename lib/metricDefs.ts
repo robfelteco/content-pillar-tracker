@@ -1,5 +1,5 @@
 // Single source of truth for what every column/metric on the dashboard MEANS.
-// Jay's QA note: the numbers need to explain themselves. He specifically hit
+// The CMO's QA note: the numbers need to explain themselves. He specifically hit
 // "what does 90-day post mean?" — it's a cadence count, not a performance stat,
 // and the tooltip now says so. Reuse these on every page that shows a metric.
 

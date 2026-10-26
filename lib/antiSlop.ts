@@ -15,7 +15,7 @@
 //
 // Compiled 2026-08-28 from github.com/petergyang/no-ai-slop, sloptells.com, and
 // louisabraham.github.io/load-bearing. Tier 6 added 2026-10-16 from the
-// stop-slop skill (~/.claude/skills/stop-slop), after Rob read a week of
+// stop-slop skill (~/.claude/skills/stop-slop), after the operator read a week of
 // pipeline drafts that cleared every check here and still read as machine
 // prose: the tells had moved from WORDS to STRUCTURE. See ANTI-SLOP.md for
 // provenance, the recorded disagreements between the sources, and the
@@ -287,18 +287,18 @@ const HEDGE_BUDGET = 2;
 // is rhythm and shape, which is prose guidance and has no regex.
 //
 // It exists because the positioning brief ASKED for these and nothing CHECKED
-// for them. Every other rule Rob cared about is enforced in code, not left as a
+// for them. Every other rule the operator cared about is enforced in code, not left as a
 // request in a prompt: em dashes are stripped, threads are caught, sources are
-// gated. The words Ryne spends the most time on were the one exception, so a
+// gated. The words the CEO spends the most time on were the one exception, so a
 // draft could clear the whole gauntlet still carrying "for agents".
 //
-// Source: Ryne, all hands 2026-08-31, on top-line messaging ("every single word
+// Source: the CEO's top-line messaging review ("every single word
 // matters"), plus the commodity-zone list already in POSITIONING_BRIEF.
 //
 // ALL SOFT, deliberately. Hard findings force a repair round trip and can drop
 // an option; these are context judgments the operator should make. A curriculum
 // post teaching correspondent banking may say "money movement" about the TRADFI
-// system and be right to. What Ryne objects to is the phrase as ECO's
+// system and be right to. What the CEO objects to is the phrase as ECO's
 // self-description. A regex cannot tell those apart, so it flags and defers.
 // ---------------------------------------------------------------------------
 
@@ -320,7 +320,7 @@ const COMMODITY_PHRASES = [
 ];
 
 // The words that sit in the hollow column and the ownable column at the same
-// time. Ryne: "you can't just say programmable and trust that people understand
+// time. The CEO: "you can't just say programmable and trust that people understand
 // the implications of that" -- and he notes he made that mistake himself this
 // year. So these are not banned, they are GATED: legitimate when the same
 // sentence shows the mechanism, empty when it does not.
@@ -328,7 +328,7 @@ const SUBSTANTIATION_GATED = [
   "programmable", "programmability", "trusted", "control",
 ];
 
-// Senses of a gated word that are not the claim Ryne objects to. "Trusted" as a
+// Senses of a gated word that are not the claim the CEO objects to. "Trusted" as a
 // self-description is hollow; "a trusted party controls execution" is the
 // technical critique we make OF the alternatives, and one of our better product
 // posts opens on exactly that line. Measured against the live corpus: without
@@ -355,7 +355,7 @@ function sentencesOf(text: string): string[] {
 }
 
 // ---------------------------------------------------------------------------
-// Form. The rules Rob named directly: one post, never a thread, no em dashes.
+// Form. The rules the operator named directly: one post, never a thread, no em dashes.
 // ---------------------------------------------------------------------------
 
 const THREAD_MARKERS: PatternRule[] = [
@@ -553,7 +553,7 @@ export function scanSlop(text: string): SlopFinding[] {
         rule: "commodity-zone",
         severity: "soft",
         match: m[0],
-        fix: `"${m[0]}" is in the crowded/meaningless column (Ryne, all hands 2026-08-31). It is not distinctive on its own. Say the specific thing Eco does instead, or qualify it in the same sentence.`,
+        fix: `"${m[0]}" is in the crowded/meaningless column (the CEO's top-line messaging review). It is not distinctive on its own. Say the specific thing Eco does instead, or qualify it in the same sentence.`,
       });
     }
   }
@@ -736,7 +736,7 @@ export function hardFindings(f: SlopFinding[]): SlopFinding[] {
 // When to spend a repair round-trip, and whether a repair was worth keeping.
 //
 // Until 2026-10-16 only a HARD finding triggered the repair. That let a draft
-// through with five soft structural findings, which is exactly the draft Rob
+// through with five soft structural findings, which is exactly the draft the operator
 // described as "consistently falling into patterns of ai slop phrasing and
 // structure": nothing on it was individually wrong, and together it was a
 // voice. So a pile of soft findings now earns the repair pass too.

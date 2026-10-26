@@ -30,7 +30,7 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
 }
 
 // Hover tooltip — pure CSS (group-hover), no client JS, safe in server
-// components. Wrap any element; pass the explainer text. Jay's "very easy UX
+// components. Wrap any element; pass the explainer text. The CMO's "very easy UX
 // improvement": every stat and chip should say what it means on hover instead
 // of making you stare at it. `underline` dots the trigger so it reads as
 // hoverable.

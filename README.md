@@ -1,41 +1,100 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Content Pillar Tracker
 
-## Getting Started
+Track one brand's X posts by content pillar, see where cadence has gone cold,
+measure what each pillar earns, and get a prioritized, sourced draft for what
+to post next. Built for a social lead who runs a company account alone, by one
+who did.
 
-First, run the development server:
+> **Status: being extracted from a production deployment.** The engine is
+> generic. The brand knowledge (pillars, positioning, products, audiences,
+> watched sources) is still hardcoded in `lib/`, and the original brand's values
+> are still what it ships with. The plan to move all of that into an editable
+> `brand/` folder is in [docs/OPEN-SOURCE-PLAN.md](docs/OPEN-SOURCE-PLAN.md).
+> Until that lands, adopting this means editing those modules by hand.
+
+## What it does
+
+- **Ingests** your account's posts daily through the X API and stores a metric
+  snapshot per day, so you get trends, not overwritten counts.
+- **Classifies** every post into your pillar taxonomy: deterministic rules
+  first (URL patterns, media shape, mentions), Claude for the rest, a review
+  queue for anything uncertain.
+- **Scores each pillar** 0 to 100 on staleness, cadence drift and performance,
+  and ranks what you are overdue to post.
+- **Drafts a starting point** for the top pick from real source material you
+  have on file (your articles, docs pages, clips, quotes), with a hard
+  anti-slop pass and a grounding check: no source, no draft.
+- **Closes the loop.** Mark a draft as used, and the next sync finds the
+  published post and attributes its impressions back to the draft, the source
+  and the pillar.
+
+Optional lanes, each switched on by its own API key: quote discovery from
+YouTube and podcasts, a web lane for reports and transcripts, a broad
+educational discover lane, a short-form video shelf, and a developer-docs shelf.
+
+## Stack
+
+Next.js 16 App Router, Neon Postgres, NextAuth v5 with Google Workspace
+sign-in, the Anthropic SDK, Vercel Cron. One Postgres database, no queue, no
+Redis.
+
+## Quick start
+
+1. Create a Neon Postgres database and an X developer app with OAuth 1.0a user
+   context for the account you track.
+2. Copy `.env.example` to `.env` and fill in the minimum set: `DATABASE_URL`,
+   the four `TWITTER_*` values, `X_ACCOUNT_HANDLE`, `ANTHROPIC_API_KEY`,
+   `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET`, `AUTH_ALLOWED_DOMAIN`,
+   `CRON_SECRET`, `NEXT_PUBLIC_BRAND_NAME`.
+3. Apply the schema:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+node --env-file=.env scripts/migrate.mjs
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Run it:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+5. Trigger the first sync by calling `/api/sync` with
+   `Authorization: Bearer $CRON_SECRET`. Deploy to Vercel and the schedule in
+   `vercel.json` takes over.
 
-## Learn More
+## Cost
 
-To learn more about Next.js, take a look at the following resources:
+The X API is pay per read. A backfill of a few hundred posts is a one-time
+charge of a few dollars; the daily sync is a few dollars a month. Claude
+classification runs only on posts the rules could not decide. Optional lanes
+add their own provider costs and are off until their key is set.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Adapting it to your brand
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Until the `brand/` extraction lands, these are the modules to edit, in order:
 
-## Deploy on Vercel
+| Module | What it holds |
+| --- | --- |
+| `lib/taxonomy.ts` + `lib/pillarShapes.ts` | Your pillars: ids, labels, staleness thresholds, draft mode, shape rules. Mirror the enum in `db/schema.sql`. |
+| `lib/classifyRules.ts` | Deterministic classification rules (your domains, URL paths). |
+| `lib/positioning.ts` | The drafter's system prompt: who you are, voice, guardrails. |
+| `lib/icp.ts` | Audiences. |
+| `lib/products.ts` | Products and their guardrails. |
+| `lib/antiSlop.ts` | Form rules and gated vocabulary. |
+| `lib/analogs.ts`, `lib/channels.ts`, `lib/quoteRoster.ts` | Optional lanes: curriculum, watched channels, quote roster. |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## License
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT. See `LICENSE`.
 
 ---
+
+# Operator's reference
+
+Everything below is the working documentation carried over from the original
+deployment. It is accurate for the code as it stands and still names the
+original brand's sources in places.
 
 ## Copy generation
 

@@ -11,7 +11,7 @@ import { ANALOG_DEFS } from "./analogs.ts";
 // settles on-chain, we are in the first inning" — and that is a thing a person
 // works out by arguing with the material, not a thing a sweep returns.
 //
-// Jay's call on 2 Sep, on this specific pillar: "I would actually not try to do
+// The CMO's call, on this specific pillar: "I would actually not try to do
 // the engine yet… focus on trying to figure out if you can manually create
 // templates based on the references you have… for now I wouldn't even automate
 // it because it's just way too hard." And on what the tool should be instead:

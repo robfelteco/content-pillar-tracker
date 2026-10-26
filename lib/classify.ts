@@ -84,7 +84,7 @@ async function getFewShots(limit = 10): Promise<FewShot[]> {
 }
 
 // Templates whose identity is carried by the IMAGE, not the text — the ones
-// Claude confuses without a visual anchor (Jay's quote-card crossover problem).
+// Claude confuses without a visual anchor (the CMO's quote-card crossover problem).
 const VISUAL_TEMPLATES: Template[] = [
   "quote_card",
   "data_motion_visual",
@@ -153,7 +153,7 @@ export async function runClaudeClassification(limit = 600): Promise<ClaudeRunRes
     LIMIT ${limit}`;
 
   // Fetch text few-shots and the VISUAL exemplars once, then reuse across every
-  // post in this run (Jay's "drag 5 quote cards in" — but generalized to one
+  // post in this run (the CMO's "drag 5 quote cards in" — but generalized to one
   // canonical image per visually-distinct template, pulled from our own
   // human-labeled/high-confidence posts).
   const [fewShots, visualFewShots] = await Promise.all([getFewShots(), getVisualFewShots()]);

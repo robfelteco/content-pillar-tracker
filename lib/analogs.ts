@@ -5,7 +5,7 @@
 // Broad Educational is our largest pillar (71 posts) and every one of them is a
 // market SIGNAL — Mastercard settling in six stablecoins, BNY and Circle, the
 // a16z piece. None of them teaches a MECHANISM. We report the new world
-// constantly and never explain the old one we are replacing. Jay's brief:
+// constantly and never explain the old one we are replacing. The CMO's brief:
 // "shine a light in the dark area of 'traditional money movement tech' ... if
 // you can deeply understand the analog, you'll be much better equipped for the
 // present/future." The four tiers below are his list, verbatim in structure.
@@ -20,7 +20,7 @@
 //
 // THE ONE NON-NEGOTIABLE FIELD: `breaksWhere`
 // A registry that only stores the parallel produces "we're the Stripe of
-// stablecoins" slop, and walks straight into the trap Ryne flagged — anchoring
+// stablecoins" slop, and walks straight into the trap the CEO flagged — anchoring
 // on payment orchestration "runs risk of confusion with Bridge etc," and
 // "payments" is too crowded and limiting on its own. So every entry must say
 // where the analogy FAILS. The parallel earns the reader's attention; the break
@@ -29,7 +29,7 @@
 // HARD RULE, enforced again in the drafter prompt: this registry is a DISCOVERY
 // and TEACHING input. It is never a positioning output. We borrow the
 // vocabulary and refuse the category — Eco stays the routing and execution
-// layer no matter which analog a post teaches. Jay, to Ryne: "this is just for
+// layer no matter which analog a post teaches. The CMO, to the CEO: "this is just for
 // our personal algo for education. Not eco."
 //
 // Kept dependency-free (same rule as lib/products.ts and lib/icp.ts) so
@@ -47,7 +47,7 @@ export interface AnalogSource {
 export interface AnalogDef {
   id: string;
   label: string;
-  /** Jay's own tiering. 1 = direct analogs, 4 = rails context. */
+  /** the CMO's own tiering. 1 = direct analogs, 4 = rails context. */
   tier: AnalogTier;
   /**
    * Which door this concept walks through. Analog education skews commercial —
@@ -130,7 +130,7 @@ export const ANALOG_DEFS: AnalogDef[] = [
     breaksWhere:
       "Two breaks. (1) Orchestrators route between PROVIDERS of a single rail; Eco routes between MARKETS. (2) Orchestrators get paid by providers to steer flow — the PayModum operator concedes on camera that 'there's money exchanging hands as well and that obviously dilutes the true value proposition.' Neutrality is structural for Eco and commercial for them. Teaching this concept is how we counter-position OUT of the category.",
     guardrail:
-      "Highest-risk entry in the registry. Per Ryne, anchoring here risks confusion with Bridge et al, and 'payments' is too crowded and limiting on its own. Never call Eco an orchestrator, a PSP or a gateway. Never imply fiat/stable orchestration.",
+      "Highest-risk entry in the registry. Per the CEO, anchoring here risks confusion with Bridge et al, and 'payments' is too crowded and limiting on its own. Never call Eco an orchestrator, a PSP or a gateway. Never imply fiat/stable orchestration.",
     sources: [
       {
         title: "PayModum — Payments Orchestration Explained",
@@ -475,7 +475,7 @@ export function analogLabel(id: string | null | undefined): string {
 // ---------------------------------------------------------------------------
 // The teaching SHAPES.
 //
-// The reason Jay pointed at those specific explainers is not the vocabulary
+// The reason the CMO pointed at those specific explainers is not the vocabulary
 // list — it is the narrative moves. Every one of them uses the same handful of
 // structures, and all of them transfer. These are handed to the drafter so a
 // curriculum post has a shape to take, rather than defaulting to "here is a

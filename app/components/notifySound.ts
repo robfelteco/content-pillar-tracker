@@ -2,7 +2,7 @@
 
 // The "it's done" chime.
 //
-// Rob's ask: start a long action, go work in another tab, hear when it lands.
+// The operator's ask: start a long action, go work in another tab, hear when it lands.
 // So the chime fires ONLY when the tab is not being looked at. If you are
 // watching the panel you already saw it finish, and a sound would just be noise
 // on every click.

@@ -2,7 +2,7 @@ import { ALL_PRODUCT_TERMS } from "./products.ts";
 
 // Content-template taxonomy — the single source of truth the app codes against.
 // Mirrors the `content_template` enum in db/schema.sql. This is OUR taxonomy
-// (by content pillar), deliberately NOT Jay's product taxonomy.
+// (by content pillar), deliberately NOT the CMO's product taxonomy.
 
 export const TEMPLATES = [
   "data_motion_visual",

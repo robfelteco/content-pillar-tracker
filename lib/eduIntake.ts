@@ -30,8 +30,8 @@ import type { CopyOption } from "./generateCopy.ts";
 //   4. Makes ONE Claude call that returns the audience, an adjacency score
 //      against the eco.com themes, and the four angle-bank fields PRE-FILLED
 //      (frame, mechanism, Eco bridge, evidence). The operator edits a frame
-//      instead of writing one. The pick itself is never automated: Jay's call
-//      on 2 Sep was that the FRAME step stays human, and the design doc keeps
+//      instead of writing one. The pick itself is never automated: The CMO's call
+//      in review was that the FRAME step stays human, and the design doc keeps
 //      it that way on purpose.
 //
 // Cost per candidate: 1 Firecrawl credit + one short Claude call. A nightly run

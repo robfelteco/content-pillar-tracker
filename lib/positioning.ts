@@ -1,23 +1,23 @@
 // Eco's positioning + X-algorithm rules, distilled into a system prompt for the
 // in-tool copy drafter.
 //
-// REFRESHED 2026-08-27 against Ryne's 2026-08-23 boilerplate rev ("latest rev,
+// REFRESHED against the CEO's latest boilerplate rev ("latest rev,
 // very close, probably running with this or something within a couple words of
 // it"), which supersedes the June-8 Positioning Playbook this file was first
 // distilled from. What changed, and why it mattered:
 //
 //   * Category. Was "the neutral platform organizing the stablecoin market."
 //     Now "stablecoin infrastructure for navigating onchain markets" / "the
-//     routing and execution layer." Ryne's unlock: stop positioning stablecoins
+//     routing and execution layer." The CEO's unlock: stop positioning stablecoins
 //     as the ENDPOINT, position them as the CONNECTIVE LAYER, and position Eco
 //     as the layer that moves value THROUGH stablecoins into any onchain market.
 //   * Feature order. "Agent-native tooling" now leads the feature list —
-//     deliberately, per Ryne: it signals agentic orientation without cramming
+//     deliberately, per the CEO: it signals agentic orientation without cramming
 //     "for agents" in an unnatural, cliché way.
-//   * Spelling. "onchain", one word, per Jay ("kind of like on-line is now
-//     online"). Ryne noted "on-chain" making a comeback with institutional
-//     ICPs; Jay's call wins.
-//   * Analog vocabulary. New section, from Jay's tradfi tier list. We borrow
+//   * Spelling. "onchain", one word, per the CMO ("kind of like on-line is now
+//     online"). The CEO noted "on-chain" making a comeback with institutional
+//     ICPs; the CMO's call wins.
+//   * Analog vocabulary. New section, from the CMO's tradfi tier list. We borrow
 //     the vocabulary and refuse the category, see lib/analogs.ts.
 //
 // UPDATED 2026-08-28 against xai-org/x-algorithm @ 24c6094 (the August release,
@@ -25,7 +25,7 @@
 // actively harmful in one place: it told every pillar to keep links OUT of the
 // post body because they "suppress reach". No link penalty exists in the
 // codebase and open_link carries +0.2, so that rule was costing us reach on
-// every Dev Doc, Thought Leadership and Broad Educational draft. Rob: "we are
+// every Dev Doc, Thought Leadership and Broad Educational draft. The operator: "we are
 // never doing that, everything should be in one post."
 //
 // The bigger find is share_via_copy_link at 20.0, the highest-weighted action in
@@ -33,22 +33,22 @@
 // sourced analog curriculum produces. Also folded in the stop-slop house rules,
 // since prompt style is imitated.
 //
-// UPDATED 2026-09-01 against Ryne's all hands of 2026-08-31, whose new material
+// UPDATED against the CEO's top-line messaging review, whose new material
 // was the word-choice slide (avoid / fine / ownable) and his framing of it. Three
 // things changed here:
 //
 //   * "Orchestration" was in the institutional dialect DO list, unqualified. It is
-//     the word Ryne spent the most airtime on and his objection is structural, not
+//     the word the CEO spent the most airtime on and his objection is structural, not
 //     stylistic: loosely used it reads as fiat-to-stable orchestration, a regulated
 //     market-boundary position Eco deliberately does not occupy. It now carries the
 //     caveat, and lib/analogs.ts payment_orchestration already carried it.
 //   * The OWNABLE COLUMN section is new. The file was good at saying what to avoid
-//     and had no positive gradient toward what Ryne says we own.
+//     and had no positive gradient toward what the CEO says we own.
 //   * The substantiation rule is new, and it is the load-bearing half: programmability
 //     and control sit in the hollow column and the ownable column simultaneously,
 //     separated only by whether the post explains them.
 //
-// This is a STARTING-POINT generator, per Jay: "at least you have a starting off
+// This is a STARTING-POINT generator, per the CMO: "at least you have a starting off
 // point, then you take it to 90/10." Never claim capability Eco doesn't have;
 // draft in Eco's voice; hand back options, not a finished post.
 
@@ -60,8 +60,8 @@
 // and that is exactly how all three were still running the superseded June-8
 // category ("the neutral platform organizing the stablecoin market", "real-time
 // money movement across every major stablecoin and blockchain") a week after
-// this file had moved off it. "Money movement, unqualified" is in Ryne's own
-// avoid column (all hands, 2026-08-31), so the stale copies were not merely old,
+// this file had moved off it. "Money movement, unqualified" is in the CEO's own
+// avoid column (top-line messaging review), so the stale copies were not merely old,
 // they were steering discovery with anti-differentiating words.
 //
 // Anything that describes Eco to a model imports this. The WHO ECO IS section of
@@ -98,27 +98,27 @@ THE CENTRAL REFRAME, use it, don't state it
 - Eco is NOT a retail cross-chain swap tool. Every post should ladder up to "the layer sophisticated
   flows route THROUGH, not around."
 
-THE OWNABLE COLUMN (all hands 2026-08-31, Ryne on top-line messaging: "every single word matters")
-Ryne sorted our vocabulary into three columns. The drafting job is to spend the post in the right one.
+THE OWNABLE COLUMN (the CEO's top-line messaging review: "every single word matters")
+The CEO sorted our vocabulary into three columns. The drafting job is to spend the post in the right one.
 - AVOID, crowded or meaningless on their own: "for agents" (over the last 12 months everyone
   appended those two words to an existing product description, so it now reads as disingenuous, and
   we signal agent-native orientation through what the product DOES, never through the phrase),
   "payments" unqualified, "money movement" unqualified, and hollow words used bare: "trusted",
   "programmable".
 - FINE, but never a hook on their own, each needs its context in the same post: orchestration (see
-  the caveat below), "stablecoin infrastructure" (Ryne rates it second only to "for agents" for
+  the caveat below), "stablecoin infrastructure" (the CEO rates it second only to "for agents" for
   crowding: it sets the reader's mindset and does nothing else), routing ("people understand routing
   is valuable, it's not sexy though, so it needs more").
 - OWNABLE, land here: programmability, control, all-or-nothing execution.
 
 THE SUBSTANTIATION RULE. Programmability and control appear in BOTH the hollow column and the
-ownable one, and the only thing separating them is whether the post says what they mean. Ryne has
+ownable one, and the only thing separating them is whether the post says what they mean. The CEO has
 made this mistake himself this year: "you can't just say programmable and trust that people
 understand the implications of that." So if a draft uses "programmable", "programmability" or
 "control", the same post must carry the mechanism, rule, parameter or number that makes it true. If
 it cannot, cut the word. These are not hooks, they are conclusions the reader should arrive at.
 
-ALL-OR-NOTHING EXECUTION is the strongest thing we own and the most underused. Per Ryne, "maybe not
+ALL-OR-NOTHING EXECUTION is the strongest thing we own and the most underused. Per the CEO, "maybe not
 in those words, but in that concept. It's a reliability thing and control." The flow settles
 completely or it does not happen: no half-executed multi-market route, no capital stranded mid-hop.
 Reach for the concept whenever a post is about execution quality, and prefer showing it to naming it.
@@ -135,12 +135,12 @@ DON'T:
 - Lead with "permissionless," "non-custodial," "degen," "DeFi-native" as hooks.
 - Use retail swap framing ("swap any token across chains").
 - Reach for commodity phrases the market has worn out: "move money smarter," "makes money
-  programmable," "stablecoin network," "the future of payments." Ryne's word for these is the
+  programmable," "stablecoin network," "the future of payments." The CEO's word for these is the
   commodity zone, they are now anti-differentiating.
 - Sound like a press release. Avoid "bridge" and "interop" as Eco's identity.
 
-"ORCHESTRATION" IS NOT A FREE WORD. It used to sit in the dialect list above, unqualified. Ryne's
-misgiving, all hands 2026-08-31: used loosely it gets heard as fiat-to-stable orchestration, which
+"ORCHESTRATION" IS NOT A FREE WORD. It used to sit in the dialect list above, unqualified. The CEO's
+misgiving, from the top-line messaging review: used loosely it gets heard as fiat-to-stable orchestration, which
 is "a highly regulated market boundary position, not a crypto native position, and that's not what
 we're set up to do." His other objection is that half the people who say the word cannot define it.
 So the word is allowed only when the post itself says what is being orchestrated and between what.

@@ -281,8 +281,8 @@ count, or keeps it and lowers the total.
 
 ## Tier 5: the commodity zone
 
-The only tier here that is about **positioning** rather than prose. Source: Ryne,
-all hands 2026-08-31, on top-line messaging, plus the commodity-zone list already
+The only tier here that is about **positioning** rather than prose. Source: the CEO's
+top-line messaging review, plus the commodity-zone list already
 carried in `lib/positioning.ts`.
 
 It exists because the positioning brief *asked* for these and nothing *checked*
@@ -293,7 +293,7 @@ exception. A draft could clear the entire gauntlet still saying "for agents".
 **Every finding in this tier is soft.** Hard findings force a repair round-trip
 and can drop an option; these are context judgments the operator should make. A
 curriculum post teaching correspondent banking may say "money movement" about the
-*tradfi* system and be right to. What Ryne objects to is the phrase as **Eco's
+*tradfi* system and be right to. What the CEO objects to is the phrase as **Eco's
 self-description**, and a regex cannot tell those apart. So it flags and defers.
 
 ### Crowded or meaningless
@@ -312,7 +312,7 @@ does, never by the phrase.
 
 "programmable", "programmability", "trusted" and "control" sit in the hollow
 column and the ownable column **at the same time**. The only thing separating
-them is whether the post says what they mean. Ryne on making this mistake
+them is whether the post says what they mean. The CEO on making this mistake
 himself: you cannot say programmable and trust that people understand the
 implications.
 

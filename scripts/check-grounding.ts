@@ -10,7 +10,7 @@ import { ANALOG_BY_ID } from "../lib/analogs.ts";
 
 // Regression check for migration 013, replaying the drafts that caused it.
 //
-// Rob flagged three drafts arguing DNS/RTGS netting mechanics off a Tokenized
+// The operator flagged three drafts arguing DNS/RTGS netting mechanics off a Tokenized
 // episode about Citi Token Services, each attributing the thesis to Ryan Rugg,
 // who says the opposite. A second set did the same thing to a different
 // episode. Both were structurally guaranteed: the drafter got title + summary +

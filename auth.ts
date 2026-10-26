@@ -1,15 +1,17 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
 
-// Google sign-in restricted to the Eco workspace. The env vars (AUTH_GOOGLE_ID,
-// AUTH_GOOGLE_SECRET, AUTH_SECRET) have been provisioned in Vercel since the
-// project was set up; this is the code that finally uses them.
+// Google sign-in restricted to one Google Workspace domain (AUTH_ALLOWED_DOMAIN).
+// Set AUTH_GOOGLE_ID, AUTH_GOOGLE_SECRET and AUTH_SECRET alongside it.
 //
 // Everything in the app is behind this — see middleware.ts. The one deliberate
 // exception is /api/sync, which Vercel Cron calls unauthenticated and which
 // guards itself with CRON_SECRET / the x-vercel-cron header.
 
-const ALLOWED_DOMAIN = process.env.AUTH_ALLOWED_DOMAIN || "eco.com";
+const ALLOWED_DOMAIN = process.env.AUTH_ALLOWED_DOMAIN ?? "";
+if (!ALLOWED_DOMAIN) {
+  throw new Error("AUTH_ALLOWED_DOMAIN is required: the Google Workspace domain allowed to sign in, e.g. yourcompany.com");
+}
 
 function emailAllowed(email?: string | null): boolean {
   if (!email) return false;

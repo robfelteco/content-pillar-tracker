@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
-/* Eco house style — palette + fonts exposed as Tailwind v4 theme tokens.
-   Colors become bg-eco-blue / text-eco-lightblue / border-eco-cyan etc.
-   Fonts become font-sans (Roobert) / font-mono (JetBrains Mono). */
+/* Palette + fonts exposed as Tailwind v4 theme tokens. The token names are
+   still the original brand's (bg-eco-blue etc); change the values here to
+   restyle the whole app. Fonts become font-sans (Geist) / font-mono (JetBrains Mono). */
 @theme {
   --color-eco-blue: #1c53bd;
   --color-eco-lightblue: #75c5ff;
@@ -11,7 +11,7 @@
   --color-eco-cyan: #008992;
   --color-eco-yellow: #f9eb70;
 
-  --font-sans: var(--font-roobert), system-ui, sans-serif;
+  --font-sans: var(--font-ui), system-ui, sans-serif;
   --font-mono: var(--font-jbmono), ui-monospace, monospace;
 }
 

@@ -1,6 +1,6 @@
 -- Eco X Post Template Tracker — Postgres schema (Neon)
 --
--- Design notes vs. Jay's eco-x-studio (which uses Redis + overwrites metrics):
+-- Design notes vs. the earlier internal tool (which uses Redis + overwrites metrics):
 --   * Posts are DURABLE rows, not a live-timeline cache.
 --   * Metrics are TIMESTAMPED SNAPSHOTS (one row per post per fetch), never
 --     overwritten — the X API only ever returns *current* numbers, so our
@@ -137,7 +137,7 @@ CREATE INDEX IF NOT EXISTS labels_template_idx ON labels (template);
 
 -- ---------------------------------------------------------------------------
 -- sync_runs — one row per sync (cron or manual). Surfaced in the UI so a silent
--- failure is visible (mirrors Jay's cronLog, but as durable rows we can trend).
+-- failure is visible (mirrors the earlier tool's cronLog, but as durable rows we can trend).
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS sync_runs (
   id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -198,7 +198,7 @@ CREATE INDEX IF NOT EXISTS posts_entities_idx ON posts USING gin (entities);
 -- ---------------------------------------------------------------------------
 -- Migration 005 — recommendation_uses: the recursion loop.
 --
--- Jay's core ask: the tool must know when a post came from its own
+-- The CMO's core ask: the tool must know when a post came from its own
 -- recommendation vs. organically, keep score of what it drove, and learn from
 -- whether that post did well. "If I use integration-announcement → Tron and
 -- push it, it should know you did it based on its recommendation, count it, and
@@ -568,7 +568,7 @@ CREATE INDEX IF NOT EXISTS posts_video_idx ON posts (video_id);
 -- ---------------------------------------------------------------------------
 -- Migration 009 — the ANALOG dimension (the education curriculum).
 --
--- Jay's brief: "get more into ICP education ... shine a light in the dark area
+-- The CMO's brief: "get more into ICP education ... shine a light in the dark area
 -- of 'traditional money movement tech'." The finding that shaped this column:
 -- broad_educational is our largest pillar (71 posts) and 100% of it is market
 -- NEWS — Mastercard settling in six stablecoins, BNY and Circle, the a16z
@@ -593,7 +593,7 @@ CREATE INDEX IF NOT EXISTS posts_analog_idx ON posts (analog_id) WHERE analog_id
 -- ---------------------------------------------------------------------------
 -- Migration 010 — analog_sources: the curriculum's evidence base.
 --
--- Rob, on the first curriculum drafts: "we can't just yolo copy without any
+-- The operator, on the first curriculum drafts: "we can't just yolo copy without any
 -- source material ... we need to ensure the copy is always relevant/aligned
 -- with/crediting to what the source material is."
 --
@@ -642,7 +642,7 @@ CREATE INDEX IF NOT EXISTS analog_sources_concept_idx ON analog_sources (analog_
 -- ---------------------------------------------------------------------------
 -- Migration 011 — the curriculum's evidence base gets a clock.
 --
--- Rob: "it also looks you're only pulling from the source material i provided
+-- The operator: "it also looks you're only pulling from the source material i provided
 -- and they are remaining static. we should be constantly sweeping the web for
 -- new sources to feed this content pillar so posts can continue to be fresh."
 --
@@ -657,7 +657,7 @@ CREATE INDEX IF NOT EXISTS analog_sources_concept_idx ON analog_sources (analog_
 --               conference talk from yesterday. This is what makes a post
 --               TIMELY, and what gives a new angle on a 150-year-old mechanism.
 --
--- Retention is 365 days per Rob. Note what that implies: at four concepts a day
+-- Retention is 365 days per the operator. Note what that implies: at four concepts a day
 -- each concept is swept roughly 73 times a year, so a year in there could be
 -- 75+ current rows per concept. That is an archive, not a freshness signal, and
 -- a drafter handed 75 sources would be both expensive and worse. So retention
@@ -719,7 +719,7 @@ CREATE INDEX IF NOT EXISTS articles_chain_idx ON articles (chain) WHERE chain IS
 -- ---------------------------------------------------------------------------
 -- Migration 012 — the CHANNEL lane: podcast/YouTube sourcing for Lane 1.
 --
--- Rob added three channels (Money Code, Tokenized, What's Next with Philip
+-- The operator added three channels (Money Code, Tokenized, What's Next with Philip
 -- Meissner) as broad-educational sourcing. They do not fit the existing sweep,
 -- and the reason is structural rather than cosmetic:
 --
@@ -1128,7 +1128,7 @@ CREATE TABLE IF NOT EXISTS lane_detect_seen (
 --             adjacency to what eco.com says Eco is, and PRE-FRAMED: the model
 --             drafts the four angle-bank fields so the operator edits a frame
 --             instead of staring at seven blank inputs.
---   picked  — the human step Jay asked to keep. The operator read the frame,
+--   picked  — the human step the CMO asked to keep. The operator read the frame,
 --             fixed the bridge, set the audience. The picked column IS the
 --             angle bank now; education_angles stays as a table but nothing
 --             writes to it any more.
@@ -1174,7 +1174,7 @@ CREATE TABLE IF NOT EXISTS edu_candidates (
   -- all_or_nothing | programmable_rules | tokenized_assets | at_par | agents.
   theme            text,
   -- The four angle-bank fields, PRE-FILLED by the intake model and edited by
-  -- the operator. Never auto-picked (Jay: the FRAME step stays human).
+  -- the operator. Never auto-picked (the CMO: the FRAME step stays human).
   frame            text,
   mechanism        text,
   eco_bridge       text,

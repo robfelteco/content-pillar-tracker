@@ -1,11 +1,10 @@
-// Eco house-style fonts. Roobert (Trial weight) for sans; JetBrains Mono stands
-// in for Aeonik Mono, used all-caps for labels/eyebrows/figures.
-import localFont from "next/font/local";
-import { JetBrains_Mono } from "next/font/google";
+// App fonts. Geist for sans, JetBrains Mono for labels, eyebrows and figures.
+// Swap either for your own brand font: next/font/local works the same way.
+import { Geist, JetBrains_Mono } from "next/font/google";
 
-export const roobert = localFont({
-  src: "../fonts/Roobert.otf",
-  variable: "--font-roobert",
+export const sans = Geist({
+  subsets: ["latin"],
+  variable: "--font-ui",
   display: "swap",
 });
 

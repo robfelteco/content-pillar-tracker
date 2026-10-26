@@ -1,6 +1,6 @@
 import { TEMPLATE_BY_ID, TEMPLATES, type Template } from "./taxonomy.ts";
 
-// Per-pillar engagement TREND. Jay's ask, close to verbatim:
+// Per-pillar engagement TREND. The CMO's ask, close to verbatim:
 //
 //   "with your tracker, it should also be like, hey, the last 10 posts have
 //    averaged 15 likes, and the most recent 11th post has dropped an average to
@@ -206,7 +206,7 @@ export interface TrendVerdict {
  *
  * Small on purpose, and in the direction that is easy to defend. A declining
  * pillar is NOT pushed down the board: "this format is cooling" is an argument
- * for looking at it, and burying it would hide exactly what Jay wanted
+ * for looking at it, and burying it would hide exactly what the CMO wanted
  * surfaced. It gets flagged instead, and the flag rides the reason list.
  *
  * A pillar on the way UP earns a real nudge, because that is the case where

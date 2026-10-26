@@ -47,7 +47,7 @@ function externalArticleDomains(domains: string[]): string[] {
   return domains.filter((d) => d && !ECO_DOMAINS.has(d) && !NON_ARTICLE_DOMAINS.has(d));
 }
 
-// URL-path → template. Jay's "the URL is in the post, so you know the category"
+// URL-path → template. The CMO's "the URL is in the post, so you know the category"
 // lever. Only PATTERNS that map to exactly one template regardless of anything
 // else in the post live here — verified against the corpus. (External media
 // domains are deliberately NOT listed: the same outlet shows up as both

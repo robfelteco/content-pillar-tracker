@@ -15,7 +15,7 @@ function ordinal(n: number): string {
   }
 }
 
-// Written date, e.g. "May 30th". Jay's ask: dates should read as words, not
+// Written date, e.g. "May 30th". The CMO's ask: dates should read as words, not
 // ISO slices. Includes the year only when it isn't the current one.
 export function writtenDate(d: Date | string | null | undefined): string {
   if (!d) return "never";

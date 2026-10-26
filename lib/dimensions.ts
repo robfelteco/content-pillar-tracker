@@ -1,5 +1,5 @@
 // Post sub-dimensions: which CHAIN(s) and which COMPANY/entity a post highlights.
-// This is the axis Jay wants the Insights tab to rank on — "the highest-ranking
+// This is the axis the CMO wants the Insights tab to rank on — "the highest-ranking
 // data motion visual based on the chain and the company we're highlighting" —
 // and it lives almost entirely in @-mentions (@solana, @trondao, @Visa,
 // @DoorDash…), with outbound domains and a few distinctive text tokens as
@@ -70,7 +70,7 @@ export const CHAIN_HANDLES: Record<string, string> = {
 //   base, tempo, ton, sei, op            — short generic words
 //   stellar, optimism, avalanche         — common English adjectives/nouns.
 //     ("stellar growth", "cautious optimism", "an avalanche of…") — these were
-//     the source of the phantom "Stellar" chip Jay flagged: a Western Union /
+//     the source of the phantom "Stellar" chip the CMO flagged: a Western Union /
 //     SoFi / MoneyGram post got tagged Stellar purely for the word "stellar".
 //   celo, monad                          — real words / names in other contexts.
 // Every excluded chain is still detected whenever its @handle is mentioned.
