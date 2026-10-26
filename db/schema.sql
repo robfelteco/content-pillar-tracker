@@ -1,0 +1,1214 @@
+-- Eco X Post Template Tracker — Postgres schema (Neon)
+--
+-- Design notes vs. Jay's eco-x-studio (which uses Redis + overwrites metrics):
+--   * Posts are DURABLE rows, not a live-timeline cache.
+--   * Metrics are TIMESTAMPED SNAPSHOTS (one row per post per fetch), never
+--     overwritten — the X API only ever returns *current* numbers, so our
+--     snapshots ARE the growth history. Deduped to one snapshot per post/day.
+--   * "Last posted" per template is DERIVED at query time (MAX(created_at)
+--     GROUP BY template), never stored as a mutable column.
+--   * Classification (template + confidence + source) is new in our app.
+--
+-- Apply with: psql "$DATABASE_URL" -f db/schema.sql   (idempotent)
+
+-- ---------------------------------------------------------------------------
+-- Content-template taxonomy. Kept as an enum so a bad label can't be written,
+-- but 'other' is a real bucket that routes to the review queue. Adding a new
+-- template later = one ALTER TYPE ... ADD VALUE (see lib/taxonomy.ts, the
+-- single source of truth the app codes against).
+-- ---------------------------------------------------------------------------
+DO $$ BEGIN
+  CREATE TYPE content_template AS ENUM (
+    'data_motion_visual',
+    'integration_announcement',
+    'quote_card',
+    'product_post',
+    'thought_leadership',
+    'dev_doc_post',
+    'broad_educational',
+    'short_form_video_eco',
+    'other'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- Who/what assigned the current template. Human always wins and is never
+-- overwritten by a re-classification run.
+DO $$ BEGIN
+  CREATE TYPE classification_source AS ENUM ('rule', 'claude', 'human');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+-- ---------------------------------------------------------------------------
+-- posts — one row per @eco tweet we've ingested. Post ID (string) is the PK.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS posts (
+  id                text PRIMARY KEY,               -- tweet id (string; JS-unsafe as number)
+  url               text NOT NULL,
+  created_at        timestamptz NOT NULL,           -- tweet publish time (X created_at)
+  text              text NOT NULL,                  -- full text (note_tweet.text when long-form)
+
+  -- Entities (expanded).
+  urls              jsonb NOT NULL DEFAULT '[]',    -- [{url, expanded_url, domain}]
+  domains           text[] NOT NULL DEFAULT '{}',   -- flattened outbound domains, for cheap rule matching
+  mentions          text[] NOT NULL DEFAULT '{}',   -- @handles (lowercased)
+  hashtags          text[] NOT NULL DEFAULT '{}',
+
+  -- Media.
+  media_type        text NOT NULL DEFAULT 'text',   -- video | photo | animated_gif | link-card | text
+  media_urls        jsonb NOT NULL DEFAULT '[]',    -- image/video urls
+  preview_image_url text,                           -- video thumbnail (for multimodal classify)
+
+  -- Post shape. We track only MAIN posts: reposts and replies (self-replies AND
+  -- replies to others) are excluded at ingestion. The flags are retained on any
+  -- legacy rows and every read query filters is_reply = false as a backstop.
+  is_reply          boolean NOT NULL DEFAULT false,
+  is_self_reply     boolean NOT NULL DEFAULT false, -- reply where author == @eco
+  is_quote          boolean NOT NULL DEFAULT false,
+
+  -- Manual flag; set in the UI, cannot come from the API. Every per-template
+  -- average must be filterable by amplified vs organic or the baseline is junk.
+  amplified         boolean NOT NULL DEFAULT false,
+
+  -- Classification (current, denormalized onto the post for fast dashboard reads).
+  template          content_template,               -- null until classified
+  confidence        real,                           -- 0..1
+  reasoning         text,                           -- one sentence from the classifier
+  class_source      classification_source,          -- rule | claude | human
+  classified_at     timestamptz,
+  -- dev_doc_post optional sub-tag (store now, classify later / manually).
+  sub_tag           text,                           -- 'soft_sell' | 'hard_sell' | null
+
+  first_seen_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS posts_template_idx     ON posts (template);
+CREATE INDEX IF NOT EXISTS posts_created_at_idx   ON posts (created_at DESC);
+CREATE INDEX IF NOT EXISTS posts_confidence_idx   ON posts (confidence);
+CREATE INDEX IF NOT EXISTS posts_amplified_idx    ON posts (amplified);
+
+-- ---------------------------------------------------------------------------
+-- metric_snapshots — append-only. One row per post per fetch; deduped to one
+-- per post per UTC day (see the unique index). This table IS the growth curve.
+-- non_public_* are only available for posts <~30d old via OAuth user context;
+-- null means "was unavailable at fetch time", recorded rather than errored.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS metric_snapshots (
+  id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  post_id           text NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  fetched_at        timestamptz NOT NULL DEFAULT now(),
+  fetched_on        date NOT NULL DEFAULT (now() AT TIME ZONE 'utc')::date, -- dedup key
+
+  impressions       integer,
+  likes             integer,
+  replies           integer,
+  retweets          integer,
+  quotes            integer,
+  bookmarks         integer,
+
+  -- non_public_metrics (user-context only, <30d).
+  url_link_clicks     integer,   -- null = unavailable at fetch
+  user_profile_clicks integer,
+  non_public_available boolean NOT NULL DEFAULT false
+);
+
+-- One snapshot per post per day. ON CONFLICT DO UPDATE lets a later same-day
+-- run refresh the numbers without creating a second row for that day.
+CREATE UNIQUE INDEX IF NOT EXISTS metric_snapshots_post_day_uidx
+  ON metric_snapshots (post_id, fetched_on);
+CREATE INDEX IF NOT EXISTS metric_snapshots_post_idx ON metric_snapshots (post_id, fetched_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- labels — ground-truth human corrections. Every confirmed/corrected review
+-- becomes a row here and feeds the few-shot pool for future Claude calls.
+-- Separate from posts.template so the training signal survives even if a post
+-- is later re-ingested; posts.template mirrors the latest human label.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS labels (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  post_id       text NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  template      content_template NOT NULL,
+  labeled_by    text NOT NULL,          -- operator email
+  labeled_at    timestamptz NOT NULL DEFAULT now(),
+  prev_template content_template,       -- what the classifier had guessed (for audit)
+  prev_source   classification_source
+);
+CREATE INDEX IF NOT EXISTS labels_post_idx     ON labels (post_id);
+CREATE INDEX IF NOT EXISTS labels_template_idx ON labels (template);
+
+-- ---------------------------------------------------------------------------
+-- sync_runs — one row per sync (cron or manual). Surfaced in the UI so a silent
+-- failure is visible (mirrors Jay's cronLog, but as durable rows we can trend).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS sync_runs (
+  id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  started_at     timestamptz NOT NULL DEFAULT now(),
+  finished_at    timestamptz,
+  trigger        text NOT NULL,          -- 'cron' | 'manual'
+  ok             boolean,
+  posts_added    integer NOT NULL DEFAULT 0,
+  posts_updated  integer NOT NULL DEFAULT 0,
+  snapshots      integer NOT NULL DEFAULT 0,
+  classified     integer NOT NULL DEFAULT 0,
+  x_reads        integer NOT NULL DEFAULT 0,
+  est_cost_usd   numeric(10,4) NOT NULL DEFAULT 0,
+  summary        text,                   -- one human sentence
+  errors         jsonb NOT NULL DEFAULT '[]'
+);
+CREATE INDEX IF NOT EXISTS sync_runs_started_idx ON sync_runs (started_at DESC);
+
+-- ---------------------------------------------------------------------------
+-- Migration 002 — link-preview enrichment (idempotent ADD COLUMN IF NOT EXISTS).
+-- Many posts carry their substance behind an outbound link — external articles
+-- and especially X's native long-form "Articles" (a t.co that opens an article
+-- whose body isn't in the tweet text). We resolve the link and scrape its OG
+-- card (title/description/image) so (a) the classifier can READ article posts
+-- instead of dumping them in review, and (b) every link/article post gets a
+-- thumbnail. See lib/enrich.ts. Populated best-effort during sync; null = not
+-- yet enriched or no usable card.
+-- ---------------------------------------------------------------------------
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS link_resolved_url text; -- t.co → final URL
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS link_title        text;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS link_description  text;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS link_image_url    text; -- OG/twitter card image
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS enriched_at       timestamptz;
+
+-- ---------------------------------------------------------------------------
+-- Migration 003 — quoted-tweet thumbnail. For a QUOTE post the visual the reader
+-- sees is the quoted tweet's own image (native photo/video poster, or the cover
+-- of a quoted X native Article). The quoting post rarely repeats it, so we pull
+-- it from the referenced-tweet expansion at ingest (see lib/twitter.ts) and use
+-- it as the row thumbnail. null = not a quote, or the quote has no visual.
+-- ---------------------------------------------------------------------------
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS quoted_image_url  text;
+
+-- ---------------------------------------------------------------------------
+-- Migration 004 — chain / entity sub-dimensions. A post's template (its content
+-- pillar) is only one axis; the Insights tab also needs to know WHICH chain and
+-- WHICH company/partner a post highlights, so it can answer "you just did a
+-- Solana data-motion visual — the next best chain is Arbitrum." Extracted
+-- deterministically from @-mentions + domains + distinctive text tokens at
+-- ingest (see lib/dimensions.ts). Empty array = none detected. Multi-valued: a
+-- post can highlight several chains/partners and counts toward each.
+-- ---------------------------------------------------------------------------
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS chains   text[] NOT NULL DEFAULT '{}';
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS entities text[] NOT NULL DEFAULT '{}';
+CREATE INDEX IF NOT EXISTS posts_chains_idx   ON posts USING gin (chains);
+CREATE INDEX IF NOT EXISTS posts_entities_idx ON posts USING gin (entities);
+
+-- ---------------------------------------------------------------------------
+-- Migration 005 — recommendation_uses: the recursion loop.
+--
+-- Jay's core ask: the tool must know when a post came from its own
+-- recommendation vs. organically, keep score of what it drove, and learn from
+-- whether that post did well. "If I use integration-announcement → Tron and
+-- push it, it should know you did it based on its recommendation, count it, and
+-- know if it did well afterwards — and adjust its recommendation."
+--
+-- Flow: operator clicks "Mark as used" on a recommendation → an OPEN row here.
+-- At the next sync, attributeUses() matches a newly-ingested @eco post of the
+-- same pillar (and chain, if one was chosen) published after used_at to that
+-- open row → status 'matched', matched_post_id set. The post's performance then
+-- rides on the normal metric_snapshots, so History can show used → posted →
+-- impressions, and scoring can discount pillars whose rec-driven posts flop.
+--
+-- We deliberately DON'T take credit for organic posts: a matching post only
+-- counts as attributed if an open use was waiting for it. Credit where due.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS recommendation_uses (
+  id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  template          content_template NOT NULL,        -- pillar the operator chose to act on
+  chain             text,                              -- chosen chain angle (canonical id), or null
+  angle             text,                              -- optional free-text topic/angle note
+  score_at_use      integer,                           -- the 0..100 priority score when used (calibration)
+  suggested_post_id text REFERENCES posts(id) ON DELETE SET NULL, -- the proven post it suggested, if any
+
+  status            text NOT NULL DEFAULT 'open',      -- 'open' | 'matched' | 'dismissed'
+  matched_post_id   text REFERENCES posts(id) ON DELETE SET NULL, -- resulting @eco post, once attributed
+  matched_at        timestamptz,
+
+  used_by           text NOT NULL DEFAULT 'public',    -- operator email once auth lands
+  used_at           timestamptz NOT NULL DEFAULT now(),
+  note              text
+);
+CREATE INDEX IF NOT EXISTS rec_uses_status_idx   ON recommendation_uses (status);
+CREATE INDEX IF NOT EXISTS rec_uses_template_idx ON recommendation_uses (template);
+CREATE INDEX IF NOT EXISTS rec_uses_used_at_idx  ON recommendation_uses (used_at DESC);
+-- Never attribute the same post to two different uses.
+CREATE UNIQUE INDEX IF NOT EXISTS rec_uses_matched_uidx
+  ON recommendation_uses (matched_post_id) WHERE matched_post_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Migration 006 — the ARTICLE registry.
+--
+-- Robert's finding, confirmed against the corpus: both Thought Leadership and
+-- Product Posts re-amplify the SAME underlying article over and over, and the
+-- tracker was reading every amplifier as a separate article. 16 thought-
+-- leadership posts collapse to ~10 distinct sources (five sources carry 11 of
+-- them); 28 of the 36 product posts trace back to just 7 blog articles
+-- (Verified Liquidity x6, Flash Intents x5, Programmable Addresses x5,
+-- Routes-trustless x5, Routes-hardest-problem x3, Permit3 x2, Any-to-Any x2).
+--
+-- So the article — not the post — is the unit the shelf should rank, and
+-- "how many times have we used this?" becomes a first-class number.
+--
+-- Seeded deterministically from the blog PDFs on disk (scripts/ingest-articles.ts):
+-- page 1 of every eco.com/blog print-to-PDF carries title, dek, author, date and
+-- the canonical URL in the footer. No LLM needed for the seed.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS articles (
+  id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  slug           text NOT NULL UNIQUE,      -- eco.com/blog slug, or a synthetic key
+  title          text NOT NULL,
+  dek            text,                      -- the standfirst line under the headline
+  author         text,
+  published_on   date,
+  canonical_url  text,                      -- https://eco.com/blog/<slug>/
+  x_article_url  text,                      -- http://x.com/i/article/<id>, when one exists
+  -- The @eco post that CARRIED this article (the bare-link post whose link_title
+  -- is the article title). Amplifiers link at this post, not at the article URL,
+  -- so it is the join key for the anchor rung of the attribution ladder.
+  anchor_post_id text REFERENCES posts(id) ON DELETE SET NULL,
+  kind           text NOT NULL,             -- 'product' | 'thought_leadership'
+  product        text,                      -- lib/products.ts id, for product articles
+  body           text,                      -- extracted article text; feeds the drafter
+  source_file    text,                      -- the PDF this row was seeded from
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS articles_kind_idx    ON articles (kind);
+CREATE INDEX IF NOT EXISTS articles_product_idx ON articles (product);
+
+-- Which article a post is amplifying, and how we worked that out. Precedence:
+--   'url'    — canonical eco.com/blog URL matched outright
+--   'xurl'   — x.com/i/article/<id> matched articles.x_article_url
+--   'anchor' — post links at an @eco status that already resolved to an article
+--   'claude' — matched on content by the LLM, above threshold
+--   'human'  — an operator said so; never overwritten by a re-run
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS article_id         bigint REFERENCES articles(id) ON DELETE SET NULL;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS article_match      text;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS article_confidence real;
+CREATE INDEX IF NOT EXISTS posts_article_idx ON posts (article_id);
+
+-- Which Eco PRODUCT(s) a post is about. The axis Product Posts actually rotates
+-- on — 34 of 36 posts in that pillar carry no chain tag at all, so the old
+-- chain-angle targeting was landing on nothing. Extracted at ingest alongside
+-- chains/entities (lib/dimensions.ts -> lib/products.ts).
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS products text[] NOT NULL DEFAULT '{}';
+CREATE INDEX IF NOT EXISTS posts_products_idx ON posts USING gin (products);
+
+-- ---------------------------------------------------------------------------
+-- Migration 007 — QUOTE DISCOVERY (see Desktop/quote-discovery-spec.md).
+--
+-- The Quote Card pillar has nothing to re-run: a quote card is used once. So its
+-- expanded section is a DISCOVERY pipeline, not a shelf. It finds usable,
+-- verbatim, attributable stablecoin quotes from credible people at credible
+-- organizations and drops them in a human review queue.
+--
+-- Precision beats recall here. A hallucinated or paraphrased quote attributed to
+-- a named executive is a brand incident, not a bug — so every candidate passes a
+-- verbatim check against the persisted source before it can reach the queue.
+-- ---------------------------------------------------------------------------
+
+-- The credibility filter. This table IS the quality control.
+CREATE TABLE IF NOT EXISTS orgs (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  name          text NOT NULL UNIQUE,
+  org_tier      smallint NOT NULL,          -- 1 = TradFi/global brand, 2 = major stablecoin/fintech, 3 = crypto infra
+  is_competitor boolean NOT NULL DEFAULT false,
+  x_handle      text,
+  li_handle     text,
+  notes         text
+);
+
+CREATE TABLE IF NOT EXISTS people (
+  id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  full_name    text NOT NULL,
+  title        text NOT NULL,
+  org_id       bigint REFERENCES orgs(id) ON DELETE SET NULL,
+  seniority    smallint NOT NULL,           -- 1 = C-suite/founder, 2 = SVP/MD/Head of, 3 = Director/PM
+  x_handle     text,
+  x_author_id  text,                        -- cached forever. never re-resolve: saves $0.010/lookup.
+  li_handle    text,
+  yt_channel   text,
+  x_since_id   text,                        -- newest tweet id already fetched, per author (incremental runs)
+  handles_verified_at timestamptz,          -- handles drift; re-verify quarterly
+  active       boolean NOT NULL DEFAULT true
+);
+CREATE UNIQUE INDEX IF NOT EXISTS people_x_handle_uidx ON people (lower(x_handle)) WHERE x_handle IS NOT NULL;
+
+-- Sources we monitor that aren't tied to one person (podcasts, conference
+-- channels, report publishers, standing keyword searches).
+CREATE TABLE IF NOT EXISTS watch_sources (
+  id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  kind         text NOT NULL,               -- 'yt_channel' | 'podcast_rss' | 'report_site' | 'x_search'
+  identifier   text NOT NULL,               -- channel id, rss url, domain, or search query
+  label        text NOT NULL,
+  active       boolean NOT NULL DEFAULT true,
+  last_run_at  timestamptz,
+  UNIQUE (kind, identifier)
+);
+
+CREATE TABLE IF NOT EXISTS discovery_runs (
+  id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  triggered_by   text NOT NULL,
+  started_at     timestamptz NOT NULL DEFAULT now(),
+  finished_at    timestamptz,
+  status         text NOT NULL DEFAULT 'queued',   -- queued|running|partial|complete|failed
+  lookback_days  int NOT NULL DEFAULT 365,
+  budget_cents   int NOT NULL DEFAULT 500,
+  spend_cents    numeric(10,2) NOT NULL DEFAULT 0,
+  lane_status    jsonb NOT NULL DEFAULT '{}',      -- {"x":"complete","youtube":"running","web":"queued"}
+  stats          jsonb NOT NULL DEFAULT '{}',      -- per-lane docs fetched / candidates / verify failures
+  errors         jsonb NOT NULL DEFAULT '[]'
+);
+CREATE INDEX IF NOT EXISTS discovery_runs_started_idx ON discovery_runs (started_at DESC);
+
+-- Live progress for the run in flight: which lane, which step, how far through
+-- it. A run is minutes long, so the UI needs something finer than lane_status
+-- to show between one lane finishing and the next one landing.
+-- {"lane":"youtube","step":"transcribe","done":2,"total":7,"note":"...","laneStartedAt":"..."}
+ALTER TABLE discovery_runs ADD COLUMN IF NOT EXISTS progress jsonb NOT NULL DEFAULT '{}';
+
+-- Persist everything we fetch. Verification reads from here, and it stops us
+-- re-paying for the same data on the next run.
+CREATE TABLE IF NOT EXISTS raw_documents (
+  id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  run_id         bigint REFERENCES discovery_runs(id) ON DELETE SET NULL,
+  source_kind    text NOT NULL,            -- 'x_post' | 'youtube' | 'article' | 'report'
+  source_url     text NOT NULL,
+  external_id    text,                     -- tweet id, yt video id, url hash
+  published_at   timestamptz,
+  title          text,
+  body           text NOT NULL,            -- full post text, transcript, or article text
+  segments       jsonb,                    -- [{speaker,start_sec,end_sec,text}] for diarized media
+  fetched_at     timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (source_kind, external_id)
+);
+CREATE INDEX IF NOT EXISTS raw_documents_run_idx ON raw_documents (run_id);
+
+CREATE TABLE IF NOT EXISTS quote_candidates (
+  id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  run_id            bigint REFERENCES discovery_runs(id) ON DELETE SET NULL,
+  raw_document_id   bigint REFERENCES raw_documents(id) ON DELETE CASCADE,
+  quote_text        text NOT NULL,
+  quote_hash        text NOT NULL,          -- sha256 of the normalized quote; dedupe across runs
+  speaker_name      text NOT NULL,
+  speaker_title     text,
+  org_name          text,                   -- org as stated in the source (may not be in orgs yet)
+  person_id         bigint REFERENCES people(id) ON DELETE SET NULL,
+  org_id            bigint REFERENCES orgs(id) ON DELETE SET NULL,
+  said_at           timestamptz,
+  deep_link         text NOT NULL,          -- ?t=NNN for YT, #:~:text= for web, post url for X
+  context_before    text,
+  context_after     text,
+  topic_tags        text[] NOT NULL DEFAULT '{}',
+  verification      text NOT NULL,          -- 'exact' | 'fuzzy' | 'failed'
+  score             numeric(5,2),
+  score_breakdown   jsonb,
+  pillar_tag        text,                   -- 'A' | 'B' | 'C' | 'D' (narrative pillars)
+  disqualifiers     text[] NOT NULL DEFAULT '{}',
+  status            text NOT NULL DEFAULT 'candidate',
+                    -- candidate | approved | rejected | carded | posted
+  reviewed_by       text,
+  reviewed_at       timestamptz,
+  reject_reason     text,
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+-- A quote reviewed and rejected once must never resurface. Single highest-value
+-- thing in the schema for reviewer sanity.
+CREATE UNIQUE INDEX IF NOT EXISTS quote_candidates_hash_uidx ON quote_candidates (quote_hash);
+CREATE INDEX IF NOT EXISTS quote_candidates_queue_idx ON quote_candidates (status, score DESC);
+CREATE INDEX IF NOT EXISTS quote_candidates_run_idx   ON quote_candidates (run_id);
+
+-- Names surfaced by the 7-day keyword sweep who aren't on the roster yet. The
+-- sweep is roster-DISCOVERY, not a quote source: it keeps the expensive read
+-- budget pointed at people we've already vetted.
+CREATE TABLE IF NOT EXISTS roster_suggestions (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  x_handle      text NOT NULL UNIQUE,
+  x_author_id   text,
+  display_name  text,
+  bio           text,
+  followers     integer,
+  seen_count    integer NOT NULL DEFAULT 1,
+  sample_post   text,
+  sample_url    text,
+  status        text NOT NULL DEFAULT 'new',   -- new | added | ignored
+  first_seen_at timestamptz NOT NULL DEFAULT now(),
+  last_seen_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS roster_suggestions_status_idx ON roster_suggestions (status, seen_count DESC);
+
+-- Which of the seven product-post SHAPES a post takes (launch, problem →
+-- mechanism, how-it-works, diagram, partner proof, ICP objection, article
+-- amplifier). Deterministic, see detectShape() in lib/products.ts. Lets the
+-- Prioritize card say "you've run problem → mechanism five times straight for
+-- this product" instead of offering the same angle again.
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS shape text;
+CREATE INDEX IF NOT EXISTS posts_shape_idx ON posts (shape);
+
+-- ---------------------------------------------------------------------------
+-- Migration 008 — the DOCS PAGE registry (Dev Doc Post) and the VIDEO registry
+-- (Short-Form Video). Both pillars were stuck on draftMode 'generic' — a single
+-- "draft something fresh" button — because neither had a shelf of source
+-- material to rank. They do now.
+--
+-- DOCS. Every dev-doc post is built around a section of docs.eco.com. The site
+-- publishes llms.txt: a curated, section-grouped index of every page with a
+-- one-line description written by the docs team, plus an .md twin of each page.
+-- So the shelf seeds itself from the docs site and re-syncs on the normal cron —
+-- no scraping, no manual list to maintain.
+--
+-- The evidence that made this worth building: of 73 pages in llms.txt, SEVEN
+-- have ever been used in a post. And the pages we do use beat the homepage
+-- decisively — deep-linked posts run a 934 median impression, /home posts 460.
+-- The pillar's whole problem was that it kept reaching for docs.eco.com/home.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS doc_pages (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  url           text NOT NULL UNIQUE,      -- canonical https://docs.eco.com/<path>, no .md, no query
+  path          text NOT NULL,             -- /routes/integrate/cli
+  section       text NOT NULL,             -- llms.txt "## " heading this page sits under
+  title         text NOT NULL,             -- llms.txt link text
+  blurb         text,                      -- the docs team's own one-liner
+  body          text,                      -- the .md page text; feeds the drafter
+  body_fetched_at timestamptz,
+
+  -- Claude-assigned, one pass at seed. Re-run only when llms.txt changes.
+  icp           text,                      -- lib/icp.ts id — who this page is FOR
+  tier          text,                      -- 'hero' | 'supporting' | 'reference'
+  hook          text,                      -- one line: what is genuinely postable here
+  tagged_at     timestamptz,
+  tag_source    text,                      -- 'claude' | 'human'
+
+  active        boolean NOT NULL DEFAULT true,  -- false once it drops out of llms.txt
+  first_seen_at timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS doc_pages_icp_idx     ON doc_pages (icp);
+CREATE INDEX IF NOT EXISTS doc_pages_tier_idx    ON doc_pages (tier);
+CREATE INDEX IF NOT EXISTS doc_pages_section_idx ON doc_pages (section);
+
+-- Which docs page a post drove to. Deterministic for 17 of 25 existing dev-doc
+-- posts (link_resolved_url carries the URL outright); the rest are the CLI
+-- photo-posts, matched by Claude or left in the residual row.
+--   'url'    — link_resolved_url matched a doc_pages.url
+--   'claude' — matched on content, above threshold
+--   'human'  — an operator said so; never overwritten by a re-run
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS doc_page_id     bigint REFERENCES doc_pages(id) ON DELETE SET NULL;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS doc_page_match  text;
+CREATE INDEX IF NOT EXISTS posts_doc_page_idx ON posts (doc_page_id);
+
+-- ---------------------------------------------------------------------------
+-- VIDEOS. The short-form pillar had the same shape of problem and a much bigger
+-- gap: the @ecoprotocol YouTube channel holds 280 shorts; 58 have ever run on X.
+-- The shelf is the residual — clips that exist and have never been posted.
+--
+-- Two sources, deliberately merged rather than picking one:
+--   youtube — 280 clips with title, a real summary description, and view counts
+--   dropbox — the team's delivery folder: fewer clips, but it carries the file
+--             itself (download link for posting) and the human quality verdict
+--             encoded in the folder tree ("Weak (Don't Use)")
+-- A clip can come from either or both; dropbox_path/yt_video_id are both
+-- nullable and either one alone is a valid row.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS videos (
+  id             bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+
+  -- YouTube side.
+  yt_video_id    text UNIQUE,               -- null = exists in Dropbox only
+  yt_url         text,
+  yt_published_on date,
+  yt_views       integer,
+  yt_thumb_url   text,
+
+  -- Dropbox side.
+  dropbox_file_id text UNIQUE,              -- id:AbCd-_12; null = YouTube only
+  dropbox_path    text,
+  dropbox_folder  text,                     -- the delivery batch it shipped in
+  dropbox_bytes   bigint,
+
+  title          text NOT NULL,             -- YT title, else cleaned-up filename
+  description    text,                      -- YT description — a real summary, not a stub
+  transcript     text,                      -- from a sibling -transcript.txt, or Gemini on demand
+  transcript_source text,                   -- 'dropbox_txt' | 'gemini' | null
+  duration_sec   integer,
+
+  -- Claude-assigned at seed, same pass shape as doc_pages.
+  series         text,                      -- 'shah_explainer' | 'ceo_podcast' | 'brand_film' | ...
+  speaker        text,                      -- 'strao' | 'rynesaxe' | 'third_party' | null
+  icp            text,
+  topic          text,                      -- short topic label for grouping
+  hook           text,                      -- the line worth building a post around
+  tagged_at      timestamptz,
+  tag_source     text,
+
+  -- The team's own verdict, read off the Dropbox folder tree. A clip filed under
+  -- "Weak (Don't Use)" must never be recommended — that is a human judgment we
+  -- already have and should not second-guess.
+  do_not_use     boolean NOT NULL DEFAULT false,
+
+  active         boolean NOT NULL DEFAULT true,
+  first_seen_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS videos_series_idx  ON videos (series);
+CREATE INDEX IF NOT EXISTS videos_icp_idx     ON videos (icp);
+CREATE INDEX IF NOT EXISTS videos_pub_idx     ON videos (yt_published_on DESC);
+
+-- Which clip a short-form post used. Almost never deterministic — only 1 of 58
+-- posts links YouTube at all, because the video is uploaded natively to X. So
+-- this is a Claude match over a +/-14 day window on title+description vs. post
+-- text, confidence-gated, with the same 'human' precedence as everywhere else.
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS video_id         bigint REFERENCES videos(id) ON DELETE SET NULL;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS video_match      text;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS video_confidence real;
+CREATE INDEX IF NOT EXISTS posts_video_idx ON posts (video_id);
+
+-- ---------------------------------------------------------------------------
+-- Migration 009 — the ANALOG dimension (the education curriculum).
+--
+-- Jay's brief: "get more into ICP education ... shine a light in the dark area
+-- of 'traditional money movement tech'." The finding that shaped this column:
+-- broad_educational is our largest pillar (71 posts) and 100% of it is market
+-- NEWS — Mastercard settling in six stablecoins, BNY and Circle, the a16z
+-- piece. None of it teaches a MECHANISM.
+--
+-- Deliberately NOT a tenth content_template. Two reasons:
+--   1. Analog education already fits broad_educational's definition — external,
+--      mechanism-level, Eco never named in the body. It is a kind of post we
+--      have not made, not a new pillar.
+--   2. A new enum value would need a migration AND a reclassify pass over 333
+--      posts, for no gain. Instead broad_educational renders as two LANES:
+--      "market news" (everything today) and "analog curriculum" (analog_id set).
+--
+-- Nullable by design. It will be null for essentially every existing post —
+-- that is the finding, not a bug, and it makes the coverage board honest on
+-- day one. Registry ids live in lib/analogs.ts (text, not an enum, same as
+-- products/icp — the curriculum will grow faster than a DDL cycle).
+-- ---------------------------------------------------------------------------
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS analog_id text;
+CREATE INDEX IF NOT EXISTS posts_analog_idx ON posts (analog_id) WHERE analog_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Migration 010 — analog_sources: the curriculum's evidence base.
+--
+-- Rob, on the first curriculum drafts: "we can't just yolo copy without any
+-- source material ... we need to ensure the copy is always relevant/aligned
+-- with/crediting to what the source material is."
+--
+-- He is right, and the first cut had it backwards twice over. Thirteen of the
+-- twenty concepts carried no source at all, and the drafter prompt explicitly
+-- told the model NOT to surface the ones that existed ("they are for your
+-- accuracy"). So a teaching post could assert how CHIPS settles with nothing
+-- behind it — the one failure mode that would actually cost us credibility with
+-- an institutional reader, who knows this material better than we do.
+--
+-- Why a table and not just AnalogDef.sources: sources are found (a Grok search
+-- per concept), verified (the URL has to actually resolve — a hallucinated
+-- citation is worse than none), reviewed, and they rot. That is data with a
+-- lifecycle, not a constant. The hand-curated seeds in lib/analogs.ts are
+-- loaded in as source_of='seed' and are the ones we trust most, because a human
+-- watched or read them.
+--
+-- key_facts is the part that makes drafts groundable rather than merely
+-- credited: specific, checkable claims lifted from the piece, so the drafter
+-- argues FROM the source instead of gesturing at it.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS analog_sources (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  analog_id     text NOT NULL,              -- lib/analogs.ts concept id
+  title         text NOT NULL,
+  publisher     text,                       -- outlet / author / institution
+  url           text NOT NULL,
+  kind          text,                       -- article | report | video | primer | standard | regulation
+  published_on  text,                       -- loose: often only a year is knowable
+  summary       text,                       -- what the piece actually says
+  key_facts     text[] NOT NULL DEFAULT '{}', -- checkable claims a draft can argue from
+
+  -- A citation nobody checked is a liability. Nothing reaches the drafter
+  -- unless the URL resolved when we looked.
+  verified      boolean NOT NULL DEFAULT false,
+  http_status   integer,
+  checked_at    timestamptz,
+
+  source_of     text NOT NULL DEFAULT 'grok', -- 'seed' (human-vetted) | 'grok'
+  added_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS analog_sources_uidx ON analog_sources (analog_id, url);
+CREATE INDEX IF NOT EXISTS analog_sources_concept_idx ON analog_sources (analog_id);
+
+-- ---------------------------------------------------------------------------
+-- Migration 011 — the curriculum's evidence base gets a clock.
+--
+-- Rob: "it also looks you're only pulling from the source material i provided
+-- and they are remaining static. we should be constantly sweeping the web for
+-- new sources to feed this content pillar so posts can continue to be fresh."
+--
+-- The sharper version of that: the first sweep DID find sources for all twenty
+-- concepts, but everything it found is structurally evergreen. A BIS primer on
+-- RTGS explains the mechanism perfectly and will say the same thing in 2029.
+-- Ideal for teaching, useless for timeliness. So the base needs two layers:
+--
+--   canonical — the institution explaining its own mechanism. Never expires.
+--               This is what makes a post CORRECT.
+--   current   — this month's BIS quarterly, a Fed speech from last week, a
+--               conference talk from yesterday. This is what makes a post
+--               TIMELY, and what gives a new angle on a 150-year-old mechanism.
+--
+-- Retention is 365 days per Rob. Note what that implies: at four concepts a day
+-- each concept is swept roughly 73 times a year, so a year in there could be
+-- 75+ current rows per concept. That is an archive, not a freshness signal, and
+-- a drafter handed 75 sources would be both expensive and worse. So retention
+-- is long and the READ is narrow: sourcesForDrafting() hands over a couple of
+-- canonical rows plus only the newest current ones.
+-- ---------------------------------------------------------------------------
+ALTER TABLE analog_sources ADD COLUMN IF NOT EXISTS tier text NOT NULL DEFAULT 'canonical';
+-- When a 'current' row stops counting as current. Null for canonical.
+ALTER TABLE analog_sources ADD COLUMN IF NOT EXISTS expires_at timestamptz;
+-- Where key_facts came from. A YouTube talk yields facts from its DESCRIPTION
+-- unless we pay to transcribe it, and a draft should not attribute a hard number
+-- to a video we never actually listened to.
+ALTER TABLE analog_sources ADD COLUMN IF NOT EXISTS facts_source text;
+CREATE INDEX IF NOT EXISTS analog_sources_tier_idx ON analog_sources (analog_id, tier, published_on DESC);
+
+-- Rotation state. The concept registry lives in code (lib/analogs.ts), so the
+-- only thing needing a row per concept is "when did we last sweep this one" —
+-- that is what makes the daily cron a rotation instead of a fan-out. A 20-concept
+-- daily fan-out would cost ~180 Firecrawl credits a day against a 5,000/cycle
+-- plan; four a day costs ~36 and refreshes everything every five days.
+CREATE TABLE IF NOT EXISTS analog_sweep_state (
+  analog_id      text PRIMARY KEY,
+  last_swept_at  timestamptz,
+  last_status    text,                          -- 'ok' | 'partial' | 'failed'
+  last_added     integer NOT NULL DEFAULT 0,
+  last_scanned   integer NOT NULL DEFAULT 0,
+  last_error     text,
+  spend_credits  integer NOT NULL DEFAULT 0,    -- cumulative Firecrawl credits
+  updated_at     timestamptz NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Migration 010 — CHAIN INTEGRATION ARTICLES
+--
+-- The chain pillar was the one draft mode with no source material. Chain
+-- targets carried only a chain id, so lib/generateCopy.ts fell through to
+-- "positioning brief + pillar shape" and the model reconstructed plausible-
+-- sounding Eco copy from nothing. Every chain integration DOES have a written
+-- piece behind it; they just were never ingested, because scripts/ingest-
+-- articles.ts only reads the two Desktop blog folders and no chain piece was
+-- ever printed to PDF there.
+--
+-- Two new columns:
+--   chain      — which chain the piece announces, joining articles to the chain
+--                shelf (lib/stats.ts) so a chain target can carry an articleId.
+--   share_url  — the URL a draft must put in the body. NOT the same thing as
+--                canonical_url or x_article_url: pasting an @eco STATUS url
+--                into the composer makes X unfurl the article card, which is
+--                the whole point. `x.com/i/article/<id>` does not unfurl, and
+--                the blog url unfurls as a plain link preview. So:
+--                  chain has an X article -> the @eco status url that carried it
+--                  no X article (Solana, Polygon — both predate X articles)
+--                                          -> the eco.com/blog url
+-- ---------------------------------------------------------------------------
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS chain     text;
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS share_url text;
+CREATE INDEX IF NOT EXISTS articles_chain_idx ON articles (chain) WHERE chain IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Migration 012 — the CHANNEL lane: podcast/YouTube sourcing for Lane 1.
+--
+-- Rob added three channels (Money Code, Tokenized, What's Next with Philip
+-- Meissner) as broad-educational sourcing. They do not fit the existing sweep,
+-- and the reason is structural rather than cosmetic:
+--
+--   lib/analogSweep.ts is CONCEPT-FIRST. pickConceptsToSweep() rotates four
+--   concepts, then for each one builds two queries and maps that concept's
+--   institutional hubs. You cannot cheaply ask "what did Tokenized say about
+--   nostro accounts" — you enumerate what the channel published and then decide
+--   which concept it serves. The lane is inverted, so it needs its own ledger.
+--
+-- It is also why these are NOT three new AnalogDef.hubs entries: analogSweep's
+-- SKIP_HOST regex excludes youtube.com deliberately, and mapReportHub + a
+-- Firecrawl scrape of a watch page returns markup, not content.
+--
+-- WHY A PER-VIDEO LEDGER AND NOT JUST analog_sweep_state.
+-- analog_sweep_state is keyed by analog_id, and a channel item routinely lands
+-- on a concept outside today's four-concept rotation. That is the point (the
+-- institutional lane keeps returning evergreen material, so `canonicalOnly`
+-- stays high and no concept ever becomes timely), but it means the bookkeeping
+-- cannot hang off the concept. It hangs off the VIDEO: triage once, transcribe
+-- once, and let unfinished work sort first on the next run — the same
+-- oldest-first idiom as pickConceptsToSweep().
+--
+-- WHAT THE MEASUREMENTS SETTLED (probed against the live API, 36 recent videos):
+--
+--   * detectAnalog() on titles matched 3/36. The vocab is tradfi language
+--     ("nostro", "prefunding"); podcast titles are stablecoin-native ("The
+--     Funding Bottleneck Slowing Stablecoin Payments" — a textbook nostro_vostro
+--     episode that matched nothing). So triage is a model call, and the
+--     deterministic matcher is only ever a cheap PROMOTER, never the filter.
+--
+--   * Every long-form episode ships 10-17 timestamped chapters in its
+--     description (French Hill's 31-minute episode is the exception at zero).
+--     A human-written, timestamped topic index is what makes windowed
+--     transcription possible: two flagged chapters out of a 46-minute episode is
+--     six minutes of Gemini, not forty-six. Hence `chapters` and `windows`.
+--
+--   * Shorts inherit their parent episode's ENTIRE description, byte-identical
+--     (five Money Code shorts and their parent all at 2822 chars). So
+--     description identity is an exact parent key — no fuzzy matching — and
+--     triaging one description group covers the whole clip family. That is also
+--     what produced the earlier apparent false positives: a 44-second clip
+--     "matched" correspondent_banking off its parent's blurb.
+-- ---------------------------------------------------------------------------
+
+-- One row per video we have ever seen on a watched channel. The channel
+-- registry itself lives in code (lib/channels.ts), for the same reason
+-- lib/analogs.ts holds the concepts: which channel is an interested party and
+-- whether its clips are worth taking are editorial judgments, not data.
+CREATE TABLE IF NOT EXISTS channel_videos (
+  video_id          text PRIMARY KEY,           -- YouTube video id
+  channel_id        text NOT NULL,              -- lib/channels.ts def id (UC…)
+  title             text NOT NULL,
+  description       text,
+  published_at      timestamptz,
+  duration_sec      integer,
+  is_short          boolean NOT NULL DEFAULT false,
+
+  -- Exact parent link for a clip cut from a long episode. Deterministic:
+  -- identical description within a channel, longest duration wins as parent.
+  -- desc_key is the sha256 of the normalized description, so the grouping is
+  -- indexable and survives a re-listing.
+  desc_key          text,
+  parent_video_id   text,
+
+  -- [{startSec, title}] parsed off the description. Empty for a short (which
+  -- carries its PARENT's chapter block, and those timestamps do not describe
+  -- the clip) and for the occasional episode published without one.
+  chapters          jsonb NOT NULL DEFAULT '[]',
+
+  -- --- triage (phase 1 stops here) ---------------------------------------
+  triaged_at        timestamptz,
+  triage_verdict    text,                       -- 'relevant' | 'off_topic' | 'unclear'
+  triage_confidence integer,                    -- 0-100, the model's own
+  triage_note       text,                       -- one clause: why
+  analog_ids        text[] NOT NULL DEFAULT '{}', -- may be several; a 50-min
+                                                -- episode legitimately touches
+                                                -- correspondent banking AND
+                                                -- nostro AND SWIFT
+  -- [{startSec, endSec, analogId, why}] — which minutes to transcribe later.
+  windows           jsonb NOT NULL DEFAULT '[]',
+  -- Checkable claims already present in the DESCRIPTION. These are enough for a
+  -- zero-transcription source row (facts_source='description'), which is the
+  -- rung most episodes should stop at.
+  desc_facts        text[] NOT NULL DEFAULT '{}',
+
+  -- --- downstream (phases 2-3; written by later work, declared here so the
+  --     ledger is one table rather than three) ------------------------------
+  source_state      text NOT NULL DEFAULT 'pending',      -- pending|stored|skipped
+  transcribe_state  text NOT NULL DEFAULT 'pending',      -- pending|done|skipped|failed
+  raw_document_id   bigint REFERENCES raw_documents(id) ON DELETE SET NULL,
+  last_error        text,
+
+  first_seen_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at        timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS channel_videos_channel_idx ON channel_videos (channel_id, published_at DESC);
+CREATE INDEX IF NOT EXISTS channel_videos_desckey_idx ON channel_videos (channel_id, desc_key);
+-- The work queues: untriaged first, then triaged-relevant awaiting a transcript.
+CREATE INDEX IF NOT EXISTS channel_videos_untriaged_idx ON channel_videos (published_at DESC)
+  WHERE triaged_at IS NULL;
+CREATE INDEX IF NOT EXISTS channel_videos_analog_idx ON channel_videos USING gin (analog_ids);
+
+-- Per-channel rotation state. Mirrors analog_sweep_state: the registry is in
+-- code, so the only thing needing a row per channel is when we last looked and
+-- how it went.
+CREATE TABLE IF NOT EXISTS channel_sweep_state (
+  channel_id        text PRIMARY KEY,
+  last_swept_at     timestamptz,
+  last_status       text,                        -- 'ok' | 'partial' | 'failed'
+  last_listed       integer NOT NULL DEFAULT 0,  -- videos enumerated
+  last_new          integer NOT NULL DEFAULT 0,  -- videos not seen before
+  last_relevant     integer NOT NULL DEFAULT 0,  -- triaged relevant
+  last_error        text,
+  -- Cumulative YouTube Data API quota units. Listing via the uploads playlist
+  -- is 2 units a channel against a 10,000/day allowance; the search.list path
+  -- listChannelUploads() uses is 100. Tracked so that stays visible.
+  quota_units       integer NOT NULL DEFAULT 0,
+  updated_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------------
+-- Migration 013 — GROUNDING. A curriculum source is only draftable if we hold
+-- its full text.
+--
+-- The bug this closes: the curriculum drafter received a source as title +
+-- URL + summary + key_facts and nothing else, while the ANALOG handed it a
+-- fully-formed thesis (analogs.ts `parallel` / `breaksWhere`) and the prompt
+-- told it to "CREDIT IT BY NAME IN THE BODY". With no source text in context
+-- the model could not tell whether the piece supported the thesis, so it
+-- welded the analog's argument onto whatever source was pinned. Two different
+-- Tokenized episodes produced near-identical drafts about DNS/RTGS netting —
+-- a mechanism neither episode mentions — each attributed to a named guest.
+--
+-- Worse for podcasts: 22 of 28 rows had key_facts extracted from the YouTube
+-- DESCRIPTION rather than the episode, so the "Checkable claims" block was
+-- carrying sponsor ad copy ("Fireblocks: over $100 billion in monthly
+-- stablecoin volume") straight into drafts as if a guest had said it.
+--
+-- The fix is structural rather than a stronger instruction: no persisted text,
+-- no drafting. text_doc_id is the gate.
+-- ---------------------------------------------------------------------------
+ALTER TABLE analog_sources ADD COLUMN IF NOT EXISTS text_doc_id bigint;
+
+DO $$ BEGIN
+  ALTER TABLE analog_sources
+    ADD CONSTRAINT analog_sources_text_doc_fk
+    FOREIGN KEY (text_doc_id) REFERENCES raw_documents (id) ON DELETE SET NULL;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS analog_sources_text_doc_idx ON analog_sources (text_doc_id);
+
+-- Cheap lookup for the backfill and for the shelf's "not ingested" badge.
+CREATE INDEX IF NOT EXISTS analog_sources_ungrounded_idx
+  ON analog_sources (analog_id) WHERE text_doc_id IS NULL;
+
+-- ---------------------------------------------------------------------------
+-- Migration 014 — an article's PRODUCT tag gets a source, so an operator can
+-- set one the extractor cannot reach.
+--
+-- articles.product is derived deterministically from the title + dek, falling
+-- back to the body (scripts/ingest-articles.ts). That works when a piece names
+-- its product outright, and eco-integrates-b2c2 is the case where it cannot:
+-- the article says "stablecoin routing" and "programmable routing", never
+-- "Eco Routes", so no term in lib/products.ts matches and the row seeds null.
+-- It is a Routes piece regardless — the integration puts B2C2's liquidity
+-- behind Routes execution — and the shelf should file it there rather than
+-- parking it on whichever product angle happens to sort first.
+--
+-- Loosening the extractor to catch "routing" was the alternative and is worse:
+-- the same terms tag POSTS, where "routing" is ordinary vocabulary in pieces
+-- about other products entirely.
+--
+-- Same precedence as everywhere else in this schema:
+--   'derived' — extracted from the article text; re-derived on every re-seed
+--   'human'   — an operator said so; never overwritten by a re-run
+-- ---------------------------------------------------------------------------
+ALTER TABLE articles ADD COLUMN IF NOT EXISTS product_source text NOT NULL DEFAULT 'derived';
+
+-- ---------------------------------------------------------------------------
+-- Migration 015 — the QUOTED POST id, so a pairing can be seen at all.
+--
+-- The pillar clock read "New Chain Integrations — way overdue" on a day whose
+-- most recent post was a data-motion visual quote-posting the Robinhood chain
+-- integration article. The subject had been in front of the audience that
+-- morning; the pillar had no way to know.
+--
+-- Migration 006's anchor rung was supposed to catch exactly this: a post that
+-- links an @eco status which is itself an article's anchor resolves to that
+-- article. It never fired for quote posts, because a quote post does NOT carry
+-- the quoted tweet's URL in entities.urls — the only x.com URL on the row is
+-- its own media (x.com/eco/status/<its own id>/video/1). The reference lives in
+-- referenced_tweets, which ingest read for the thumbnail (Migration 003) and
+-- then threw away. Zero of 57 data-motion visuals and zero of 22 quote cards
+-- held an article_id as a result, so the pairing signal did not exist in the
+-- data, let alone in the score.
+--
+-- Persisting the id is the whole fix on the data side: the attribution ladder
+-- gains a rung that reads it, and the pairing becomes a join.
+-- ---------------------------------------------------------------------------
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS quoted_post_id text;
+CREATE INDEX IF NOT EXISTS posts_quoted_post_idx ON posts (quoted_post_id)
+  WHERE quoted_post_id IS NOT NULL;
+
+-- ---------------------------------------------------------------------------
+-- Migration 016 — recommendation_uses is RETIRED.
+--
+-- The loop it implemented ("Mark as used" → attribute the resulting post →
+-- discount pillars whose rec-driven posts flopped) was built for a workflow
+-- that did not survive contact: the copy drafter is used rarely, so the button
+-- was rarely pressed, so the signal was too sparse to move a score and the
+-- History tab was mostly empty. The pillar-level engagement trend replaces it
+-- (lib/trend.ts) — it needs no operator input and every post feeds it.
+--
+-- The TABLE is deliberately left in place. It holds real rows, dropping it
+-- would lose them, and it costs nothing empty. Nothing writes to it any more:
+-- lib/recUses.ts, /api/use and the "Mark as used" control are gone.
+-- ---------------------------------------------------------------------------
+
+-- ---------------------------------------------------------------------------
+-- Migration 017 — EDUCATION ANGLES: the Broad Educational angle bank.
+--
+-- Broad Educational was the one pillar whose expanded card offered a draft it
+-- could not write. Its curriculum shelf, source sweep and grounding all work;
+-- the drafts off the back of them did not land, because the missing step is
+-- upstream of drafting — what IS the frame? "Stablecoins are inevitable" is
+-- the register we are trying to leave, and the replacement ("look at what
+-- financial routing costs today, then look at what settles on-chain — first
+-- inning") is a thing a person works out, not a thing a sweep returns.
+--
+-- So the pillar stops pretending to generate and starts keeping score of the
+-- thinking: one row per angle, where it came from, the ICP it speaks to, and
+-- whether it has been used. The card becomes "12 concepts never covered, 3
+-- angles banked" — a project-management signal, which is the job it can
+-- actually do today. Drafting stays available on the pillars that earn it.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS education_angles (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  -- The curriculum concept this angle teaches (lib/analogs.ts id), when it maps
+  -- to one. Null is legitimate: a good angle can arrive before the concept
+  -- exists on the shelf.
+  analog_id     text,
+  frame         text NOT NULL,            -- the angle in one line, as you'd pitch it
+  mechanism     text,                     -- the TradFi thing it explains
+  eco_bridge    text,                     -- how it gets to what Eco does; the hard half
+  icp           text,                      -- 'institutional' | 'developer' | null
+  source_url    text,                     -- where the evidence lives
+  source_note   text,                     -- the number/quote worth arguing from
+  status        text NOT NULL DEFAULT 'banked',  -- 'banked' | 'used' | 'parked'
+  used_post_id  text REFERENCES posts(id) ON DELETE SET NULL,
+  used_at       timestamptz,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS education_angles_status_idx ON education_angles (status);
+CREATE INDEX IF NOT EXISTS education_angles_analog_idx ON education_angles (analog_id);
+
+-- ---------------------------------------------------------------------------
+-- Migration 018 — CHAIN MOMENTUM: is the timeline paying attention to a chain?
+--
+-- The chain pillar knows when WE last posted about a chain. It has never known
+-- whether that chain is doing anything worth posting about. Both halves are
+-- needed to pick a target: Robinhood Chain was worth three posts in a fortnight
+-- because it was ripping, and a chain that is quiet is a cold angle no matter
+-- how long the pillar clock has run.
+--
+-- One row per (chain, UTC day): how many posts the chain's own account put out
+-- and what they earned. A spike is judged against that chain's OWN trailing
+-- baseline, never across chains — Base's quiet day outperforms Sei's best one,
+-- and a cross-chain comparison would only ever surface the biggest account.
+--
+-- Deliberately narrow, because reads cost money ($0.005 each): the chain's own
+-- timeline, capped posts per chain per day, integrated chains only by default.
+-- Mention-volume across all of X would be a better signal and ~50x the bill.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS chain_momentum (
+  chain         text NOT NULL,            -- lib/dimensions.ts CHAIN_LABELS id
+  day           date NOT NULL,            -- UTC day the posts landed
+  posts         int  NOT NULL DEFAULT 0,
+  likes         int  NOT NULL DEFAULT 0,
+  reposts       int  NOT NULL DEFAULT 0,
+  replies       int  NOT NULL DEFAULT 0,
+  quotes        int  NOT NULL DEFAULT 0,
+  -- The single best post of the day, kept so the UI can show WHY a chain spiked
+  -- rather than only that it did.
+  top_post_id   text,
+  top_post_text text,
+  top_post_eng  int,
+  fetched_at    timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (chain, day)
+);
+CREATE INDEX IF NOT EXISTS chain_momentum_day_idx ON chain_momentum (day DESC);
+
+-- The handle each chain's momentum is read from, and whether we scan it. Seeded
+-- from lib/chainAccounts.ts; a row here lets an operator turn a chain off (or a
+-- new one on) without a deploy.
+CREATE TABLE IF NOT EXISTS chain_momentum_sources (
+  chain      text PRIMARY KEY,
+  handle     text NOT NULL,               -- X handle, no '@'
+  user_id    text,                        -- resolved once, then reused (saves a read/day)
+  enabled    boolean NOT NULL DEFAULT true,
+  last_run   timestamptz,
+  last_error text
+);
+
+-- ---------------------------------------------------------------------------
+-- Migration 019 — the LANE REGISTRY: lanes stop being a code constant.
+--
+-- The bug this fixes, in the operator's words: "Arc was recently integrated and
+-- the app did a great job of logging it in chain integrations, but we don't
+-- have a lane for Arc in the prioritize section." Same for Smart Deposits and
+-- the B2C2 integration.
+--
+-- Classification generalises — Claude read the Arc post and filed it under New
+-- Chain Integrations correctly, having never seen Arc. Dimension TAGGING did
+-- not: posts.chains is filled by matching @handles and text tokens against
+-- CHAIN_HANDLES / CHAIN_LABELS in lib/dimensions.ts, and posts.products against
+-- PRODUCT_DEFS in lib/products.ts. Both are hardcoded. A chain or product that
+-- is not already in the code gets an empty array, and every lane in Prioritize
+-- is built by unnesting those arrays (lib/stats.ts). So the post lands in the
+-- right pillar, is counted in that pillar's clock, and feeds no lane at all —
+-- the one state that looks like success and behaves like a silent drop.
+--
+-- Three of them were sitting in the table at once:
+--   Arc            integration_announcement, chains  = {}   (no `arc` id exists)
+--   Smart Deposits product_post,             products = {}   (registry has fast_deposits)
+--   B2C2           product_post,             products = {}, entities = {}
+--
+-- A lane is now a ROW. The code registries stay as the seed — they carry briefs
+-- and guardrails worth keeping under review — and this table is unioned over
+-- them, so a new lane needs no deploy. Rows written by the sync detector land
+-- with source='auto' and reviewed=false: the lane is LIVE immediately (that is
+-- the point — the operator should not have to go and switch on a lane for a
+-- chain we already announced), and it also shows up in a tray on Prioritize
+-- where it can be renamed, merged into an existing lane, or dismissed.
+--
+-- `kind` is three axes, not one:
+--   chain    — a blockchain Eco routes through. Feeds posts.chains.
+--   product  — an Eco product. Feeds posts.products.
+--   partner  — a company shipping Eco infra in their own product (B2C2, Para,
+--              LI.FI, Circle). Feeds posts.entities, and is the third axis
+--              Product Posts never had: its own description names "partners
+--              integrating Eco" as one of three flavours, and it was the only
+--              one with nothing to rotate on, so a run of partner posts kept
+--              the pillar's clock fresh while no partner had a clock of its own.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS lane_registry (
+  kind        text NOT NULL,                    -- 'chain' | 'product' | 'partner'
+  id          text NOT NULL,                    -- canonical snake_case id
+  label       text NOT NULL,                    -- display name
+  -- Matching vocabulary. `handles` is the reliable signal (@Arc → arc);
+  -- `terms` are unambiguous text tokens; `loose_terms` are ordinary English
+  -- words only matched when the post also mentions Eco (see lib/products.ts).
+  handles     text[] NOT NULL DEFAULT '{}',
+  terms       text[] NOT NULL DEFAULT '{}',
+  loose_terms text[] NOT NULL DEFAULT '{}',
+  domains     text[] NOT NULL DEFAULT '{}',
+  -- Fact sheet handed to the copy drafter. Without one the drafter knows only
+  -- the lane's NAME and writes generic infra copy — the failure the chain
+  -- pillar had before Migration 010 gave it articles.
+  brief       text,
+  guardrail   text,
+  status      text NOT NULL DEFAULT 'active',   -- 'active' | 'dismissed' | 'merged'
+  source      text NOT NULL DEFAULT 'auto',     -- 'code' | 'auto' | 'human'
+  -- false = auto-detected and not yet looked at. Live either way; this only
+  -- drives the review tray and the "auto-detected" badge on the lane.
+  reviewed    boolean NOT NULL DEFAULT false,
+  -- Where it came from, so the tray can show the post that created the lane.
+  evidence_post_id text REFERENCES posts(id) ON DELETE SET NULL,
+  evidence_note    text,                        -- the model's one-line rationale
+  -- Set when an operator folds this lane into another (Smart Deposits → Fast
+  -- Deposits, say). Tagging then writes the target id and this row stops
+  -- producing a lane of its own.
+  merged_into text,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (kind, id)
+);
+CREATE INDEX IF NOT EXISTS lane_registry_review_idx ON lane_registry (reviewed, status);
+
+-- A lane the detector looked at and rejected, so the same post never costs a
+-- second Claude call on the next sync. Keyed by post, not by lane — the answer
+-- being recorded is "this post proposes nothing new".
+CREATE TABLE IF NOT EXISTS lane_detect_seen (
+  post_id    text PRIMARY KEY REFERENCES posts(id) ON DELETE CASCADE,
+  -- Bumped when the detector's own vocabulary changes enough that a re-look is
+  -- worth paying for. Same row is simply overwritten.
+  checked_at timestamptz NOT NULL DEFAULT now(),
+  outcome    text NOT NULL,                     -- 'none' | 'existing' | 'proposed'
+  note       text
+);
+
+-- ---------------------------------------------------------------------------
+-- Migration 020 — EDU CANDIDATES: Broad Educational becomes a pipeline.
+--
+-- Phase 2 of docs/BROAD-ED-REDESIGN.md. The Broad Educational card had three
+-- surfaces that did not feed each other: an angle bank nobody filled (zero rows
+-- in six weeks), a four-tier curriculum accordion built for one deep mechanism
+-- post, and a Discover button whose results vanished on reload. Nothing carried
+-- forward, so the "4" of the 4-1-1 ran at 8% of main posts.
+--
+-- One table, one path. Every row is a CANDIDATE for an educational post and it
+-- moves left to right:
+--
+--   inbox   — stocked nightly by /api/edu-intake from the Grok lenses and the
+--             current-tier analog sources. Already scraped, deduped, scored for
+--             adjacency to what eco.com says Eco is, and PRE-FRAMED: the model
+--             drafts the four angle-bank fields so the operator edits a frame
+--             instead of staring at seven blank inputs.
+--   picked  — the human step Jay asked to keep. The operator read the frame,
+--             fixed the bridge, set the audience. The picked column IS the
+--             angle bank now; education_angles stays as a table but nothing
+--             writes to it any more.
+--   drafted — generateCopy ran against the scraped text with the frame and
+--             bridge as its steer. The three bands persist in `drafts` so a
+--             reload cannot lose them (the Discover button's failure).
+--   posted  — the operator marked it, and the next sync matches the @eco post
+--             by resolved URL and writes used_post_id (lib/eduIntake.ts).
+--   skipped — remembered forever, so the same URL never comes back from a
+--             later intake run. A skip is information, not a delete.
+--
+-- Dedupe key: the NORMALISED source URL (lowercase host, no scheme, no utm,
+-- no trailing slash). Grok and the sweep both surface the same piece with
+-- different tracking params, and a tracked URL is not a new candidate.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS edu_candidates (
+  id               bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  -- What it is.
+  headline         text NOT NULL,            -- the post angle / hook, one line
+  summary          text,                     -- 1-3 sentences of facts + so-what
+  key_stat         text,                     -- the single most quotable number
+  source_url       text NOT NULL,
+  source_key       text NOT NULL,            -- normalised source_url, the dedupe key
+  source_title     text,
+  publisher        text,
+  published_at     timestamptz,
+  -- Where it came from: 'grok:market-data' | 'grok:company-moves' |
+  -- 'grok:policy-infra' | 'analog_source' | 'manual'.
+  origin           text NOT NULL,
+  -- The scraped piece, in raw_documents. NULL means the scrape failed; the
+  -- card says so and Draft is disabled, because the grounding gates in
+  -- lib/generateCopy.ts need text to check claims against.
+  raw_document_id  bigint REFERENCES raw_documents(id) ON DELETE SET NULL,
+  -- lib/analogs.ts concept id, via detectAnalog(), when a mechanism is in play.
+  analog_id        text,
+  -- SITE_AUDIENCES id (lib/icp.ts), one of the six eco.com audiences.
+  audience         text,
+  -- 0-100 against the eco.com themes (design doc §2), with the one-line reasons
+  -- the pillar score already uses as its contract.
+  adjacency_score  integer NOT NULL DEFAULT 0,
+  adjacency_reasons text[] NOT NULL DEFAULT '{}',
+  -- Which eco.com theme the piece implies: fragmentation | pre_funding |
+  -- all_or_nothing | programmable_rules | tokenized_assets | at_par | agents.
+  theme            text,
+  -- The four angle-bank fields, PRE-FILLED by the intake model and edited by
+  -- the operator. Never auto-picked (Jay: the FRAME step stays human).
+  frame            text,
+  mechanism        text,
+  eco_bridge       text,
+  evidence         text,
+  status           text NOT NULL DEFAULT 'inbox',  -- inbox | picked | drafted | posted | skipped
+  -- generateCopy's CopyOption[] as returned, so the three bands survive a reload.
+  drafts           jsonb,
+  drafted_at       timestamptz,
+  -- Set by the operator (Mark posted) or by sync-time URL matching.
+  used_post_id     text REFERENCES posts(id) ON DELETE SET NULL,
+  posted_at        timestamptz,
+  picked_at        timestamptz,
+  skipped_at       timestamptz,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS edu_candidates_source_key_uidx ON edu_candidates (source_key);
+CREATE INDEX IF NOT EXISTS edu_candidates_queue_idx ON edu_candidates (status, adjacency_score DESC);
+CREATE INDEX IF NOT EXISTS edu_candidates_analog_idx ON edu_candidates (analog_id) WHERE analog_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS edu_candidates_used_post_idx ON edu_candidates (used_post_id) WHERE used_post_id IS NOT NULL;
+
+-- When intake last ran and what it did, so the card can say "stocked 6h ago,
+-- 11 new" instead of leaving the operator to guess whether the cron is alive.
+CREATE TABLE IF NOT EXISTS edu_intake_runs (
+  id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  started_at    timestamptz NOT NULL DEFAULT now(),
+  finished_at   timestamptz,
+  trigger       text NOT NULL,                -- 'cron' | 'manual'
+  scanned       integer NOT NULL DEFAULT 0,   -- candidates seen across every feed
+  added         integer NOT NULL DEFAULT 0,   -- new inbox rows
+  deduped       integer NOT NULL DEFAULT 0,   -- dropped: already posted or already a candidate
+  scrape_failed integer NOT NULL DEFAULT 0,
+  credits       integer NOT NULL DEFAULT 0,   -- Firecrawl credits spent
+  warnings      text[] NOT NULL DEFAULT '{}',
+  error         text
+);
+CREATE INDEX IF NOT EXISTS edu_intake_runs_started_idx ON edu_intake_runs (started_at DESC);
