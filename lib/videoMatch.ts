@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import { sql } from "./db.ts";
 
@@ -94,7 +95,7 @@ export interface VideoMatchResult {
 }
 
 const SYSTEM = `
-You decide whether an @eco X post used a specific short video clip.
+You decide whether an @${BRAND.handle} X post used a specific short video clip.
 
 The post's copy was written ABOUT the clip and rarely repeats its title — it usually opens with a
 question the clip answers, then names the speaker. Your job is to tell whether the post and one of
@@ -102,7 +103,7 @@ the candidate clips are about the SAME argument.
 
 Strong evidence: the post's question is the clip's thesis; both name the same speaker; both turn on
 the same specific mechanism, number or claim.
-Weak evidence: both are about stablecoins generally; both mention Eco; the dates are close. These
+Weak evidence: both are about stablecoins generally; both mention ${BRAND.name}; the dates are close. These
 are NOT enough on their own — every candidate shares them.
 
 If no candidate is clearly the same clip, return null. Null is the correct and expected answer for

@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import type { AttributionPost, ArticleLite } from "./articleAttribution.ts";
 
@@ -86,8 +87,8 @@ export function makeClaudeMatcher(cost: MatchCost) {
         model: MODEL,
         max_tokens: 400,
         system: [
-          "You match an @eco X post to the ONE article on file that it is amplifying.",
-          "Eco is a stablecoin infrastructure company. Its account regularly posts several different",
+          `You match an @${BRAND.handle} X post to the ONE article on file that it is amplifying.`,
+          `${BRAND.oneLiner} Its account regularly posts several different`,
           "takes pointing back at the same underlying article over a period of weeks — your job is to",
           "work out which article a given post is pointing at, from its argument and vocabulary.",
           "",
@@ -109,7 +110,7 @@ export function makeClaudeMatcher(cost: MatchCost) {
             role: "user",
             content:
               group.length > 1
-                ? `These ${group.length} @eco posts all point at the same source, so they are amplifying the SAME article. Which one?\n\n${evidence}`
+                ? `These ${group.length} @${BRAND.handle} posts all point at the same source, so they are amplifying the SAME article. Which one?\n\n${evidence}`
                 : evidence,
           },
         ],

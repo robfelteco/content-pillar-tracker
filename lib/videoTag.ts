@@ -1,8 +1,9 @@
+import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import { sql } from "./db.ts";
 import { icpPromptBlock, ICP_IDS } from "./icp.ts";
 import { SERIES_DEFS, SPEAKER_LABELS } from "./videos.ts";
-import { ECO_ONE_LINER } from "./positioning.ts";
+import { BRAND_ONE_LINER } from "./positioning.ts";
 
 // Tagging pass for the video shelf: series, speaker, ICP, topic, and the line
 // worth building a post around.
@@ -32,13 +33,12 @@ function stripFences(s: string): string {
 }
 
 const SYSTEM = `
-You are cataloguing short-form video clips produced by Eco, so that a social operator can find
+You are cataloguing short-form video clips produced by ${BRAND.name}, so that a social operator can find
 the right clip to post on X.
 
-${ECO_ONE_LINER}
+${BRAND_ONE_LINER}
 
-The people who appear on camera are Ryne Saxe (CEO, @rynesaxe), a Head of Product (@strao_), and
-Shah, who fronts an educational explainer series.
+${BRAND.onCamera ?? ""}
 
 For each clip you get a title, a description (often a real summary of the clip's argument), a
 duration, and sometimes a transcript. Return five judgments per clip.
@@ -48,7 +48,7 @@ ${SERIES_DEFS.map((s) => `   - ${s.id}: ${s.label} — ${s.hint}`).join("\n")}
 
 2. speaker — who is talking, if identifiable. Options: ${Object.keys(SPEAKER_LABELS).join(", ")}.
    Use "none" for a produced piece with no on-camera speaker. Use "third_party" for someone
-   outside Eco. Do NOT guess a named Eco person unless the text actually names or implies them.
+   outside ${BRAND.name}. Do NOT guess a named ${BRAND.name} person unless the text actually names or implies them.
 
 3. icp — which single audience the clip is most useful for. Options:
 ${icpPromptBlock()}

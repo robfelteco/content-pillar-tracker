@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 import { sql } from "./db.ts";
 import { icpFromSolutionsPath, ICP_BY_ID, TIER_ORDER, type DocTier } from "./icp.ts";
 
@@ -21,7 +22,7 @@ import { icpFromSolutionsPath, ICP_BY_ID, TIER_ORDER, type DocTier } from "./icp
 // grouping would show only the 7 we already reach for, which is exactly the rut
 // this is meant to break.
 
-export const DOCS_ORIGIN = "https://docs.eco.com";
+export const DOCS_ORIGIN = BRAND.docsOrigin;
 export const LLMS_TXT_URL = `${DOCS_ORIGIN}/llms.txt`;
 
 // ---------------------------------------------------------------------------

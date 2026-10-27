@@ -5,12 +5,11 @@ measure what each pillar earns, and get a prioritized, sourced draft for what
 to post next. Built for a social lead who runs a company account alone, by one
 who did.
 
-> **Status: being extracted from a production deployment.** The engine is
-> generic. The brand knowledge (pillars, positioning, products, audiences,
-> watched sources) is still hardcoded in `lib/`, and the original brand's values
-> are still what it ships with. The plan to move all of that into an editable
-> `brand/` folder is in [docs/OPEN-SOURCE-PLAN.md](docs/OPEN-SOURCE-PLAN.md).
-> Until that lands, adopting this means editing those modules by hand.
+> **Status: extracted from a production deployment, not yet run by a second
+> brand.** The core is generic and reads the company from `brand/`. The
+> optional lanes (curriculum, watched channels, quote roster, tracked chains)
+> still carry the original brand's registries in `lib/`. The remaining plan is
+> in [docs/OPEN-SOURCE-PLAN.md](docs/OPEN-SOURCE-PLAN.md).
 
 ## What it does
 
@@ -72,17 +71,27 @@ add their own provider costs and are off until their key is set.
 
 ## Adapting it to your brand
 
-Until the `brand/` extraction lands, these are the modules to edit, in order:
+Everything the tracker knows about the company lives in `brand/`, as typed
+TypeScript data the core reads. It ships with a neutral starter; the complete,
+production-tested configuration it was extracted from is in `examples/eco/`.
 
-| Module | What it holds |
+| File | What it holds |
 | --- | --- |
-| `lib/taxonomy.ts` + `lib/pillarShapes.ts` | Your pillars: ids, labels, staleness thresholds, draft mode, shape rules. Mirror the enum in `db/schema.sql`. |
-| `lib/classifyRules.ts` | Deterministic classification rules (your domains, URL paths). |
-| `lib/positioning.ts` | The drafter's system prompt: who you are, voice, guardrails. |
-| `lib/icp.ts` | Audiences. |
-| `lib/products.ts` | Products and their guardrails. |
-| `lib/antiSlop.ts` | Form rules and gated vocabulary. |
-| `lib/analogs.ts`, `lib/channels.ts`, `lib/quoteRoster.ts` | Optional lanes: curriculum, watched channels, quote roster. |
+| `brand/identity.ts` | Name, handle, own handles and domains, docs origin, one-line description, URL to pillar rules |
+| `brand/pillars.ts` | Pillar ids, labels, classifier descriptions, staleness, draft mode, ratio buckets, how each pillar is built |
+| `brand/positioning.ts` | The drafter's system prompt |
+| `brand/audiences.ts` | Personas and site audiences |
+| `brand/products.ts` | Products, fact sheets, guardrails, product-post shapes |
+| `brand/voice.ts` | Commodity phrases and substantiation-gated words |
+
+Pillar ids must match the `content_template` enum in `db/schema.sql`;
+`node scripts/brand-check.ts` prints the SQL for any difference. See
+[brand/README.md](brand/README.md).
+
+Still hardcoded outside `brand/`: the optional lanes' registries
+(`lib/analogs.ts`, `lib/channels.ts`, `lib/quoteRoster.ts`, `lib/integratedChains.ts`,
+`lib/chainAccounts.ts`, `lib/dmvLanes.ts`, `lib/angleBank.ts`) and the brand colour tokens in
+`app/globals.css`.
 
 ## License
 

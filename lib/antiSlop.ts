@@ -1,5 +1,9 @@
+import { VOICE } from "../brand/voice.ts";
+import { BRAND } from "../brand/identity.ts";
+
 // The anti-slop engine. ANTI-SLOP.md is the prose version of this file; the two
-// are meant to be edited together.
+// are meant to be edited together. Tiers 1-4 and 6 are generic slop research;
+// Tier 5 (vocabulary the company owns or refuses) is read from brand/voice.ts.
 //
 // Three jobs, in the order they run:
 //
@@ -68,9 +72,8 @@ const BANNED_PHRASES = [
   "double down", "deep dive", "lean into", "on the same page",
 ];
 
-// Business jargon with a plain replacement (stop-slop). SOFT, because two of
-// these are Eco's own words: the one-liner says "navigating onchain markets"
-// and the product posts say "landscape" about chains. Flagged, not vetoed.
+// Business jargon with a plain replacement (stop-slop). SOFT, because a brand
+// may legitimately own one of these words. Flagged, not vetoed.
 const JARGON: { word: string; plain: string }[] = [
   { word: "navigate", plain: "handle, route, move through" },
   { word: "navigating", plain: "handling, routing, moving through" },
@@ -302,48 +305,13 @@ const HEDGE_BUDGET = 2;
 // self-description. A regex cannot tell those apart, so it flags and defers.
 // ---------------------------------------------------------------------------
 
-const COMMODITY_PHRASES = [
-  // "It's shocking how many people had their existing product description and
-  // then just literally added two words at the end of it." We signal agent-native
-  // orientation through what the product does, never through the phrase.
-  // "for agents" alone also catches "built for agents" / "designed for agents",
-  // so the longer variants would only double-report the same sentence.
-  "for agents", "agent-ready",
-  // Unqualified, and therefore not distinctive.
-  "money movement", "move money", "moves money", "moving money",
-  "the future of payments", "payment rails for the internet",
-  "makes money programmable",
-  // Worn-out category labels, including the superseded self-description that
-  // was still live in three prompt files until 2026-09-01.
-  "stablecoin network",
-  "the neutral platform organizing the stablecoin market",
-];
-
-// The words that sit in the hollow column and the ownable column at the same
-// time. The CEO: "you can't just say programmable and trust that people understand
-// the implications of that" -- and he notes he made that mistake himself this
-// year. So these are not banned, they are GATED: legitimate when the same
-// sentence shows the mechanism, empty when it does not.
-const SUBSTANTIATION_GATED = [
-  "programmable", "programmability", "trusted", "control",
-];
-
-// Senses of a gated word that are not the claim the CEO objects to. "Trusted" as a
-// self-description is hollow; "a trusted party controls execution" is the
-// technical critique we make OF the alternatives, and one of our better product
-// posts opens on exactly that line. Measured against the live corpus: without
-// this, that post flags and the finding is simply wrong.
-const GATED_EXCEPTIONS: Record<string, RegExp> = {
-  trusted:
-    /\btrusted\s+(party|parties|third[- ]party|intermediary|intermediaries|setup|execution|environment|counterparty|entity|custodian|relayer|oracle)\b/i,
-};
-
-// What counts as substantiation, checked inside the same sentence. Crude on
-// purpose, in the same spirit as the rest of the regex tiers: it catches the
-// bare assertion, and anything fuzzier is left to the model and the operator.
-// A number is the strongest signal; a named mechanism is the other honest one.
-const SUBSTANTIATION_RE =
-  /\d|\b(rule|rules|ruleset|rulesets|parameter|parameters|policy|deadline|slippage|route|routes|routing|solver|solvers|intent|intents|settle|settles|settled|settlement|atomic|atomically|revert|reverts|signature|allowance|permit|endpoint|API|call|calls|quote|quotes|mint|redemption|custody|counterparty)\b/i;
+const COMMODITY_PHRASES = VOICE.commodityPhrases;
+const SUBSTANTIATION_GATED = VOICE.substantiationGated;
+const GATED_EXCEPTIONS = VOICE.gatedExceptions;
+const SUBSTANTIATION_RE = new RegExp(
+  `\\d|\\b(${VOICE.substantiationTerms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`,
+  "i",
+);
 
 // Sentence split for the gated check. Handles the newline-separated lines an X
 // post is actually built from, not just full stops.
@@ -553,7 +521,7 @@ export function scanSlop(text: string): SlopFinding[] {
         rule: "commodity-zone",
         severity: "soft",
         match: m[0],
-        fix: `"${m[0]}" is in the crowded/meaningless column (the CEO's top-line messaging review). It is not distinctive on its own. Say the specific thing Eco does instead, or qualify it in the same sentence.`,
+        fix: `"${m[0]}" is on this brand's commodity-phrase list (brand/voice.ts). It is not distinctive on its own. Say the specific thing ${BRAND.name} does instead, or qualify it in the same sentence.`,
       });
     }
   }
@@ -838,9 +806,7 @@ Slop is writing that survives being moved. Lift any sentence out and drop it int
 a post about a different company, in a different market, on a different day. If it
 still reads fine, it was carrying nothing. Cut it or replace it with a number, a
 named system, a dated fact, or a claim someone could argue with.
-This account has a second problem: Eco's voice is precise and institutional, which
-is the same register current models write in. Sounding rigorous is not evidence of
-being human. The number is.
+${VOICE.voiceNote}
 
 HARD BANS, mechanical
 - NO EM DASHES OR EN DASHES. Anywhere, including as a bullet marker. Use a comma,
@@ -878,9 +844,8 @@ indistinguishable, verbatim, orthogonal, latent, rests on, refuses, asserts.
 
 CONSTRUCTIONS TO CUT
 - Binary contrast. "It's not X, it's Y." "The question isn't X, it's Y." "Not
-  because X. Because Y." State Y. Example: "This isn't a bridge, it's a routing
-  layer" becomes "Eco routes and settles the whole flow atomically. A bridge moves
-  one hop."
+  because X. Because Y." State Y. Example: "${VOICE.contrastExample.before}"
+  becomes "${VOICE.contrastExample.after}"
 - "The real question is", "the actual problem is", "what actually matters".
 - Faux-insight setups: "what nobody tells you", "the part everyone misses".
 - Colon reveals: a noun phrase, a colon, a lowercase dramatic reveal. Write the

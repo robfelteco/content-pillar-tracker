@@ -1,3 +1,5 @@
+import { BRAND } from "../brand/identity.ts";
+import { PRODUCT_DEFS } from "./products.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import { taxonomyPromptBlock, isTemplate, type Template } from "./taxonomy.ts";
 import type { RuleInput } from "./classifyRules.ts";
@@ -115,8 +117,8 @@ function stripFences(s: string): string {
 
 function buildSystem(): string {
   return [
-    "You classify posts from Eco's X (Twitter) brand account into exactly ONE content template.",
-    "Eco is a stablecoin infrastructure company (products: Routes, Verified Liquidity, Programmable Addresses, Permit3, Flash Intents). Its CEO is Ryne Saxe (@rynesaxe).",
+    `You classify posts from ${BRAND.name}'s X (Twitter) brand account (@${BRAND.handle}) into exactly ONE content template.`,
+    `${BRAND.oneLiner} Products: ${PRODUCT_DEFS.map((p) => p.label).join(", ")}. Own handles: ${BRAND.ownHandles.map((h) => "@" + h).join(", ")}.`,
     "",
     "Templates:",
     taxonomyPromptBlock(),
@@ -125,13 +127,13 @@ function buildSystem(): string {
     "Use them as visual anchors — a post whose image matches a reference's style is very likely that template (this is the reliable way to recognize quote_card vs other static images).",
     "",
     "Disambiguation rules:",
-    "- docs.eco.com or eco.com/docs link → dev_doc_post.",
-    "- External non-Eco link with zero Eco/product mention → broad_educational.",
-    "- integration_announcement is ONLY for a new BLOCKCHAIN going live in Eco (the chain is the subject: 'Eco now supports @TRONDAO', 'Eco Routes is live on @BNBChain').",
-    "- A COMPANY/PARTNER integrating an Eco product into their own app (Para ships Permit3, LI.FI/Jumper routes through Eco, Circle Gateway raises Eco order limits) → product_post, NOT integration_announcement.",
-    "- eco.com blog link about a product or feature → product_post.",
+    `- A link into the developer docs (${BRAND.docsOrigin}) → dev_doc_post.`,
+    `- External link (not ${BRAND.domains.join(" or ")}) with zero company or product mention → broad_educational.`,
+    `- integration_announcement is ONLY for a new platform, network or chain going live with ${BRAND.name} (the target is the subject: "${BRAND.name} now supports X", "${BRAND.name} is live on X").`,
+    `- A COMPANY/PARTNER integrating a ${BRAND.name} product into their own app → product_post, NOT integration_announcement.`,
+    `- A ${BRAND.blogDomain} blog link about a product or feature → product_post.`,
     "- No media, no link, long essay-like text → likely thought_leadership.",
-    "- Video/GIF: data animation → data_motion_visual; Eco demo/talking-head/event → short_form_video_eco or product_post (product demo).",
+    `- Video/GIF: data animation → data_motion_visual; ${BRAND.name} demo/talking-head/event → short_form_video_eco or product_post (product demo).`,
     "- Static image with a big pulled quote + speaker attribution → quote_card.",
     "- If it truly fits nothing, use other.",
     "",

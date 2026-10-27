@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 import { sql } from "./db.ts";
 import { ICP_BY_ID } from "./icp.ts";
 
@@ -28,7 +29,7 @@ import { ICP_BY_ID } from "./icp.ts";
 // ones with no post attached.
 
 const YT_API = "https://www.googleapis.com/youtube/v3";
-export const ECO_YT_HANDLE = "@ecoprotocol";
+export const BRAND_YT_HANDLE = BRAND.youtubeHandle;
 
 // A "short" for our purposes. YouTube's own Shorts cutoff is 180s, and the
 // pillar's posted clips run 17-179s, so the same bound is the right filter.
@@ -171,7 +172,7 @@ async function ytJson(url: string): Promise<Record<string, unknown>> {
 
 // Walk the channel's uploads playlist (cheap, 1 unit/page) rather than paying
 // 100 units a page for search.list, then batch-hydrate the details.
-export async function syncYouTubeVideos(handle = ECO_YT_HANDLE): Promise<YtSyncResult> {
+export async function syncYouTubeVideos(handle = BRAND_YT_HANDLE): Promise<YtSyncResult> {
   const res: YtSyncResult = { seen: 0, shorts: 0, inserted: 0, updated: 0, errors: [] };
   const key = ytKey();
 

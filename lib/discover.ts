@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 // Discover — find recent external articles / reports / data the operator could
 // turn into a BROAD-EDUCATIONAL @eco post. Emulates the carousel app's discover
 // tool (Grok web_search + x_search, one call per editorial lens) but tuned for a
@@ -6,7 +7,7 @@
 // piece", so the route feeds Grok an exclude-list of what @eco has already
 // posted and asks only for NEW territory.
 
-import { ECO_ONE_LINER } from "./positioning.ts";
+import { BRAND_ONE_LINER } from "./positioning.ts";
 import { SITE_AUDIENCES, SITE_AUDIENCE_BY_ID, siteAudiencePromptBlock } from "./icp.ts";
 
 const XAI_MODEL = "grok-4.3";
@@ -30,9 +31,9 @@ export interface DiscoveredItem {
   lens?: string;
 }
 
-const ECO_BRIEF = `${ECO_ONE_LINER} Broad-educational posts are TOP-OF-FUNNEL: the market story carries the post and Eco's relevance rides in by implication, Eco is NOT named in the body. The reader should finish smarter about the stablecoin market.
+const ECO_BRIEF = `${BRAND_ONE_LINER} Broad-educational posts are TOP-OF-FUNNEL: the market story carries the post and ${BRAND.name}'s relevance rides in by implication, ${BRAND.name} is NOT named in the body. The reader should finish smarter about the market.
 
-Six audiences, the ones eco.com names. Pick ONE per idea, by id:
+The audiences the company names. Pick ONE per idea, by id:
 ${siteAudiencePromptBlock()}`;
 
 const LENSES = [
@@ -58,13 +59,13 @@ const LENSES = [
 
 function buildPrompt(lens: (typeof LENSES)[number], count: number, excludeTitles: string[]): string {
   const exclusion = excludeTitles.length
-    ? `\nALREADY POSTED by @eco — do NOT propose these or near-duplicates (we never reshare the same piece). Find genuinely NEW territory:\n${excludeTitles.slice(0, 30).map((t) => `- ${t}`).join("\n")}\n`
+    ? `\nALREADY POSTED by @${BRAND.handle}, do NOT propose these or near-duplicates (we never reshare the same piece). Find genuinely NEW territory:\n${excludeTitles.slice(0, 30).map((t) => `- ${t}`).join("\n")}\n`
     : "";
   return `${ECO_BRIEF}
 
 YOUR LENS: ${lens.brief}
 ${exclusion}
-Find the ${count} strongest, most RECENT ideas for a broad-educational @eco X post through this lens. Prefer developments from the last few weeks. Every idea must have a real, cited source (press release, article, dataset, filing) — no invented or rumored numbers. Chase the primary source over coverage of it.
+Find the ${count} strongest, most RECENT ideas for a broad-educational @${BRAND.handle} X post through this lens. Prefer developments from the last few weeks. Every idea must have a real, cited source (press release, article, dataset, filing) — no invented or rumored numbers. Chase the primary source over coverage of it.
 
 Return ONLY a JSON object (no prose, no code fences) of this shape:
 {"candidates":[{

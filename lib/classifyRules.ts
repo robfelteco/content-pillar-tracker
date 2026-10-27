@@ -1,4 +1,6 @@
-import { ECO_PRODUCT_TERMS, type Template } from "./taxonomy.ts";
+import { BRAND_PRODUCT_TERMS, type Template } from "./taxonomy.ts";
+import { BRAND } from "../brand/identity.ts";
+import { BRAND_NAME_RE, isOwnDomain, isOwnHandle } from "./brand/helpers.ts";
 
 // Stage-1 deterministic classification. Cheap, runs before any Claude call.
 // A rule only SETTLES a post when the signal is unambiguous (high confidence);
@@ -22,29 +24,24 @@ export interface RuleResult {
   candidates: Template[]; // narrowed set for Stage 2 (all templates if unknown)
 }
 
-const ECO_DOMAINS = new Set(["eco.com", "docs.eco.com"]);
 // Links that aren't "external articles": X itself + link shorteners we can't resolve.
 const NON_ARTICLE_DOMAINS = new Set(["x.com", "twitter.com", "t.co"]);
-// Eco-affiliated X handles (lowercased, no @). A post featuring these is Eco
-// content even when the literal word "eco" is absent — e.g. @rynesaxe (CEO).
-// Extend as more team handles show up.
-const ECO_HANDLES = new Set(["eco", "rynesaxe"]);
 
-// Does the text/domains reference Eco or an Eco product? \beco\b avoids matching
-// "economy"/"ecosystem"/"record". Product terms, eco domains, and Eco team
-// @handles (in the text or the mentions list) also count.
-export function mentionsEco(input: RuleInput): boolean {
+// Does the text/domains reference the company or one of its products? The name
+// is matched as a whole word (so "eco" never matches "economy"). Product terms,
+// own domains, and own @handles (in the text or the mentions list) also count.
+export function mentionsBrand(input: RuleInput): boolean {
   const t = input.text.toLowerCase();
-  if (/\beco\b/.test(t)) return true;
-  if (ECO_PRODUCT_TERMS.some((term) => t.includes(term))) return true;
-  if (input.domains.some((d) => ECO_DOMAINS.has(d))) return true;
-  if (input.mentions.some((m) => ECO_HANDLES.has(m.toLowerCase()))) return true;
-  if ([...ECO_HANDLES].some((h) => t.includes(`@${h}`))) return true;
+  if (BRAND_NAME_RE.test(t)) return true;
+  if (BRAND_PRODUCT_TERMS.some((term) => t.includes(term))) return true;
+  if (input.domains.some((d) => isOwnDomain(d))) return true;
+  if (input.mentions.some((m) => isOwnHandle(m))) return true;
+  if (BRAND.ownHandles.some((h) => t.includes(`@${h.toLowerCase()}`))) return true;
   return false;
 }
 
 function externalArticleDomains(domains: string[]): string[] {
-  return domains.filter((d) => d && !ECO_DOMAINS.has(d) && !NON_ARTICLE_DOMAINS.has(d));
+  return domains.filter((d) => d && !isOwnDomain(d) && !NON_ARTICLE_DOMAINS.has(d));
 }
 
 // URL-path → template. The CMO's "the URL is in the post, so you know the category"
@@ -53,19 +50,19 @@ function externalArticleDomains(domains: string[]): string[] {
 // domains are deliberately NOT listed: the same outlet shows up as both
 // thought_leadership and broad_educational, so a domain-level settle would
 // misfire; those stay with the generic external-link rule below.) A substring
-// match against any expanded outbound URL. Extend as new Eco properties ship.
+// match against any expanded outbound URL. The list lives in brand/identity.ts.
 interface UrlRule {
   match: string; // lowercased substring to find in an outbound URL
   template: Template;
   confidence: number;
   reason: string;
 }
-const URL_TEMPLATE_RULES: UrlRule[] = [
-  // eco.com/docs/... (the docs live under a PATH on the marketing domain, so the
-  // domain-only docs.eco.com check misses them). 6/6 in-corpus are dev docs.
-  { match: "eco.com/docs/", template: "dev_doc_post", confidence: 0.9, reason: "Links to eco.com/docs (developer documentation)." },
-  { match: "docs.eco.com", template: "dev_doc_post", confidence: 0.95, reason: "Links to docs.eco.com (developer documentation)." },
-];
+const URL_TEMPLATE_RULES: UrlRule[] = BRAND.urlRules.map((r) => ({
+  match: r.match.toLowerCase(),
+  template: r.pillar,
+  confidence: r.confidence,
+  reason: r.reason,
+}));
 
 function matchUrlTemplate(urls: string[]): UrlRule | null {
   for (const u of urls) {
@@ -86,9 +83,9 @@ function candidatesForMedia(media: string): Template[] {
 
 export function classifyByRules(input: RuleInput): RuleResult {
   const domains = input.domains || [];
-  const ecoBlog = domains.includes("eco.com");
+  const ecoBlog = domains.includes(BRAND.blogDomain);
   const external = externalArticleDomains(domains);
-  const eco = mentionsEco(input);
+  const eco = mentionsBrand(input);
 
   // R1 — known Eco URL pattern (path-aware) → its template. Covers docs.eco.com
   // AND eco.com/docs/* (a path the old domain-only check missed).
@@ -114,7 +111,7 @@ export function classifyByRules(input: RuleInput): RuleResult {
     return {
       template: "broad_educational",
       confidence: 0.9,
-      reasoning: `Standalone external link (${external[0]}) with no Eco/product mention.`,
+      reasoning: `Standalone external link (${external[0]}) with no ${BRAND.name}/product mention.`,
       candidates: ["broad_educational"],
     };
   }
@@ -123,7 +120,7 @@ export function classifyByRules(input: RuleInput): RuleResult {
   const candidates = new Set<Template>(candidatesForMedia(input.media_type));
 
   // eco.com/blog + a partner @-mention → integration vs product (Stage 2 picks).
-  if (ecoBlog && input.mentions.some((m) => m !== "eco")) {
+  if (ecoBlog && input.mentions.some((m) => !isOwnHandle(m))) {
     candidates.add("integration_announcement");
     candidates.add("product_post");
   }
@@ -138,7 +135,7 @@ export function classifyByRules(input: RuleInput): RuleResult {
   candidates.add("other");
 
   const reasonBits: string[] = [`media=${input.media_type}`];
-  if (eco) reasonBits.push("mentions Eco/product");
+  if (eco) reasonBits.push(`mentions ${BRAND.name}/product`);
   if (external.length) reasonBits.push(`ext=${external[0]}`);
   if (input.is_self_reply) reasonBits.push("self-reply");
   if (input.is_quote) reasonBits.push("quote");

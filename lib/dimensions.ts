@@ -1,3 +1,4 @@
+import { BRAND_NAME_RE, isOwnDomain, isOwnHandle } from "./brand/helpers.ts";
 // Post sub-dimensions: which CHAIN(s) and which COMPANY/entity a post highlights.
 // This is the axis the CMO wants the Insights tab to rank on — "the highest-ranking
 // data motion visual based on the chain and the company we're highlighting" —
@@ -206,12 +207,12 @@ function hasToken(haystack: string, token: string): boolean {
   return !wordish(before) && !wordish(after);
 }
 
-// Does this post reference Eco at all? Gates the ambiguous product terms (see
-// ProductDef.looseTerms) so "routes" only tags Eco Routes on an Eco post.
-function mentionsEcoLoose(text: string, mentions: string[], domains: string[]): boolean {
-  if (/\beco\b/.test(text)) return true;
-  if (mentions.includes("eco") || mentions.includes("rynesaxe")) return true;
-  if (domains.some((d) => d === "eco.com" || d === "docs.eco.com")) return true;
+// Does this post reference the company at all? Gates the ambiguous product terms
+// (see ProductDef.looseTerms) so "routes" only tags a product on a company post.
+function mentionsBrandLoose(text: string, mentions: string[], domains: string[]): boolean {
+  if (BRAND_NAME_RE.test(text)) return true;
+  if (mentions.some((m) => isOwnHandle(m))) return true;
+  if (domains.some((d) => isOwnDomain(d))) return true;
   return false;
 }
 
@@ -276,7 +277,7 @@ export function extractDimensions(input: DimensionInput, extra: ExtraVocab = EMP
     if (tokens.some((tok) => hasToken(text, tok))) chains.add(chain);
   }
 
-  const ecoish = mentionsEcoLoose(text, mentions, domains);
+  const ecoish = mentionsBrandLoose(text, mentions, domains);
   for (const e of extra.chain) if (vocabHit(e, text, mentions, domains, ecoish)) chains.add(e.id);
   for (const e of extra.partner) if (vocabHit(e, text, mentions, domains, ecoish)) entities.add(e.id);
   const extraProducts = extra.product

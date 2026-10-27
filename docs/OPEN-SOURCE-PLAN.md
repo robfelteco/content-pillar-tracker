@@ -64,10 +64,16 @@ and `docs/BROAD-ED-REDESIGN.md` are regenerated or dropped, not scrubbed.
 ## Phases
 
 1. Sign-off from Eco on what ships (positioning distillation, anti-slop
-   standard, pillar taxonomy as the example).
-2. Scrub pass on this copy. Remove font, logo, manifest. Rewrite README.
-3. Extract `brand/`. Core reads config; Eco's values move to `examples/eco/`
-   with names scrubbed.
+   standard, pillar taxonomy as the example). PENDING.
+2. Scrub pass. DONE 2026-10-26.
+3. Extract `brand/`. DONE 2026-10-26 for identity, pillars and shapes,
+   positioning, audiences, products and voice: typed TypeScript data in
+   `brand/` (neutral starter) and `examples/eco/` (the real one), contract in
+   `lib/brand/types.ts`, `scripts/brand-check.ts` for the enum. Not yet
+   extracted: the optional-lane registries (analogs, curriculum, channels,
+   quote roster, integrated chains, chain accounts, dmv lanes, angle bank),
+   the colour tokens, and the Eco-specific wording inside `lib/analogs.ts`
+   and `lib/classifyRules.ts` candidate narrowing.
 4. Module gating by env key. Smoke test with only the minimum keys against a
    fresh Neon database.
 5. Claude Code setup skill (`/setup`): interviews the adopter, writes

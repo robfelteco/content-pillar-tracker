@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 import { ANALOG_BY_ID, type AnalogDef } from "./analogs.ts";
 
 // Question mining — the demand side of the curriculum.
@@ -46,7 +47,7 @@ function buildPrompt(def: AnalogDef, count: number, excludeQuestions: string[]):
         .join("\n")}\n`
     : "";
 
-  return `You are doing audience research for @eco, a stablecoin infrastructure company. We are building educational content that teaches traditional money-movement mechanisms to an institutional and developer audience.
+  return `You are doing audience research for @${BRAND.handle}. ${BRAND.oneLiner} We are building educational content that teaches the underlying mechanisms of our market to the audiences we sell to.
 
 THE CONCEPT: ${def.label}
 What it is: ${def.parallel}
@@ -65,7 +66,7 @@ Return ONLY a JSON object (no prose, no code fences):
   "askedWhere":"where it recurs, e.g. \\"YouTube comments + r/fintech\\"",
   "frequency":"recurring" | "occasional",
   "answeredWell": true | false,
-  "angle":"how an @eco post would answer it — one line, specific",
+  "angle":"how an @${BRAND.handle} post would answer it, one line, specific",
   "asker":"who asks it, e.g. \\"treasury operators\\", \\"backend devs new to payments\\"",
   "source":{"title":"where you saw it","url":"https://real-url"}
 }]}

@@ -1,9 +1,10 @@
+import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import { sql } from "./db.ts";
 import { discover, type DiscoveredItem } from "./discover.ts";
 import { ANALOG_BY_ID, detectAnalog } from "./analogs.ts";
 import { SITE_AUDIENCES, SITE_AUDIENCE_BY_ID, siteAudiencePromptBlock } from "./icp.ts";
-import { ECO_ONE_LINER } from "./positioning.ts";
+import { BRAND_ONE_LINER } from "./positioning.ts";
 import { sanitizePrompt, stripDashes } from "./antiSlop.ts";
 import type { CopyOption } from "./generateCopy.ts";
 
@@ -415,9 +416,9 @@ function client(): Anthropic {
   return _client;
 }
 
-const FRAMING_SYSTEM = `You are the research desk for @eco's educational X posts. ${ECO_ONE_LINER}
+const FRAMING_SYSTEM = `You are the research desk for @${BRAND.handle}'s educational X posts. ${BRAND_ONE_LINER}
 
-You read a piece of market news or research and decide how useful it is as the raw material for a BROAD EDUCATIONAL post: top-of-funnel, Eco never named in the body, the reader finishes smarter about how money moves. The best posts in this pillar name an institution, carry one number, and give one line of so-what that implies Eco's thesis without stating it.
+You read a piece of market news or research and decide how useful it is as the raw material for a BROAD EDUCATIONAL post: top-of-funnel, ${BRAND.name} never named in the body, the reader finishes smarter about how the market works. The best posts in this pillar name an institution, carry one number, and give one line of so-what that implies ${BRAND.name}'s thesis without stating it.
 
 You return JSON and nothing else.`;
 
@@ -467,7 +468,7 @@ function framingPrompt(input: {
     `PRE-FILL THE FRAME. These are a starting point an operator will edit, not a finished post:`,
     `  frame: the post angle in one line, as you would pitch it to an editor. Specific, with the number if there is one.`,
     `  mechanism: the thing being explained, in a sentence (the TradFi or market mechanism, named).`,
-    `  ecoBridge: how this gets to what Eco does, WITHOUT naming Eco: the property the reader should infer (failsafe settlement, no pre-funding, programmable rules, at-par conversion, one layer across fragmented markets). One sentence. Say "no clear bridge" if there is not one.`,
+    `  ecoBridge: how this gets to what ${BRAND.name} does, WITHOUT naming ${BRAND.name}: the property the reader should infer (failsafe settlement, no pre-funding, programmable rules, at-par conversion, one layer across fragmented markets). One sentence. Say "no clear bridge" if there is not one.`,
     `  evidence: the exact quotable fact from the text, with the number, that the post would rest on. Copy it closely from the text.`,
     ``,
     `Return ONLY this JSON object, no prose, no code fences:`,

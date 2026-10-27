@@ -19,7 +19,7 @@
 // in instead, which is the whole difference between this and the real tool.
 
 import { writeFileSync } from "fs";
-import { ECO_ONE_LINER, POSITIONING_BRIEF } from "../lib/positioning.ts";
+import { BRAND_ONE_LINER, POSITIONING_BRIEF } from "../lib/positioning.ts";
 import { TEMPLATE_DEFS } from "../lib/taxonomy.ts";
 import { PILLAR_SHAPES } from "../lib/pillarShapes.ts";
 import { ANTI_SLOP_BRIEF, formBlock, LENGTH_BANDS } from "../lib/antiSlop.ts";
@@ -79,7 +79,7 @@ w(
 w();
 w("**The one-line version of Eco**, which every other prompt in the app imports:");
 w();
-fence(ECO_ONE_LINER);
+fence(BRAND_ONE_LINER);
 w("**What this document cannot give you.** The app also injects, per draft:");
 w();
 w("- the **source article** body, so the draft argues from the piece rather than about it");

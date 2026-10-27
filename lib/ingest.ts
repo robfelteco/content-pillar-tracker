@@ -1,3 +1,4 @@
+import { trackedHandle } from "./brand/helpers.ts";
 import { sql } from "./db.ts";
 import {
   resolveHandle,
@@ -217,7 +218,7 @@ export async function runSync(opts: {
   count?: number;
 }): Promise<SyncResult> {
   const errors: string[] = [];
-  const handle = process.env.X_ACCOUNT_HANDLE || "eco";
+  const handle = trackedHandle();
 
   const runRows = await sql<{ id: number }>`
     INSERT INTO sync_runs (trigger) VALUES (${opts.trigger}) RETURNING id

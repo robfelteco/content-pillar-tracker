@@ -1,0 +1,24 @@
+import { BRAND } from "../../brand/identity.ts";
+
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Whole-word match for the company name, lowercased. "eco" never matches "economy". */
+export const BRAND_NAME_RE = new RegExp(`\\b${escapeRe(BRAND.name.toLowerCase())}\\b`);
+
+const OWN_HANDLES = new Set(BRAND.ownHandles.map((h) => h.toLowerCase()));
+const OWN_DOMAINS = new Set(BRAND.domains.map((d) => d.toLowerCase()));
+
+export function isOwnHandle(handle: string | null | undefined): boolean {
+  return !!handle && OWN_HANDLES.has(handle.toLowerCase().replace(/^@/, ""));
+}
+
+export function isOwnDomain(domain: string | null | undefined): boolean {
+  return !!domain && OWN_DOMAINS.has(domain.toLowerCase());
+}
+
+/** The handle the tracker ingests. Env wins so one build serves any account. */
+export function trackedHandle(): string {
+  return process.env.X_ACCOUNT_HANDLE || BRAND.handle;
+}

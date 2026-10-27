@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import { spawn } from "child_process";
 import { tmpdir } from "os";
@@ -717,7 +718,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
     // IS chain integrations.
     chain
       ? input.template === "integration_announcement"
-        ? `CHAIN going live in Eco: ${chain}. This is the subject of the post.`
+        ? `CHAIN going live in ${BRAND.name}: ${chain}. This is the subject of the post.`
         : `Chain that may be worth naming: ${chain}. Only mention it if it genuinely sharpens the post — this pillar is not about chains.`
       : null,
 
@@ -830,10 +831,10 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
           ``,
           `Structure: earn attention with the parallel, then land the break. A draft that only`,
           `runs the parallel is not usable — the break IS the post.`,
-          `Eco is NOT named in the body. This is top-of-funnel: the reader should finish smarter`,
-          `about how money moves, and Eco's relevance should be inferable, not stated.`,
+          `${BRAND.name} is NOT named in the body. This is top-of-funnel: the reader should finish smarter`,
+          `about how the market works, and ${BRAND.name}'s relevance should be inferable, not stated.`,
           `HARD RULE — borrow the vocabulary, refuse the category. You may write an entire post`,
-          `about ${analog.label} without ever implying Eco belongs to that category. Eco is the`,
+          `about ${analog.label} without ever implying ${BRAND.name} belongs to that category. ${BRAND.name} is the`,
           `routing and execution layer; never an orchestrator, PSP, gateway, prime broker or bridge.`,
           analog.guardrail ? `CONCEPT GUARDRAIL: ${analog.guardrail}` : null,
           ``,
@@ -1066,8 +1067,8 @@ function candidateFrameBlock(c: EduCandidate, audienceLabel: string | null): str
     c.frame ? `  Frame: ${c.frame}` : null,
     c.mechanism ? `  Mechanism being explained: ${c.mechanism}` : null,
     c.ecoBridge
-      ? `  What the reader should infer (never state, never name Eco): ${c.ecoBridge}`
-      : `  No Eco bridge was set. Write the post so the reader finishes smarter about the mechanism, and stop there.`,
+      ? `  What the reader should infer (never state, never name ${BRAND.name}): ${c.ecoBridge}`
+      : `  No ${BRAND.name} bridge was set. Write the post so the reader finishes smarter about the mechanism, and stop there.`,
     c.evidence ? `  The fact the post rests on: ${c.evidence}` : null,
     audienceLabel ? `  Written for: ${audienceLabel}` : null,
     c.theme ? `  Theme it implies: ${themeLabel(c.theme)}` : null,
