@@ -5,7 +5,11 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "check": "node scripts/brand-check.ts && tsc --noEmit",
+    "brand:check": "node scripts/brand-check.ts",
+    "copy-brief": "node scripts/export-copy-brief.ts",
+    "migrate": "node --env-file=.env scripts/migrate.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.1",
@@ -26,5 +30,8 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "type": "module"
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  }
 }
