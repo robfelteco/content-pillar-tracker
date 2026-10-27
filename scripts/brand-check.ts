@@ -83,7 +83,13 @@ import { ORG_SEED, PEOPLE_SEED, WATCH_SEED } from "../brand/quoteRoster.ts";
   dup("PARTNERS id", PARTNERS.map((x) => x.id));
   dup("PARTNERS handle", PARTNERS.flatMap((x) => x.handles.map((h) => h.toLowerCase())));
   for (const c of CHAINS) if (!c.handles.length) { console.error(`CHAINS "${c.id}" has no handles; it can never be detected`); p++; }
-  for (const c of CHAINS) for (const h of [...c.handles, c.momentumHandle ?? ""]) if (h.startsWith("@")) { console.error(`CHAINS "${c.id}": handle "${h}" must not start with @`); p++; }
+  const lowerNoAt = (label: string, id: string, hs: string[]) => {
+    for (const h of hs) if (h.startsWith("@") || h !== h.toLowerCase()) { console.error(`${label} "${id}": "${h}" must be lowercase with no @`); p++; }
+  };
+  for (const c of CHAINS) { lowerNoAt("CHAINS handle", c.id, [...c.handles, ...(c.momentumHandle ? [c.momentumHandle] : [])]); lowerNoAt("CHAINS keyword", c.id, c.keywords ?? []); }
+  for (const x of PARTNERS) { lowerNoAt("PARTNERS handle", x.id, x.handles); lowerNoAt("PARTNERS domain", x.id, x.domains ?? []); }
+  for (const c of CHAINS) if (c.liveWithoutArticle && c.announcedNotLive) { console.error(`CHAINS "${c.id}": cannot be both liveWithoutArticle and announcedNotLive`); p++; }
+  for (const d of PILLAR_DEFS) if (d.staleDays >= 9999 && d.id !== "other" && d.draftMode !== "generic") { console.error(`parked pillar "${d.id}" (staleDays ${d.staleDays}) should have draftMode "generic", not "${d.draftMode}"`); p++; }
   dup("ANALOG_DEFS id", ANALOG_DEFS.map((a) => a.id));
   dup("EDUCATION_SHAPES id", EDUCATION_SHAPES.map((s) => s.id));
   const icpIds2 = new Set(ICP_DEFS.map((i) => i.id));
@@ -101,5 +107,5 @@ import { ORG_SEED, PEOPLE_SEED, WATCH_SEED } from "../brand/quoteRoster.ts";
   for (const w of WATCH_SEED) if (!kinds.has(w.kind)) { console.error(`WATCH_SEED "${w.label}": unknown kind "${w.kind}"`); p++; }
   for (const c of CHANNEL_DEFS) if (!WATCH_SEED.some((w) => w.identifier === c.id)) console.log(`note: channel "${c.label}" is not in WATCH_SEED, so the quote lane will not share its transcripts`);
   if (p) process.exitCode = 1;
-  else console.log(`registries ok: ${CHAINS.length} chains (${CHAINS.filter((c) => c.momentumHandle).length} watched), ${PARTNERS.length} partners (${PARTNERS.filter((x) => x.inProduction).length} in production), ${ANALOG_DEFS.length} curriculum concepts, ${CHANNEL_DEFS.length} channels, ${ORG_SEED.length} orgs / ${PEOPLE_SEED.length} people / ${WATCH_SEED.length} watch sources`);
+  else console.log(`registries ok: ${CHAINS.length} chains (${CHAINS.filter((c) => c.momentumHandle && c.momentumEnabled).length} read daily, ${CHAINS.filter((c) => c.momentumHandle && !c.momentumEnabled).length} on demand, ${CHAINS.filter((c) => c.announcedNotLive).length} announced not live), ${PARTNERS.length} partners (${PARTNERS.filter((x) => x.inProduction).length} in production), ${ANALOG_DEFS.length} curriculum concepts, ${CHANNEL_DEFS.length} channels, ${ORG_SEED.length} orgs / ${PEOPLE_SEED.length} people / ${WATCH_SEED.length} watch sources`);
 }

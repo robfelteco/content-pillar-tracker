@@ -160,6 +160,8 @@ export interface ChainDef {
   momentumEnabled?: boolean;
   /** The company is live here but never published a dedicated piece. Give the reason. */
   liveWithoutArticle?: string;
+  /** Announced but not live yet. Give the reason. Kept out of the integrated set even if a post about it is filed under the integration pillar. */
+  announcedNotLive?: string;
 }
 
 // A company or partner the account highlights (issuers, customers, partners).
@@ -221,7 +223,8 @@ export interface EducationShape {
 export interface ChannelDef {
   /** YouTube channelId (UC…). Pinned, because handles can change. */
   id: string;
-  handle: string;
+  /** Display only. */
+  handle?: string;
   label: string;
   /** The publisher has a commercial position in what it explains; capped below canonical. */
   interestedParty: boolean;

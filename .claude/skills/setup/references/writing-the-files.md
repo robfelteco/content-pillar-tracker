@@ -28,8 +28,10 @@ optional there, it is optional here.
   `integration_announcement` is the model.
 - `staleDays` in days. `9999` hides the pillar from the staleness board.
 - A parked pillar: `staleDays: 9999`, `draftMode: "generic"`, bucket kept.
-- `draftMode` `chains` and `dmv` read registries still hardcoded in `lib/`
-  for the original brand; use `generic` unless the company is in that market.
+- `draftMode` `chains` and `dmv` read `brand/entities.ts`; use them when the
+  company integrates with platforms worth announcing and charting.
+- The integration pillar's description must exclude pre-announcements ("X
+  coming soon"): a post filed there marks the platform as live.
 - `ratioBucket`: `edu` for content with the company unnamed, `soft` for
   company-in-frame but standalone, `hard` for announce or sell, `null` to
   keep out of the meter (only `other`).
@@ -71,28 +73,29 @@ optional there, it is optional here.
 
 - `commodityPhrases` lowercase; matched as whole words, case-insensitive.
   Casing rules therefore go in positioning.ts, not here.
-- `substantiationGated` lowercase single words.
+- `substantiationGated` single words or hyphenated tokens ("real-time"),
+  matched case-insensitively as whole words.
 - `gatedExceptions` keyed by the gated word, value a case-insensitive regex.
   Omit words with no exception.
-- `substantiationTerms` lowercase nouns and verbs; the engine also counts any
-  digit. Include the mechanism words from the product briefs.
+- `substantiationTerms` nouns and verbs, matched case-insensitively; the
+  engine also counts any digit. Include the mechanism words from the product briefs.
 - `voiceNote` is injected into the anti-slop brief after the test
   paragraph; two or three lines, no leading label.
 - `contrastExample` uses the company's own world: a "not X, it's Y" sentence
   a writer would plausibly produce, and its direct rewrite.
 
-## After writing
-
-Run the three verification commands in SKILL.md step 5.
-
 ## entities.ts
 
-- `id` snake_case; `handles` lowercase, no `@`, unique across all chains.
+- `id` snake_case; `handles` lowercase, no `@`, unique across all chains. A
+  partner may reuse a chain's handle: a feed provider is often both.
 - `keywords` only for names that are unambiguous in text.
 - `momentumHandle` plus `momentumEnabled: true` only for platforms worth a
   daily read; the rest stay off and can be switched on in the database.
 - `liveWithoutArticle` carries the reason; an unexplained line is
   indistinguishable from a mistake.
+- `announcedNotLive` for a platform that has been announced but is not live:
+  it is kept out of the integrated set even if a post about it is filed under
+  the integration pillar.
 - Partners: `inProduction` only when the partner runs the product today.
 - `DMV_LANES` keeps its three keys.
 
@@ -106,9 +109,18 @@ Run the three verification commands in SKILL.md step 5.
 
 ## channels.ts and quoteRoster.ts
 
-- Channel `id` is the YouTube channelId (UC…). Add each channel to
-  `WATCH_SEED` as well.
+- Channel `id` is the YouTube channelId (UC…); `handle` is optional. Add
+  each channel to `WATCH_SEED` as well.
+- `PersonSeed.title` spelled out ("Chief Executive Officer", not "CEO"), as
+  it prints on a card. `xHandle` on orgs and people as the account writes
+  it; case does not matter there.
 - `PersonSeed.org` must match an `OrgSeed.name` exactly.
 - `WATCH_SEED.kind` is one of `yt_channel`, `report_site`, `x_search`.
 
 `brand-check` verifies all of the above.
+
+## After writing
+
+Run the three verification commands in SKILL.md step 5. Then
+`grep -rn "not in the setup material" brand/` should list only placeholders:
+keep the phrase out of comments.

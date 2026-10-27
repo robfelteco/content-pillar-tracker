@@ -51,6 +51,10 @@ type SqlTag = <T = Record<string, unknown>>(
  * The set of chain ids Eco is live on: seeded integration articles, plus posts
  * filed under the integration pillar, plus the registry above.
  */
+// Announced but not live: a "coming soon" post filed under the integration
+// pillar must not move the chain into the integrated lane.
+const ANNOUNCED_NOT_LIVE = new Set(CHAINS.filter((c) => c.announcedNotLive).map((c) => c.id));
+
 export async function getIntegratedChains(sql: SqlTag): Promise<Set<string>> {
   const rows = await sql<{ chain: string }>`
     SELECT chain FROM articles WHERE chain IS NOT NULL AND kind = 'chain_integration'
@@ -58,5 +62,7 @@ export async function getIntegratedChains(sql: SqlTag): Promise<Set<string>> {
     SELECT unnest(chains) AS chain FROM posts
       WHERE template = 'integration_announcement' AND is_reply = false
   `;
-  return new Set([...rows.map((r) => r.chain), ...Object.keys(LIVE_WITHOUT_ARTICLE)]);
+  const live = new Set([...rows.map((r) => r.chain), ...Object.keys(LIVE_WITHOUT_ARTICLE)]);
+  for (const id of ANNOUNCED_NOT_LIVE) live.delete(id);
+  return live;
 }

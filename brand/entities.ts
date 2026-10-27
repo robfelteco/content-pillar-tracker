@@ -16,6 +16,7 @@ export const CHAINS: ChainDef[] = [
     id: "example_network",
     label: "Example Network",
     handles: ["examplenetwork"],
+    // announcedNotLive: "Signed, launching next quarter.",
     keywords: ["example network"],
     momentumHandle: "examplenetwork",
     momentumEnabled: false,

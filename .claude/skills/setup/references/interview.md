@@ -102,9 +102,13 @@ appears in exactly one site audience's `icps`.
 
 ## positioning.ts
 
-Needed: the company sections of the drafter's system prompt: who we are, the
-central reframe, vocabulary (avoid / fine / ownable), voice do and don't,
-narrative pillars, the two audience doors, guardrails.
+Needed: the company sections of the drafter's system prompt, matching the
+starter's placeholders: who we are (category claim, the capability stack in
+order of emphasis, the positioning line, the product list), the central
+reframe, vocabulary (avoid / fine / ownable), voice do and don't, four
+narrative pillars (the starter expects one each of inevitability, mechanism,
+execution quality and defensibility; rename them if the company's story has
+different beats), the two audience doors, guardrails.
 
 Why: this is the whole voice of the copy generator. Everything else in the
 tracker measures; this file writes.
@@ -156,8 +160,10 @@ is what the "they're ripping, you haven't posted" nudge reads; the
 in-production flag is what lets a partner lane be drawn at all.
 
 Ask: "List the platforms you've integrated with or announced. For each: their
-X handle(s), and should we watch their account daily?" and "Which companies
-run your product in production today?" Keywords: only names that are not
+X handle(s), is it live today or only announced, and should we watch their
+account daily?" and "Which companies run your product in production today?"
+Announced-but-not-live platforms get `announcedNotLive` with the reason, so a
+"coming soon" post cannot mark them integrated. Keywords: only names that are not
 ordinary English words; the handle carries the rest. Chains that are live
 with no dedicated piece need the reason stated.
 
@@ -182,8 +188,9 @@ registry grows. Vocabulary must be jargon, never ordinary words.
 ## channels.ts and quoteRoster.ts (only if those lanes are live)
 
 Channels: "Which podcasts or publishers regularly cover your market's
-mechanisms?" Pin the channelId, note whether the publisher has a commercial
-position in what it explains, and whether its Shorts are worth taking.
+mechanisms?" Pin the channelId (the handle is optional), note whether the
+publisher has a commercial position in what it explains, and whether its
+Shorts are worth taking.
 
 Roster: "Whose quotes would you be proud to put on a card? Which institutions
 carry the most weight with your buyers?" Aim for 40 to 60 people across three

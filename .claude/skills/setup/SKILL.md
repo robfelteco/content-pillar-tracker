@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Configure the Content Pillar Tracker for a new company by interviewing the adopter and writing the brand/ folder (identity, pillars, positioning, audiences, products, voice). Use this whenever someone opens this repo and wants to point the tracker at their own X account, says "set this up for us", "configure it for <company>", "replace the Acme placeholders", asks how to adapt the pillars or positioning to their brand, or asks what to put in brand/. Also use it when they want to re-run part of the setup later, such as adding a product, a pillar, or new vocabulary rules.
+description: Configure the Content Pillar Tracker for a new company by interviewing the adopter and writing the brand/ folder (identity, pillars, positioning, audiences, products, voice, and the optional-lane registries for integrated platforms, partners, curriculum, watched channels and the quote roster). Use this whenever someone opens this repo and wants to point the tracker at their own X account, says "set this up for us", "configure it for <company>", "replace the Acme placeholders", asks how to adapt the pillars or positioning to their brand, or asks what to put in brand/. Also use it when they want to re-run part of the setup later, such as adding a product, a pillar, or new vocabulary rules.
 ---
 
 # Set up the tracker for a brand
@@ -20,8 +20,9 @@ product brief with a mechanism and a date beats one with adjectives.
 
 ## The flow
 
-1. **Orient.** Read `brand/README.md`, `lib/brand/types.ts`, the six current
-   `brand/*.ts` files, and every file in `examples/eco/`. The types are the
+1. **Orient.** Read `brand/README.md`, `lib/brand/types.ts`, the ten current
+   `brand/*.ts` files (six core, four registries), and every file in
+   `examples/eco/`. The types are the
    contract, the current files are the structure you keep, the example is the
    quality bar. If `brand/identity.ts` no longer says Acme, this is a
    revision: read what is there and ask what should change rather than
@@ -69,8 +70,8 @@ product brief with a mechanism and a date beats one with adjectives.
    guessed at and why, and every placeholder you left, so the person can grep
    for them. Then the two or three things worth refining after a week of
    real drafts. Close with the runtime steps from the README (fill `.env`,
-   migrate, first sync) and the warning in "What brand/ does not cover"
-   below if any of their pillars depend on it.
+   migrate, first sync) and, if the integration pillar is live, the note at
+   the end of "The optional-lane registries" below about the word "chain".
 
 ## Judgment calls
 
@@ -103,7 +104,8 @@ product brief with a mechanism and a date beats one with adjectives.
 - **Do not invent facts.** A placeholder is better than a confident wrong
   claim, because the drafter will repeat the claim in copy. Use one form
   everywhere, `<what is missing: not in the setup material>`, so the person
-  can grep for `not in the setup material`. This applies to the positioning
+  can grep for `not in the setup material`, and keep that phrase out of
+  comments so the grep stays clean. This applies to the positioning
   brief as much as to product briefs. The `<-` arrows in the algorithm table
   are not placeholders.
 
