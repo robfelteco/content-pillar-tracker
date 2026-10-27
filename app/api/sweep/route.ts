@@ -1,3 +1,4 @@
+import { laneOn } from "@/lib/lanes";
 import { NextRequest, NextResponse } from "next/server";
 import { runAnalogSweep, pickConceptsToSweep } from "@/lib/analogSweep";
 
@@ -32,6 +33,7 @@ function authorized(req: NextRequest): boolean {
 
 async function handle(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!laneOn("curriculum")) return NextResponse.json({ ok: true, skipped: "the curriculum source sweep is off: no pillar uses its source, or its registry is empty" });
 
   // Four a day is the budgeted default: measured Firecrawl costs are 2 credits a
   // search, 1 a map and 1 a scrape, so a concept runs 9-13 and four is ~40/day

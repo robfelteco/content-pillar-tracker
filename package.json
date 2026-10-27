@@ -9,7 +9,8 @@
     "check": "node scripts/brand-check.ts && tsc --noEmit",
     "brand:check": "node scripts/brand-check.ts",
     "copy-brief": "node scripts/export-copy-brief.ts",
-    "migrate": "node --env-file=.env scripts/migrate.mjs"
+    "migrate": "node --env-file=.env scripts/migrate.mjs",
+    "env:check": "node scripts/env-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.98.1",

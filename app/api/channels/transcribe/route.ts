@@ -1,3 +1,4 @@
+import { laneOn } from "@/lib/lanes";
 import { NextRequest, NextResponse } from "next/server";
 import { runChannelTranscription } from "@/lib/channelTranscribe";
 
@@ -26,6 +27,7 @@ function authorized(req: NextRequest): boolean {
 
 async function handle(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!laneOn("channels")) return NextResponse.json({ ok: true, skipped: "the watched-channel transcription is off: no pillar uses its source, or its registry is empty" });
 
   const n = Number(req.nextUrl.searchParams.get("limit") ?? 4);
   const limit = Math.max(1, Math.min(10, Number.isFinite(n) ? n : 4));

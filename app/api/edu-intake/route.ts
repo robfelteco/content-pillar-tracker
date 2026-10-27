@@ -1,3 +1,4 @@
+import { laneOn } from "@/lib/lanes";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { runEduIntake } from "@/lib/eduIntake";
@@ -32,6 +33,7 @@ async function authorized(req: NextRequest): Promise<boolean> {
 
 async function handle(req: NextRequest) {
   if (!(await authorized(req))) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!laneOn("education")) return NextResponse.json({ ok: true, skipped: "the educational intake is off: no pillar uses its source, or its registry is empty" });
   const startedAt = Date.now();
   const cron = !!req.headers.get("x-vercel-cron");
   const q = req.nextUrl.searchParams;

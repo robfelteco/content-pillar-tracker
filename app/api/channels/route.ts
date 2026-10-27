@@ -1,3 +1,4 @@
+import { laneOn } from "@/lib/lanes";
 import { NextRequest, NextResponse } from "next/server";
 import { runChannelSweep } from "@/lib/channelSweep";
 import { promoteDescriptionSources } from "@/lib/channelSources";
@@ -27,6 +28,7 @@ function authorized(req: NextRequest): boolean {
 
 async function handle(req: NextRequest) {
   if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!laneOn("channels")) return NextResponse.json({ ok: true, skipped: "the watched-channel sweep is off: no pillar uses its source, or its registry is empty" });
 
   const days = Number(req.nextUrl.searchParams.get("days") ?? 45);
   const max = Number(req.nextUrl.searchParams.get("max") ?? 40);

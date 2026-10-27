@@ -71,11 +71,31 @@ the rest for scale.
    and hand the person the file: it is the one artefact that shows them what
    the drafter will be told.
 
-6. **Report.** One line per file on what it now holds. Then the fields you
+6. **Keys.** Run `npm run env:check`. It works with no `.env` at all: it
+   lists the lanes this brand turned on, the keys each one needs, whether
+   each is set, where to get it and how it is billed, and nothing for lanes
+   that are off. Walk the person through it:
+
+   - Copy `.env.example` to `.env` if they have not, and tell them which
+     keys to fill, in the order the check lists them. Required keys for the
+     core first; a lane's keys only if they want that lane.
+   - They paste the values into `.env` themselves. Never ask for a key
+     value in chat, never write one into a file for them, and never print
+     one: transcripts get shared. If they paste a key into the chat anyway,
+     do not repeat it, tell them to move it into `.env`, and suggest
+     rotating it if the conversation will be shared.
+   - If they do not want to pay for a lane, that is a brand change, not a
+     missing key: give its pillar `draftMode: "generic"` (or empty the
+     registry), re-run brand-check, and the lane goes quiet.
+   - Re-run `npm run env:check` until no lane that is on shows MISSING.
+     "missing" (lower case) means part of a lane is skipped, which is fine.
+
+7. **Report.** One line per file on what it now holds. Then the fields you
    guessed at and why, and every placeholder you left, so the person can grep
    for them. Then the two or three things worth refining after a week of
-   real drafts. Close with the runtime steps from the README (fill `.env`,
-   migrate, first sync).
+   real drafts. Then the lanes that are on and any key still missing.
+   Close with the runtime steps from the README that come after setup:
+   migrate, first sync.
 
 ## Judgment calls
 

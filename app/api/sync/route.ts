@@ -4,6 +4,7 @@ import { runRuleClassification, runClaudeClassification } from "@/lib/classify";
 import { runAnalogSweep } from "@/lib/analogSweep";
 import { runMomentumSweep } from "@/lib/chainMomentum";
 import { platformLaneEnabled } from "@/lib/taxonomy";
+import { laneOn } from "@/lib/lanes";
 import { sql } from "@/lib/db";
 import { attributeArticles } from "@/lib/articleAttribution";
 import { attributeEduCandidates } from "@/lib/eduIntake";
@@ -93,7 +94,7 @@ async function handle(req: NextRequest) {
     // the file/transcript layer is seeded from an optional db/video-manifest.json
     // by scripts/sync-videos.ts. See that file's header.
     const shelves: Record<string, unknown> = {};
-    try {
+    if (laneOn("docs")) try {
       const d = await syncDocPages();
       const da = await attributeDocPages();
       const dt = await tagDocPages();
@@ -102,7 +103,7 @@ async function handle(req: NextRequest) {
     } catch (err) {
       classifyErrors.push(`docs shelf: ${err instanceof Error ? err.message.slice(0, 200) : String(err)}`);
     }
-    try {
+    if (laneOn("videos")) try {
       const y = await syncYouTubeVideos();
       const vt = await tagVideos({ limit: 60 });
       const vm = await matchVideosToPosts({ limit: 40 });

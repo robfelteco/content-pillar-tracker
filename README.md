@@ -51,15 +51,21 @@ set of pillars works, and ids are stored as plain text.
 ## Quick start
 
 1. Clone, then `npm install`.
-2. Copy `.env.example` to `.env` and fill the minimum set: `DATABASE_URL`,
-   the four `TWITTER_*` values, `X_ACCOUNT_HANDLE`, `ANTHROPIC_API_KEY`,
-   `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET`, `AUTH_ALLOWED_DOMAIN`,
-   `CRON_SECRET`.
-3. Open the folder in Claude Code and run `/setup`. It asks what your content
+2. Open the folder in Claude Code and run `/setup`. It asks what your content
    pillars are, where each one's material comes from, who you sell to, what
    you own and refuse in your vocabulary, and writes `brand/` for you. Or edit
    the starter by hand; `brand/README.md` explains every file.
-4. Check it:
+3. Copy `.env.example` to `.env` and fill the keys your lanes need. This
+   lists exactly those, with where to get each one, and never prints a value:
+
+```bash
+npm run env:check
+```
+
+   The setup skill runs it with you. The core always needs the database, the
+   four X keys, Anthropic, Google sign-in and the cron secret; everything
+   else depends on which sources your pillars use.
+4. Check the brand folder:
 
 ```bash
 npm run check
@@ -87,16 +93,18 @@ run the tracker exactly as the original deployment did.
 
 ## Optional lanes
 
-Each lane is off until a pillar uses its source and its key is set.
+A lane is on when a pillar drafts from its source; its nightly work, tab and
+queries are skipped otherwise. `npm run env:check` prints this for your brand.
 
-| Lane | Source | Needs |
-| --- | --- | --- |
-| Developer docs shelf | `docs` | `docsOrigin` in identity, a docs site that publishes `llms.txt` |
-| Short-form video shelf | `videos` | `youtubeHandle` in identity, `YOUTUBE_API_KEY`, `GEMINI_API_KEY` for tagging |
-| Integrated platforms and momentum | `chains`, `dmv` | `entities.ts` |
-| Curriculum and watched channels | `education` | `curriculum.ts`, `channels.ts`, `YOUTUBE_API_KEY`, `GEMINI_API_KEY`, `FIRECRAWL_API_KEY` |
-| Discovery (web search) | `education` | `XAI_API_KEY` |
-| Quote discovery | `quotes` | `quoteRoster.ts`, `market.ts`, `YOUTUBE_API_KEY`, `GEMINI_API_KEY`, `FIRECRAWL_API_KEY` |
+| Lane | On when a pillar uses | Required keys | Optional keys (part of the lane is skipped without them) |
+| --- | --- | --- | --- |
+| Developer docs shelf | `docs`, with `docsOrigin` set | none beyond the core | |
+| Short-form video shelf | `videos`, with `youtubeHandle` set | `YOUTUBE_API_KEY` | |
+| Integrated platforms and momentum | `chains` or `dmv` | none beyond the core (X reads) | |
+| Educational pipeline | `education` | `FIRECRAWL_API_KEY` | `XAI_API_KEY` (discovery lenses) |
+| Curriculum source sweep | `education`, with concepts in `curriculum.ts` | `FIRECRAWL_API_KEY` | `XAI_API_KEY`, `YOUTUBE_API_KEY` |
+| Watched channels | `education`, with channels in `channels.ts` | `YOUTUBE_API_KEY`, `GEMINI_API_KEY` | |
+| Quote discovery | `quotes` | `GEMINI_API_KEY` | `YOUTUBE_API_KEY` (YouTube lane), `FIRECRAWL_API_KEY` (web lane) |
 
 ## Running it in production
 
@@ -115,6 +123,7 @@ for. Optional lanes add their own provider costs.
 | Command | Does |
 | --- | --- |
 | `npm run check` | Verifies `brand/` against the contract and type-checks |
+| `npm run env:check` | Lists the lanes that are on, the keys they need, and which are set (presence only, never values) |
 | `npm run copy-brief` | Writes `COPY-BRIEF.md`, a readable copy of everything the drafter is told |
 | `node --env-file=.env scripts/reclassify.ts <pillar>` | Re-decides a pillar after its description changed |
 | `node --env-file=.env scripts/seed-quote-roster.ts` | Seeds the quote roster from `brand/quoteRoster.ts` |
