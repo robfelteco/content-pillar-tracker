@@ -16,6 +16,7 @@ here. To see a complete, production-tested configuration, read `examples/eco/`.
 | `curriculum.ts` | The analog curriculum: legacy concepts, where your mechanism breaks from each, teaching shapes | broad educational lane, angle bank, question mining |
 | `channels.ts` | YouTube channels the curriculum lane watches | channel sweep and triage |
 | `quoteRoster.ts` | Orgs, people and watch sources for quote discovery | quote lanes |
+| `market.ts` | The market's vocabulary: name, keywords, on-domain terms, quote disqualifiers and examples, educational themes, discovery lenses, clip series | quote, discovery, education and video lanes |
 
 Any registry may be empty; its lane then has nothing to do and stays quiet.
 

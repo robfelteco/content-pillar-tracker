@@ -1,4 +1,4 @@
-import type { ChainDef, PartnerDef, DmvLaneDef, DmvLaneId } from "@/lib/brand/types.ts";
+import type { ChainDef, PartnerDef, DmvLaneDef, DmvLaneId, ChainArticleDef } from "@/lib/brand/types.ts";
 
 // The platforms the company integrates with ("chains" in the schema, because
 // the original brand's were blockchains) and the companies it highlights.
@@ -53,3 +53,7 @@ export const DMV_LANES: Record<DmvLaneId, DmvLaneDef> = {
     staleDays: 14,
   },
 };
+
+// The articles that carried each platform integration (blog slug, optional
+// own-account status id). Read by scripts/ingest-chain-articles.ts.
+export const CHAIN_ARTICLES: ChainArticleDef[] = [];

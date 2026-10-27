@@ -26,6 +26,9 @@ const CHAIN_PILLARS: Template[] = pillarsByMode("chains");
  * Requires the firecrawl CLI on PATH and authenticated.
  */
 import { execFileSync } from "node:child_process";
+import { BRAND } from "../brand/identity.ts";
+import { CHAIN_ARTICLES } from "../brand/entities.ts";
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 import pg from "pg";
 
 const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
@@ -34,50 +37,9 @@ if (!url) {
   process.exit(1);
 }
 
-// The registry. Adding a chain integration = adding a row here and re-running.
-// `shareUrl` null means "no X article exists" and the blog url is used instead.
-interface ChainArticle {
-  chain: string; // lib/dimensions.ts CHAIN_LABELS id
-  slug: string; // eco.com/blog slug
-  /** The @eco status post that carried the X article. Null before X articles existed. */
-  anchorStatusId: string | null;
-  /** x.com/i/article/<id>, recorded for provenance. Never used as the link. */
-  xArticleId: string | null;
-}
-
-const CHAIN_ARTICLES: ChainArticle[] = [
-  {
-    chain: "bnb",
-    slug: "eco-expands-to-bnb-chain",
-    anchorStatusId: "2039679540994171313",
-    xArticleId: "2039674298621706241",
-  },
-  {
-    chain: "hyperliquid",
-    slug: "eco-upgrades-hyperliquid",
-    anchorStatusId: "2038603881513447511",
-    xArticleId: "2038601660830765056",
-  },
-  {
-    chain: "tron",
-    slug: "eco-integrates-tron",
-    anchorStatusId: "2075270264854544548",
-    xArticleId: "2075268807166189568",
-  },
-  {
-    chain: "robinhood",
-    slug: "eco-integrates-robinhood-chain",
-    anchorStatusId: "2082451890869059861",
-    xArticleId: "2082239814879854593",
-  },
-  // All three predate X articles — blog link only.
-  { chain: "solana", slug: "eco-powers-stablecoin-bridging-between-solana-in-seconds-not-steps", anchorStatusId: null, xArticleId: null },
-  { chain: "polygon", slug: "eco-powers-next-chapter-of-polygons-stablecoin-economy", anchorStatusId: null, xArticleId: null },
-  // Not an integration ANNOUNCEMENT — Arbitrum was live before this ran. It is
-  // the usage piece (35% of Portal transfers), and it is the only published Eco
-  // article about the chain, so it is what the pillar drafts from.
-  { chain: "arbitrum", slug: "arbitrum-leads-usage-across-eco", anchorStatusId: null, xArticleId: null },
-];
+// The registry is brand/entities.ts CHAIN_ARTICLES. Adding an integration piece
+// = adding a row there and re-running. No anchorStatusId means "no X article
+// exists" and the blog url is used instead.
 
 const MONTHS: Record<string, string> = {
   jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
@@ -127,7 +89,7 @@ function parse(md: string): Parsed | null {
 
   // Body starts after the hero image (the last image line before the prose) and
   // ends at the "About Eco" divider.
-  const aboutIdx = lines.findIndex((l) => /^#{1,3}\s+\*{0,2}About Eco/i.test(l.trim()));
+  const aboutIdx = lines.findIndex((l) => new RegExp(`^#{1,3}\\s+\\*{0,2}About ${escapeRe(BRAND.name)}`, "i").test(l.trim()));
   const heroIdx = lines.findIndex((l, i) => i > h1 && /^!\[/.test(l.trim()));
   const start = heroIdx === -1 ? h1 + 1 : heroIdx + 1;
   const end = aboutIdx === -1 ? lines.length : aboutIdx;
@@ -163,7 +125,7 @@ let seeded = 0;
 const failures: string[] = [];
 
 for (const ca of CHAIN_ARTICLES) {
-  const canonicalUrl = `https://eco.com/blog/${ca.slug}/`;
+  const canonicalUrl = `https://${BRAND.blogDomain}/blog/${ca.slug}/`;
   let parsed: Parsed | null = null;
   try {
     parsed = parse(scrape(canonicalUrl));
@@ -179,7 +141,7 @@ for (const ca of CHAIN_ARTICLES) {
   // The link the draft must carry. Status url when an X article exists, so the
   // composer unfurls the article card; blog url otherwise.
   const shareUrl = ca.anchorStatusId
-    ? `https://x.com/eco/status/${ca.anchorStatusId}`
+    ? `https://x.com/${BRAND.handle}/status/${ca.anchorStatusId}`
     : canonicalUrl;
   const xArticleUrl = ca.xArticleId ? `http://x.com/i/article/${ca.xArticleId}` : null;
 
@@ -195,7 +157,7 @@ for (const ca of CHAIN_ARTICLES) {
        kind = EXCLUDED.kind, chain = EXCLUDED.chain, body = EXCLUDED.body,
        source_file = EXCLUDED.source_file, updated_at = now()`,
     [
-      ca.slug, parsed.title, parsed.dek, "Eco", parsed.publishedOn,
+      ca.slug, parsed.title, parsed.dek, BRAND.name, parsed.publishedOn,
       canonicalUrl, xArticleUrl, shareUrl,
       // Only set when that post is actually in `posts`, or the FK rejects it.
       ca.anchorStatusId, ca.chain, parsed.body, canonicalUrl,

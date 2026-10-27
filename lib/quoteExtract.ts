@@ -1,3 +1,4 @@
+import { MARKET } from "../brand/market.ts";
 import { BRAND } from "../brand/identity.ts";
 import { NARRATIVE_PILLARS } from "./positioning.ts";
 // Quote extraction — spec §6.3 (two-pass) and §8 (the prompt contract).
@@ -387,7 +388,7 @@ function anchorToWindow(list: Segment[], window: ClipWindow): void {
 // --- Pass 2: quote extraction over persisted TEXT ---------------------------
 
 const EXTRACTION_RULES = [
-  "You extract QUOTABLE, VERBATIM statements about the stablecoin market for a quote card.",
+  `You extract QUOTABLE, VERBATIM statements about ${MARKET.name} for a quote card.`,
   "",
   "A QUOTE CARD shows one sentence in quotation marks next to ONE named person's face, name and title.",
   "So the only thing that qualifies is something a SPECIFIC NAMED HUMAN said or wrote in their own voice.",
@@ -402,24 +403,16 @@ const EXTRACTION_RULES = [
   "(the operator approved 8 of 38 candidates; these are the actual patterns):",
   "",
   "TAKE — a claim about the MARKET, stated as a general truth. The speaker is",
-  "describing how money is changing, not what their employer shipped:",
-  '  "stablecoins would become the rails of global payments"',
-  '  "Stablecoins have moved from the edge of payments to the mainstream"',
-  '  "Commerce runs 7 days a week, but moving money has been stuck on a 5-day cycle"',
-  '  "Crypto demand is moving past trading and into core financial infrastructure"',
+  "describing how the market is changing, not what their employer shipped:",
+  ...MARKET.quoteExamples.take.map((q) => `  "${q}"`),
   "",
   "SKIP — the speaker promoting their OWN company, product or milestone. These",
-  "were all rejected even though they are well said and mention stablecoins:",
-  '  "@SoFi is the first U.S. nationally chartered bank to offer a stablecoin"',
-  '  "MGUSD is a foundation for making money movement simpler"',
-  '  "Five years ago, we started turning stablecoins into real-world money infrastructure"',
-  '  "And now, with SoFiUSD as a settlement option in Mastercard\'s network..."',
+  "were all rejected even though they are well said and on topic:",
+  ...MARKET.quoteExamples.skipSelfPromo.map((q) => `  "${q}"`),
   "",
-  "SKIP — legislative or regulatory process. Adjacent to stablecoins, but it is",
-  "politics, not a claim about how money moves. All rejected:",
-  '  "The current language around yield is a strong step forward towards the Clarity Act"',
-  '  "they should apply for a Bank IDI license not ask the Senate to lower the standard"',
-  '  "We need a durable regulatory environment for digital assets"',
+  "SKIP — legislative or regulatory process. Adjacent to the market, but it is",
+  "politics, not a claim about how the market works. All rejected:",
+  ...MARKET.quoteExamples.skipPolitics.map((q) => `  "${q}"`),
   "",
   "The test: would this sentence still be true and interesting if the speaker",
   "worked somewhere else? If it only makes sense as their company's news, skip it.",

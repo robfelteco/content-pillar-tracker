@@ -1,5 +1,7 @@
 "use client";
 
+import { MARKET } from "@/brand/market";
+import { BRAND } from "@/brand/identity";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useAction, ActionProgress } from "./useAction";
@@ -26,24 +28,15 @@ const EDU_PILLAR = pillarsByMode("education")[0];
 
 type Tab = Exclude<CandidateStatus, "skipped">;
 const TABS: { id: Tab; label: string; hint: string }[] = [
-  { id: "inbox", label: "Inbox", hint: "Stocked nightly, ranked by how directly the piece implies an Eco theme. Pick or skip; skips never return." },
+  { id: "inbox", label: "Inbox", hint: `Stocked nightly, ranked by how directly the piece implies a ${BRAND.name} theme. Pick or skip; skips never return.` },
   { id: "picked", label: "Picked", hint: "The week's educational queue. Fix the frame and the bridge, set the audience, then Draft." },
   { id: "drafted", label: "Drafted", hint: "Three bands, grounded in the scraped text. Copy one to the composer, then Mark posted." },
-  { id: "posted", label: "Posted", hint: "Closed. The sync matches the @eco post by URL and attaches impressions." },
+  { id: "posted", label: "Posted", hint: `Closed. The sync matches the @${BRAND.handle} post by URL and attaches impressions.` },
 ];
 
-// Mirrors EDU_THEMES in lib/eduIntake.ts as a plain literal, same reason the
-// other client components duplicate registries: that module imports the
-// Anthropic SDK and the database, neither of which belongs in the browser.
-const THEME_LABEL: Record<string, string> = {
-  fragmentation: "Fragmentation",
-  pre_funding: "Pre-funding",
-  all_or_nothing: "All-or-nothing",
-  programmable_rules: "Programmable rules",
-  tokenized_assets: "Tokenized assets",
-  at_par: "At-par conversion",
-  agents: "Agents",
-};
+// Theme labels straight from brand/market.ts (pure data, safe in the browser);
+// lib/eduIntake.ts cannot be imported here because it pulls in the SDK and db.
+const THEME_LABEL: Record<string, string> = Object.fromEntries(MARKET.themes.map((t) => [t.id, t.label]));
 
 function hostOf(url: string): string {
   try {
@@ -251,7 +244,7 @@ export function EduPipeline({
         {tab === "inbox" && (
           <button
             onClick={() => setUntaughtOnly((v) => !v)}
-            title="Only candidates tagged with a curriculum concept no @eco post has taught yet. The concept's parallel and break ride into the drafter."
+            title={`Only candidates tagged with a curriculum concept no @${BRAND.handle} post has taught yet. The concept's parallel and break ride into the drafter.`}
             className={`ml-auto rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition ${
               untaughtOnly ? "bg-emerald-400/15 text-emerald-300" : "border border-white/10 text-white/40 hover:border-white/30 hover:text-white/70"
             }`}
@@ -293,7 +286,7 @@ export function EduPipeline({
                     {tab === "inbox" && (
                       <span
                         className={`flex-none rounded-full px-1.5 py-0.5 font-mono text-[10px] tabular-nums ${scoreTone(c.adjacencyScore)}`}
-                        title={c.adjacencyReasons.length ? c.adjacencyReasons.join(" ") : "Adjacency to the eco.com themes, 0-100."}
+                        title={c.adjacencyReasons.length ? c.adjacencyReasons.join(" ") : `Adjacency to the ${BRAND.name} themes, 0-100.`}
                       >
                         {c.adjacencyScore}
                       </span>
@@ -360,7 +353,7 @@ export function EduPipeline({
                   )}
                   {tab === "drafted" && (
                     <>
-                      <button onClick={() => setStatus(c.id, "posted")} disabled={busy} title="Moves it to Posted now. The next sync attaches the @eco post by URL." className="rounded-full bg-eco-blue px-3 py-1 text-[11px] font-medium text-white transition hover:brightness-110 disabled:opacity-50">
+                      <button onClick={() => setStatus(c.id, "posted")} disabled={busy} title={`Moves it to Posted now. The next sync attaches the @${BRAND.handle} post by URL.`} className="rounded-full bg-eco-blue px-3 py-1 text-[11px] font-medium text-white transition hover:brightness-110 disabled:opacity-50">
                         Mark posted
                       </button>
                       <button onClick={() => draft(c)} disabled={busy} className="rounded-full border border-white/10 px-2.5 py-1 text-[11px] text-white/50 transition hover:border-white/30 hover:text-white/80 disabled:opacity-50">
@@ -374,10 +367,10 @@ export function EduPipeline({
                   {tab === "posted" && (
                     c.usedPostUrl ? (
                       <a href={c.usedPostUrl} target="_blank" rel="noreferrer" className="rounded-full border border-white/10 px-2.5 py-1 font-mono text-[10px] text-white/60 hover:border-white/30 hover:text-white/90">
-                        @eco post{c.usedPostImpressions != null ? ` · ${c.usedPostImpressions.toLocaleString()} impr` : ""}
+                        @{BRAND.handle} post{c.usedPostImpressions != null ? ` · ${c.usedPostImpressions.toLocaleString()} impr` : ""}
                       </a>
                     ) : (
-                      <span className="font-mono text-[10px] text-white/35" title="Marked posted here. The sync matches the @eco post by its resolved URL.">
+                      <span className="font-mono text-[10px] text-white/35" title={`Marked posted here. The sync matches the @${BRAND.handle} post by its resolved URL.`}>
                         awaiting sync match
                       </span>
                     )
@@ -471,8 +464,8 @@ function FrameEditor({
   return (
     <div className="grid gap-2 border-t border-white/[0.06] px-3 pb-3 pt-2 sm:grid-cols-2">
       {field("Frame", frame, setFrame, "frame", "The angle in one line, as you'd pitch it.")}
-      {field("Mechanism", mechanism, setMechanism, "mechanism", "The TradFi or market mechanism being explained.")}
-      {field("Eco bridge", bridge, setBridge, "ecoBridge", "What the reader should infer. Eco is never named.", true)}
+      {field("Mechanism", mechanism, setMechanism, "mechanism", "The legacy or market mechanism being explained.")}
+      {field(`${BRAND.name} bridge`, bridge, setBridge, "ecoBridge", `What the reader should infer. ${BRAND.name} is never named.`, true)}
       {field("Evidence", evidence, setEvidence, "evidence", "The number or quote the post rests on.")}
       <label className="block">
         <span className="font-mono text-[10px] uppercase tracking-wider text-white/35">Audience</span>

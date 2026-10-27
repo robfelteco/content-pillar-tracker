@@ -14,7 +14,7 @@
 // that the deferred play() works in both, including on a backgrounded tab.
 
 const SRC = "/sounds/action-complete.mp3";
-const PREF_KEY = "eco-tracker:sound:v1";
+const PREF_KEY = "content-pillar-tracker:sound:v1";
 
 let el: HTMLAudioElement | null = null;
 let unlocked = false;

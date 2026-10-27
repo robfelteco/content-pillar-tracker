@@ -1,3 +1,4 @@
+import { MARKET } from "../brand/market.ts";
 import { BRAND } from "../brand/identity.ts";
 // Discover — find recent external articles / reports / data the operator could
 // turn into a BROAD-EDUCATIONAL @eco post. Emulates the carousel app's discover
@@ -36,26 +37,7 @@ const ECO_BRIEF = `${BRAND_ONE_LINER} Broad-educational posts are TOP-OF-FUNNEL:
 The audiences the company names. Pick ONE per idea, by id:
 ${siteAudiencePromptBlock()}`;
 
-const LENSES = [
-  {
-    id: "market-data",
-    label: "Market data",
-    brief:
-      "Find a recent, verifiable stablecoin-market DATA point or trend (market cap milestone, volume crossover, growth curve, chain fragmentation, share shift) from data providers / research desks (DeFiLlama, Artemis, Visa Onchain Analytics, McKinsey, bank research). Each idea = one surprising number the ICP hasn't internalized yet.",
-  },
-  {
-    id: "company-moves",
-    label: "Company moves",
-    brief:
-      "Find a recent NAMED-company stablecoin move (a bank, card network, fintech, Fortune 500, asset manager issuing / settling / paying out in stablecoins) that signals where the market is going. Amplify the logo; never bash it.",
-  },
-  {
-    id: "policy-infra",
-    label: "Policy & infrastructure",
-    brief:
-      "Find a recent structural shift in rules or rails (GENIUS Act rollout, MiCA, state charters, new settlement rails/chains, custody approvals) and what it unlocks for institutions or developers.",
-  },
-];
+const LENSES = MARKET.discoveryLenses;
 
 function buildPrompt(lens: (typeof LENSES)[number], count: number, excludeTitles: string[]): string {
   const exclusion = excludeTitles.length

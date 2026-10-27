@@ -1,3 +1,4 @@
+import { MARKET } from "../brand/market.ts";
 import { pillarsByMode, type Template } from "./taxonomy.ts";
 const VIDEO_PILLARS: Template[] = pillarsByMode("videos");
 import { BRAND } from "../brand/identity.ts";
@@ -90,22 +91,12 @@ export interface VideoUse {
 // Series / speaker vocabulary
 // ---------------------------------------------------------------------------
 
-export const SERIES_DEFS: { id: string; label: string; hint: string }[] = [
-  { id: "product_explainer", label: "Product explainer", hint: "Head of Product / team explaining a mechanism to camera" },
-  { id: "ceo_interview", label: "CEO interview clip", hint: "A cut from a podcast or show appearance" },
-  { id: "concept_101", label: "Concept 101", hint: "'What is X' educational explainer, no Eco pitch" },
-  { id: "market_take", label: "Market take", hint: "Commentary on a stablecoin-market development" },
-  { id: "brand_film", label: "Brand film", hint: "Produced brand/marketing piece, not a talking head" },
-  { id: "demo", label: "Product demo", hint: "Screen or in-app footage" },
-  { id: "third_party", label: "Third-party clip", hint: "Someone outside Eco saying something useful" },
-];
+export const SERIES_DEFS: { id: string; label: string; hint: string }[] = MARKET.clipSeries.map((s) => ({ id: s.id, label: s.label, hint: s.brief }));
 
 export const SERIES_BY_ID = Object.fromEntries(SERIES_DEFS.map((s) => [s.id, s]));
 
 export const SPEAKER_LABELS: Record<string, string> = {
-  strao: "@strao_ (Head of Product)",
-  rynesaxe: "@rynesaxe (CEO)",
-  shah: "Shah",
+  ...(BRAND.speakers ?? {}),
   third_party: "External speaker",
   none: "No speaker / voiceover",
 };

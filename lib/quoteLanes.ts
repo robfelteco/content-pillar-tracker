@@ -1,3 +1,4 @@
+import { MARKET } from "../brand/market.ts";
 import { xGet, countBilledReads, resolveHandle } from "./twitter.ts";
 import { sql } from "./db.ts";
 import type { RosterPerson } from "./quoteRoster.ts";
@@ -68,11 +69,7 @@ const MIN_CENTS_PER_AUTHOR = 5; // one page of ~10 posts; below this a slot is p
 // crypto account at 50k does not clear the same bar.
 const MIN_ENGAGEMENT_BY_TIER: Record<number, number> = { 1: 2, 2: 8, 3: 25 };
 
-const STABLECOIN_KEYWORDS = [
-  "stablecoin", "usdc", "usdt", "digital dollar", "tokenized deposit", "settlement",
-  "clearing", "orchestration", "payment rail", "onchain payment", "treasury",
-  "cross-border", "remittance", "custody", "tokenization", "rwa", "genius act", "mica",
-];
+const MARKET_KEYWORDS = MARKET.keywords.map((k) => k.toLowerCase());
 
 interface RawSearchTweet {
   id: string;
@@ -92,9 +89,9 @@ interface RawUser {
   public_metrics?: { followers_count?: number };
 }
 
-function hasStablecoinKeyword(text: string): boolean {
+function hasMarketKeyword(text: string): boolean {
   const t = text.toLowerCase();
-  return STABLECOIN_KEYWORDS.some((k) => t.includes(k));
+  return MARKET_KEYWORDS.some((k) => t.includes(k));
 }
 
 export async function runLaneX(
@@ -243,7 +240,7 @@ function passesLocalFilter(t: RawSearchTweet, text: string, orgTier: number | nu
   // Replies and quote-posts with little original text are reaction, not a quote.
   const isReferencing = (t.referenced_tweets ?? []).some((r) => r.type === "replied_to" || r.type === "quoted");
   if (isReferencing && text.replace(/https?:\/\/\S+/g, "").trim().length < 120) return false;
-  if (!hasStablecoinKeyword(text)) return false;
+  if (!hasMarketKeyword(text)) return false;
   return true;
 }
 

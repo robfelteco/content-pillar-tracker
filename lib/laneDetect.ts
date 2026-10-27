@@ -209,7 +209,7 @@ Reply with JSON only:
 Rules:
 - Empty "lanes" array is the right answer for a generic post with no specific subject. Do not stretch.
 - "existing" means the subject IS in the list above but the tagger missed it. Give the existing id and only the handles/terms that would have caught it — do not restate its brief.
-- "new" needs a proper noun that is genuinely the subject. A company merely mentioned is not a partner lane; a partner lane means they run Eco infra in their own product.
+- "new" needs a proper noun that is genuinely the subject. A company merely mentioned is not a partner lane; a partner lane means they run ${BRAND.name} infra in their own product.
 - kind "chain" only for an actual blockchain or L1/L2 network.
 - handles: X handles WITHOUT the @, lowercased, exactly as they appear above.
 - terms: only tokens that are unambiguous in ordinary English. Skip a term you would not want matched in an unrelated post.

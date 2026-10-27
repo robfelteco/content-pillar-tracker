@@ -227,3 +227,21 @@ across three org tiers before it produces well; an interview rarely yields
 that. Seed what the material gives, say the lane will be thin, and point at
 the roster UI where the operator adds people over time. Every person's org
 must be an org in the list.
+
+## market.ts (whenever the quotes, education or videos sources are in use)
+
+Needed: what the market is called in a sentence; the keywords that mark a
+post as about it; the whole words that mark a quote as on-domain; the framing
+a quote card must never carry (price talk, slang, politics, whatever applies);
+one or two real examples each of a quote worth taking and one to skip; the
+themes an educational post can imply about the company without naming it;
+what the discovery lane should search for; the series a clip can belong to.
+
+Why: these are how the lanes tell on-topic from off-topic. Left at the
+starter, the quote lane accepts nothing and the discovery lane searches for
+placeholders.
+
+Ask: "What words do people use when they talk about your market?" and "Which
+quotes would you be proud to card, and which would embarrass you?" Themes come
+straight from the central reframe and the ownable column: each theme is one
+thing the company wants the reader to conclude on their own.

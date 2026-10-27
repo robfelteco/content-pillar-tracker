@@ -58,7 +58,7 @@ function mergedEntities(t) {
 
 // --- minimal OG scraper (mirrors lib/enrich.ts scrapeCard) ---
 const SCRAPER_UAS = [
-  "facebookexternalhit/1.1 (+https://eco.com)",
+  "facebookexternalhit/1.1 (+https://example.com)",
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
 ];
 function decodeEntities(s) {

@@ -1,3 +1,5 @@
+import { MARKET } from "../brand/market.ts";
+import type { LabeledBrief } from "./brand/types.ts";
 import { pillarsByMode, pillarsWith, type Template } from "./taxonomy.ts";
 const EDU_PILLARS: Template[] = pillarsByMode("education");
 const TEACHING_PILLARS: Template[] = pillarsWith("teaches");
@@ -48,20 +50,11 @@ const FIRECRAWL_BASE = "https://api.firecrawl.dev/v2";
 export type CandidateStatus = "inbox" | "picked" | "drafted" | "posted" | "skipped";
 export const CANDIDATE_STATUSES: CandidateStatus[] = ["inbox", "picked", "drafted", "posted", "skipped"];
 
-// The eco.com themes an educational post can imply (design doc §2). The intake
-// model picks one per candidate; the UI shows it as the fourth word on the
-// card. Kept as a list so the rubric and the UI cannot drift apart.
-export const EDU_THEMES = [
-  { id: "fragmentation", label: "Fragmentation", brief: "Liquidity, chains, venues and rails split into pieces that do not talk to each other." },
-  { id: "pre_funding", label: "Pre-funding", brief: "Capital parked in advance (nostro, prefunded wallets, inventory) to make a payment or fill possible." },
-  { id: "all_or_nothing", label: "All-or-nothing", brief: "Failsafe execution: every step confirms or nothing executes. PvP, DvP, atomic settlement, stranded funds." },
-  { id: "programmable_rules", label: "Programmable rules", brief: "Policies and guardrails enforced in the money movement itself, not by a back office after the fact." },
-  { id: "tokenized_assets", label: "Tokenized assets", brief: "RWAs, tokenized deposits, funds and securities moving on the same rails as stablecoins." },
-  { id: "at_par", label: "At-par conversion", brief: "1:1 stablecoin-to-stablecoin and stablecoin-to-fiat conversion, signed quotes, no slippage." },
-  { id: "agents", label: "Agents", brief: "Software agents that transact: bounded authority, machine-readable rails, outcomes enforced onchain." },
-] as const;
-export type EduTheme = (typeof EDU_THEMES)[number]["id"];
-const THEME_BY_ID: Record<string, (typeof EDU_THEMES)[number]> = Object.fromEntries(EDU_THEMES.map((t) => [t.id, t]));
+// The themes an educational post can imply about the company (brand/market.ts).
+// The intake model picks one per candidate; the UI shows it on the card.
+export const EDU_THEMES = MARKET.themes;
+export type EduTheme = string;
+const THEME_BY_ID: Record<string, LabeledBrief> = Object.fromEntries(EDU_THEMES.map((t) => [t.id, t]));
 
 export function themeLabel(id: string | null | undefined): string | null {
   if (!id) return null;
@@ -455,15 +448,15 @@ function framingPrompt(input: {
           ``,
         ].join("\n")
       : null,
-    `THE SIX AUDIENCES (pick exactly one id):`,
+    `THE AUDIENCES (pick exactly one id):`,
     siteAudiencePromptBlock(),
     ``,
-    `THE SEVEN THEMES an educational post can imply (pick the one the piece most naturally implies, or null):`,
+    `THE THEMES an educational post can imply (pick the one the piece most naturally implies, or null):`,
     EDU_THEMES.map((t) => `- ${t.id}: ${t.label}. ${t.brief}`).join("\n"),
     ``,
-    `ADJACENCY SCORE, 0-100: how directly does this piece let a reader infer one of those themes without Eco being named?`,
+    `ADJACENCY SCORE, 0-100: how directly does this piece let a reader infer one of those themes without ${BRAND.name} being named?`,
     `  80-100: a named institution, a hard number, and the so-what IS one of the themes (e.g. a bank publishing pre-funding costs).`,
-    `  50-79: clearly in the stablecoin/payments/tokenization market and a theme is one honest step away.`,
+    `  50-79: clearly in ${MARKET.name} and a theme is one honest step away.`,
     `  20-49: in the market but the bridge would be a stretch; token price, exchange drama, generic adoption cheer.`,
     `  0-19: off-topic, promotional, or unverifiable.`,
     `Give 1-3 short reasons, each a plain sentence a colleague could argue with.`,

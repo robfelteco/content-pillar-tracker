@@ -25,6 +25,8 @@ import { icpFromSolutionsPath, ICP_BY_ID, TIER_ORDER, type DocTier } from "./icp
 // this is meant to break.
 
 export const DOCS_ORIGIN = BRAND.docsOrigin;
+// Hostname of the docs origin, lowercased; empty when the shelf is off.
+const DOCS_HOST = (() => { try { return BRAND.docsOrigin ? new URL(BRAND.docsOrigin).hostname.toLowerCase() : ""; } catch { return ""; } })();
 export const LLMS_TXT_URL = `${DOCS_ORIGIN}/llms.txt`;
 
 // ---------------------------------------------------------------------------
@@ -137,7 +139,7 @@ export function canonicalDocUrl(href: string): string | null {
   } catch {
     return null;
   }
-  if (!/(^|\.)docs\.eco\.com$/i.test(u.hostname)) return null;
+  if (!DOCS_HOST || !(u.hostname.toLowerCase() === DOCS_HOST || u.hostname.toLowerCase().endsWith("." + DOCS_HOST))) return null;
   let path = u.pathname.replace(/\.md$/i, "").replace(/\/+$/, "");
   if (path === "") path = "/home";
   return `${DOCS_ORIGIN}${path}`;
@@ -517,14 +519,14 @@ export interface HomepagePenalty {
 export async function getHomepagePenalty(): Promise<HomepagePenalty> {
   const rows = await sql<{ isHome: boolean; n: number; med: number | null }>`
     WITH x AS (
-      SELECT (p.link_resolved_url ILIKE '%docs.eco.com/home%') AS "isHome",
+      SELECT (p.link_resolved_url ILIKE ${"%" + DOCS_HOST + "/home%"}) AS "isHome",
              s.impressions
       FROM posts p
       LEFT JOIN LATERAL (
         SELECT impressions FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
       ) s ON true
       WHERE p.template = ANY(${DOCS_PILLARS}::text[]) AND p.is_reply = false
-        AND p.link_resolved_url ILIKE '%docs.eco.com%'
+        AND p.link_resolved_url ILIKE ${"%" + DOCS_HOST + "%"}
     )
     SELECT "isHome", COUNT(*)::int AS n,
            ROUND(percentile_cont(0.5) WITHIN GROUP (ORDER BY impressions))::int AS med

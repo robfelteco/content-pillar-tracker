@@ -1,7 +1,7 @@
 /**
  * Seed the `articles` registry (Migration 006) from the blog PDFs on disk.
  *
- * Every eco.com/blog print-to-PDF carries the same page-1 furniture: a print
+ * Every blog print-to-PDF carries the same page-1 furniture: a print
  * timestamp, the running-header title, the wrapped H1, the dek, the author,
  * "Share", the publish date, and the canonical URL in the footer. That makes
  * the seed fully deterministic — no LLM, no scraping.
@@ -13,6 +13,8 @@
  *
  * Re-running is safe: rows upsert on slug.
  */
+import { BRAND } from "../brand/identity.ts";
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 import pg from "pg";
 import { readdirSync } from "node:fs";
 import { join, basename } from "node:path";
@@ -22,17 +24,14 @@ import { extractDimensions } from "../lib/dimensions.ts";
 import { getLaneRegistry } from "../lib/laneRegistry.ts";
 import { brandBlogSlug } from "../lib/articleKeys.ts";
 
-const DEFAULT_DIRS: [string, string][] = [
-  ["product", join(process.env.HOME!, "Desktop/Product Blogs")],
-  ["thought_leadership", join(process.env.HOME!, "Desktop/Thought Leadership Blogs")],
-];
-
-const dirs: [string, string][] = process.argv.slice(2).length
-  ? process.argv.slice(2).map((a) => {
-      const i = a.indexOf(":");
-      return [a.slice(0, i), a.slice(i + 1)] as [string, string];
-    })
-  : DEFAULT_DIRS;
+const dirs: [string, string][] = process.argv.slice(2).map((a) => {
+  const i = a.indexOf(":");
+  return [a.slice(0, i), a.slice(i + 1)] as [string, string];
+});
+if (!dirs.length) {
+  console.error('Usage: node --env-file=.env scripts/ingest-articles.ts "product:/path/to/pdfs" "thought_leadership:/path/to/pdfs"');
+  process.exit(1);
+}
 
 const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL;
 if (!url) {
@@ -100,7 +99,7 @@ function parseFront(page1: string, file: string): Parsed | null {
   const publishedOn = dm ? `${dm[3]}-${MONTHS[dm[2].toLowerCase()]}-${dm[1].padStart(2, "0")}` : null;
 
   // 6. canonical URL from the footer
-  const um = page1.match(/https?:\/\/eco\.com\/blog\/[a-z0-9-]+\/?/i);
+  const um = page1.match(new RegExp(`https?:\\/\\/${escapeRe(BRAND.blogDomain)}\\/blog\\/[a-z0-9-]+\\/?`, "i"));
   const canonicalUrl = um ? um[0] : null;
   const slug = brandBlogSlug(canonicalUrl) ?? basename(file).replace(/\.pdf$/i, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -116,7 +115,7 @@ function cleanBody(all: string, title: string): string {
       const t = l.trim();
       if (!t) return true;
       if (/^\d{1,2}\/\d{1,2}\/\d{2,4},\s+\d{1,2}:\d{2}\s*(AM|PM)$/i.test(t)) return false;
-      if (/^https?:\/\/eco\.com\/blog\//i.test(t)) return false;
+      if (new RegExp(`^https?:\\/\\/${escapeRe(BRAND.blogDomain)}\\/blog\\/`, "i").test(t)) return false;
       if (/^\d+\/\d+$/.test(t)) return false;
       if (t.toLowerCase() === titleNorm) return false;
       if (/^share$/i.test(t)) return false;
@@ -137,11 +136,12 @@ function cleanBody(all: string, title: string): string {
   // read like eco-integrates-b2c2 the footer opens two thirds of the way in,
   // while an "About Eco" heading in a long piece could be genuine prose. Only
   // one of the two standing footer paragraphs marks the real end of an article.
-  const FOOTER = /^[ \t]*About Eco\b[\s\S]{0,40}?Eco (?:powers real-time money movement|is the stablecoin network)/m;
+  // The standing "About <Company>" footer paragraph marks the real end.
+  const FOOTER = new RegExp(`^[ \\t]*About ${escapeRe(BRAND.name)}\\b[\\s\\S]{0,40}?${escapeRe(BRAND.name)} `, "m");
   const m = cleaned.match(FOOTER);
   if (m && m.index !== undefined) return cleaned.slice(0, m.index).trim();
   // Some prints end on the heading with the paragraph on a page we never see.
-  const bare = cleaned.search(/^[ \t]*About Eco\b\s*$/m);
+  const bare = cleaned.search(new RegExp(`^[ \\t]*About ${escapeRe(BRAND.name)}\\b\\s*$`, "m"));
   return bare >= 0 && cleaned.length - bare < 40 ? cleaned.slice(0, bare).trim() : cleaned;
 }
 
@@ -192,7 +192,7 @@ for (const [kind, dir] of dirs) {
     // going quietly empty is the same class of silent gap the registry exists
     // to close.
     const tagProducts = (text: string) =>
-      extractDimensions({ text, mentions: [], domains: ["eco.com"] }, vocab).products;
+      extractDimensions({ text, mentions: [], domains: [BRAND.blogDomain] }, vocab).products;
     const fromTitle = tagProducts(`${parsed.title} ${parsed.dek ?? ""}`);
     const product = kind === "product" ? (fromTitle[0] ?? tagProducts(body)[0] ?? null) : null;
 

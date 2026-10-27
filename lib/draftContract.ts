@@ -1,3 +1,4 @@
+import { MARKET } from "../brand/market.ts";
 // The output contract and the scoring rubric: what a returned draft must look
 // like, and the dimensions the drafter scores itself on before returning.
 //
@@ -27,7 +28,7 @@ export const SCORING_RUBRIC: string[] = [
   "  conversational pull (does it earn a considered reply or quote, without bait?)",
   "  dwell value (enough substance to hold attention)",
   "  hook honesty (does the payload deliver what the first line implies?)",
-  "  standing out from a feed of stablecoin takes",
+  `  standing out from a feed of takes about ${MARKET.name}`,
   "  slop risk (does it read as machine-written?)",
   "  length fit (is this the right band for the material?)",
   "Anything you would score under 60, rewrite before returning it. Put the weakest dimension in scoreNote.",

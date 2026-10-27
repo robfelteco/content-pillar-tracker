@@ -1,3 +1,5 @@
+import { MARKET } from "../brand/market.ts";
+import { NARRATIVE_PILLARS } from "./positioning.ts";
 import type { RosterPerson } from "./quoteRoster.ts";
 import type { Verification } from "./quoteVerify.ts";
 
@@ -34,9 +36,8 @@ const SENIORITY_WEIGHT: Record<number, number> = { 1: 1.0, 2: 0.8, 3: 0.5 };
 
 // Framing that disqualifies regardless of who said it. These are the things a
 // neutral institutional platform must not amplify.
-const PRICE_RE = /\b(price target|market cap|moon|pump|all[- ]time high|ath|rally|bull run|bear market|token price|\$[a-z]{2,6} to \$)/i;
-const RETAIL_RE = /\b(degen|ape|wagmi|ngmi|gm |fren|hodl|to the moon|diamond hands)\b/i;
-const TRIBAL_RE = /\b(ethereum killer|solana killer|evm maxi|flippening|l1 wars|chain war)\b/i;
+// The patterns live in brand/market.ts quoteDisqualifiers, keyed by reason.
+const DISQUALIFIERS: [string, RegExp][] = Object.entries(MARKET.quoteDisqualifiers ?? {});
 
 // --- Learned from the first real review pass -------------------------------
 // Robert approved 8 of 38 and rejected 22, every rejection as off_narrative.
@@ -49,7 +50,6 @@ const TRIBAL_RE = /\b(ethereum killer|solana killer|evm maxi|flippening|l1 wars|
 
 // Regulatory and legislative process. Adjacent to stablecoins, but it is
 // political commentary, not a claim about how money moves.
-const POLITICS_RE = /\b(clarity act|genius act|senate|congress|house committee|banking committee|white house|regulator[sy]?\s+(?:environment|framework)|idi\b|insured depository|bank charter|trust bank|occ\b|lower the standard|legislation|bill\b|political cycle|regulatory leadership|administrations)/i;
 
 // First-person promotion of the speaker's own company or product. "We launched",
 // "our network", a $TICKER or a product name the speaker owns.
@@ -59,7 +59,7 @@ const POLITICS_RE = /\b(clarity act|genius act|senate|congress|house committee|b
 // Mixed-case brands like SoFiUSD need [A-Za-z], not [A-Z][a-z]+. USDC and USDT
 // are deliberately EXCLUDED: they are the market's reference assets, and a Visa
 // or DoorDash exec naming one is describing the market, not their own product.
-const OWN_TICKER_RE = /\b(?!USDC\b|USDT\b)[A-Za-z]{2,8}USD\b/;
+const OWN_TICKER_RE: RegExp | null = MARKET.ownTickerPattern ?? null;
 
 // Company milestone / announcement framing. This is what actually separates the
 // rejections from the approvals — NOT whether the speaker's employer is named.
@@ -69,7 +69,7 @@ const MILESTONE_RE = /\b(is the first|are the first|just paid|just acquired|can 
 
 // Is the quote actually about the stablecoin domain at all? Robert's floor.
 // Kept broad enough that "digital dollar" and a named issuer asset still pass.
-const DOMAIN_RE = /\b(stablecoin|stablecoins|digital dollar|tokeni[sz]ed (?:deposit|cash|money)|usdc|usdt|onchain (?:dollar|money|payment)|money movement|settlement|clearing)\b/i;
+const DOMAIN_RE = new RegExp(`\\b(${MARKET.domainTerms.map(escapeRe).join("|")})\\b`, "i");
 
 export function scoreCandidate(input: ScoreInput): ScoreResult {
   const disqualifiers: string[] = [];
@@ -81,12 +81,9 @@ export function scoreCandidate(input: ScoreInput): ScoreResult {
   if (input.competitorNames.some((c) => c && new RegExp(`\\b${escapeRe(c)}\\b`, "i").test(text))) {
     disqualifiers.push("praises_competitor");
   }
-  if (PRICE_RE.test(text)) disqualifiers.push("price_speculation");
-  if (RETAIL_RE.test(text)) disqualifiers.push("retail_framing");
-  if (TRIBAL_RE.test(text)) disqualifiers.push("chain_tribalism");
+  for (const [reason, re] of DISQUALIFIERS) if (re.test(text)) disqualifiers.push(reason);
   if (input.verification === "failed") disqualifiers.push("verification_failed");
-  if (POLITICS_RE.test(text)) disqualifiers.push("regulatory_politics");
-  if (OWN_TICKER_RE.test(text) || MILESTONE_RE.test(text)) {
+  if ((OWN_TICKER_RE && OWN_TICKER_RE.test(text)) || MILESTONE_RE.test(text)) {
     disqualifiers.push("self_promotional");
   }
 
@@ -119,8 +116,8 @@ export function scoreCandidate(input: ScoreInput): ScoreResult {
   if (input.wordCount >= 12 && input.wordCount <= 40) quotability += 0.3;
   else if (input.wordCount >= 8 && input.wordCount <= 55) quotability += 0.15;
 
-  // Pillar fit — which of Eco's four narrative pillars it serves.
-  const pillarFit = input.pillarTag && "ABCD".includes(input.pillarTag) ? 1 : 0;
+  // Pillar fit: the quote serves one of the brand's narrative pillars.
+  const pillarFit = input.pillarTag && NARRATIVE_PILLARS.some((p) => p.id === input.pillarTag) ? 1 : 0;
 
   const breakdown = {
     credibility: round2(credibility),

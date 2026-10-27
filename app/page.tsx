@@ -1,3 +1,4 @@
+import { BRAND as IDENTITY } from "@/brand/identity";
 import { PLATFORM } from "@/lib/brand/helpers";
 import {
   getInsights,
@@ -470,7 +471,7 @@ function docTarget(r: DocShelfRow): Target & { score: number } {
     badges.push({ label: "Hero", tone: "good", title: "A whole post can be built around this page." });
   }
   if (r.useCount === 0) {
-    badges.push({ label: "Never linked", tone: "good", title: "No @eco post has ever driven to this page." });
+    badges.push({ label: "Never linked", tone: "good", title: `No @${IDENTITY.handle} post has ever driven to this page.` });
   }
   return {
     key: `doc-${r.docPageId}`,
@@ -593,7 +594,7 @@ function buildVideoLanes(videos: VideoShelfRow[]): { lanes: LaneGroup[]; videosM
 function videoTarget(v: VideoShelfRow): Target & { score: number } {
   const badges: NonNullable<Target["badges"]> = [];
   if (v.useCount === 0) {
-    badges.push({ label: "Never posted", tone: "good", title: "This clip has never run on @eco." });
+    badges.push({ label: "Never posted", tone: "good", title: `This clip has never run on @${IDENTITY.handle}.` });
   }
   if (v.transcript) {
     badges.push({ label: "Transcript", tone: "good", title: "The drafter can quote the speaker directly." });

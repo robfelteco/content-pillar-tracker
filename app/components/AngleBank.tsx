@@ -1,5 +1,7 @@
 "use client";
 
+import { BRAND } from "@/brand/identity";
+import { MARKET } from "@/brand/market";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { AngleBank as Bank, EducationAngle } from "@/lib/angleBank";
@@ -73,7 +75,7 @@ export function AngleBank({ bank, analogs }: { bank: Bank; analogs: { id: string
         <div className="text-[11px] text-white/45">
           {bank.banked} banked
           {bank.missingBridge > 0 && (
-            <span className="text-amber-300/70"> · {bank.missingBridge} still missing the Eco bridge</span>
+            <span className="text-amber-300/70"> · {bank.missingBridge} still missing the {BRAND.name} bridge</span>
           )}
           {bank.used > 0 && <span className="text-white/30"> · {bank.used} used</span>}
         </div>
@@ -192,7 +194,7 @@ function AngleRow({
             )}
             {noBridge && a.status === "banked" && (
               <span className="rounded bg-amber-400/15 px-1.5 py-0.5 font-mono text-[9px] text-amber-300">
-                no Eco bridge
+                no {BRAND.name} bridge
               </span>
             )}
           </div>
@@ -245,7 +247,7 @@ function AngleRow({
       {(a.mechanism || a.ecoBridge || a.sourceNote) && (
         <dl className="mt-2 space-y-1 border-t border-white/[0.06] pt-2 text-[11px]">
           {a.mechanism && <Field label="Mechanism" value={a.mechanism} />}
-          {a.ecoBridge && <Field label="Eco bridge" value={a.ecoBridge} />}
+          {a.ecoBridge && <Field label={`${BRAND.name} bridge`} value={a.ecoBridge} />}
           {a.sourceNote && <Field label="Evidence" value={a.sourceNote} />}
         </dl>
       )}
@@ -310,19 +312,19 @@ function AngleForm({
         hint="The angle in one line, as you'd pitch it out loud."
         value={frame}
         onChange={setFrame}
-        placeholder="Swift moves $X a day at Y cost — stablecoins settle the same value for Z. First inning."
+        placeholder={MARKET.angleExamples?.frame ?? ""}
         rows={2}
       />
       <Input
         label="Mechanism"
-        hint="The TradFi thing this explains."
+        hint="The legacy mechanism this explains."
         value={mechanism}
         onChange={setMechanism}
-        placeholder="Correspondent banking: nostro/vostro prefunding, and why it costs what it costs."
+        placeholder={MARKET.angleExamples?.mechanism ?? ""}
       />
       <Input
-        label="Eco bridge"
-        hint="How it gets to what Eco does. The hard half — leave it blank and it'll be flagged rather than forgotten."
+        label={`${BRAND.name} bridge`}
+        hint={`How it gets to what ${BRAND.name} does. The hard half: leave it blank and it will be flagged rather than forgotten.`}
         value={ecoBridge}
         onChange={setEcoBridge}
         placeholder="The cost the reader already pays, then the mechanism that removes it."

@@ -17,6 +17,7 @@ export const BRAND: BrandIdentity<PillarId> = {
   onCamera:
     "The people who appear on camera are Ryne Saxe (CEO, @rynesaxe), a Head of Product (@strao_), and " +
     "Shah, who fronts an educational explainer series.",
+  speakers: { strao: "@strao_ (Head of Product)", rynesaxe: "@rynesaxe (CEO)", shah: "Shah" },
 
   // The canonical short-form description. The WHO WE ARE section of the
   // positioning brief is the long form of the same claim; edit them together.

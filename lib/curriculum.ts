@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 import { pillarsWith } from "./taxonomy.ts";
 import { sql } from "./db.ts";
 import { ANALOG_DEFS, type AnalogDef, type AnalogTier } from "./analogs.ts";
@@ -127,7 +128,7 @@ const STRENGTH_REASON: Record<1 | 2 | 3, string> = {
 // at full marks and decays as we teach it; a concept taught in the last three
 // weeks drops far enough that something untaught always outranks it.
 function coverageWeight(useCount: number, daysSince: number | null): { w: number; why: string } {
-  if (useCount === 0) return { w: 1, why: "Never taught — no @eco post has explained this" };
+  if (useCount === 0) return { w: 1, why: `Never taught: no @${BRAND.handle} post has explained this` };
   const depth = Math.max(0.15, 0.5 - 0.1 * (useCount - 1));
   if (daysSince == null) return { w: depth, why: `Touched ${useCount}× (no date)` };
   if (daysSince < FRESH_DAYS) {

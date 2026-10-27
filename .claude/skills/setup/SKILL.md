@@ -8,8 +8,8 @@ description: Configure the Content Pillar Tracker for a new company by interview
 You are turning the neutral starter in `brand/` into a real configuration for
 the person in front of you. The core reads nothing else about the company, so
 when `brand/` is right the whole app is right: classification, the dashboard,
-the prioritize scoring and the copy drafter all key off these ten files, six
-core and four registries.
+the prioritize scoring and the copy drafter all key off these eleven files:
+six core, four registries, and the market vocabulary.
 
 Two things make this go well. First, write from material, not from thin air:
 a positioning doc, a boilerplate, the website, the docs site, a few months of
@@ -24,9 +24,9 @@ the rest for scale.
 
 ## The flow
 
-1. **Orient.** Read `brand/README.md`, `lib/brand/types.ts`, the ten current
-   `brand/*.ts` files (six core, four registries), and every file in
-   `examples/eco/`. The types are the
+1. **Orient.** Read `brand/README.md`, `lib/brand/types.ts`, the eleven
+   current `brand/*.ts` files (six core, four registries, `market.ts`), and
+   the example files named below. The types are the
    contract, the current files are the structure you keep, the example is the
    quality bar. If `brand/identity.ts` no longer says Acme, this is a
    revision: read what is there and ask what should change rather than
@@ -140,6 +140,10 @@ may be left empty, which switches its lane off cleanly:
   `discovery`, the angle bank and question mining.
 - `channels.ts`: YouTube channels the curriculum lane watches.
 - `quoteRoster.ts`: orgs, people and watch sources for quote discovery.
+- `market.ts`: the market's vocabulary (name, keywords, on-domain terms,
+  quote disqualifiers and examples, educational themes, discovery lenses,
+  clip series). Needed whenever the quotes, education or videos sources are
+  in use; the lanes cannot tell on-topic from off-topic without it.
 
 Do these AFTER the six core files, and only for the sources the person's
 pillars use. A source no pillar uses is off: its registry stays empty, its

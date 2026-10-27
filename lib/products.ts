@@ -75,7 +75,7 @@ export interface ShapeInput {
   entities: string[]; // canonical partner ids from lib/dimensions.ts
 }
 
-const LAUNCH_RE = /\b(introducing|we're releasing|we are releasing|today,? we're|is now live|are now live|is live in|live in eco|now supports|we're launching|is launching)\b/i;
+const LAUNCH_RE = /\b(introducing|we're releasing|we are releasing|today,? we're|is now live|are now live|is live in|now supports|we're launching|is launching)\b/i;
 const NUMBERED_RE = /(^|\n)\s*(?:[1-4][.)]|[-–•])\s+\S/;
 const INSTITUTIONAL_RE = /\b(institution|institutional|regulated|compliance|kyb|sanctions|audit|counterparty|desk|treasury|risk committee)\b/i;
 const DIAGRAM_RE = /\b(here's the flow|here's the full|lifecycle|under the hood|architecture|breaks down how|the flow)\b/i;

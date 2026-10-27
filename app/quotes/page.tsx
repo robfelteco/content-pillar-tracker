@@ -1,3 +1,4 @@
+import { MARKET } from "@/brand/market";
 import { getQueue, queueCounts, latestRun, getRosterSuggestions } from "@/lib/quoteDiscovery";
 import { rosterCounts } from "@/lib/quoteRoster";
 import { getReviewCount } from "@/lib/queries";
@@ -29,7 +30,7 @@ export default async function QuotesPage() {
         <Eyebrow>Quote discovery</Eyebrow>
         <h1 className="mt-1.5 text-2xl font-medium tracking-[-0.02em]">Quotes worth a card</h1>
         <p className="mt-1 max-w-2xl text-sm text-white/45">
-          Verbatim, attributable stablecoin quotes from credible people at credible organizations. Every candidate has
+          Verbatim, attributable quotes about {MARKET.name} from credible people at credible organizations. Every candidate has
           been matched back against its source before it got here — if you have to go verify one by hand, that&apos;s a
           bug, not a judgement call.
         </p>

@@ -1,6 +1,6 @@
 # Writing the files
 
-Ten files, six core and four registries, written in this order because later
+Eleven files, six core, four registries and the market vocabulary, written in this order because later
 ones reference earlier ones.
 Keep each file's imports, exports and explanatory comments from the starter;
 replace the values and delete the "STARTER VALUES" notes.
@@ -150,3 +150,17 @@ The article shelf groups by an article's `kind` (`product` or
 `thought_leadership`), a property of the piece set when it is ingested, not
 the id of the pillar that drafts from it. A pillar named `essays` on the
 `articles` source still reads articles of kind `thought_leadership`.
+
+## market.ts
+
+- `name` reads inside a sentence: "quotes about the stablecoin market".
+- `keywords` lowercase substrings; `domainTerms` whole words (matched
+  case-insensitively).
+- `quoteDisqualifiers` keyed by reason, which appears in the review UI; omit
+  the key when the market has none.
+- `quoteExamples` are real sentences, two to four per list; they calibrate
+  the extractor more than any rule does.
+- `themes` ids snake_case; two to eight.
+- `discoveryLenses` briefs are search instructions in the imperative.
+- `clipSeries` only matters when a pillar drafts from videos; keep
+  `third_party` so external clips have a home.

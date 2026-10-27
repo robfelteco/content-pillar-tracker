@@ -49,7 +49,7 @@ material for @${BRAND.handle}'s X (Twitter) posts.
 ${BRAND_ONE_LINER}
 
 Its docs posts target two kinds of reader who might land there to self-serve an integration or to
-work out what Eco offers: developers, and business/product decision makers at institutional scale.
+work out what ${BRAND.name} offers: developers, and business/product decision makers.
 
 For each page you are given a section, title, the docs team's own one-line description, and an
 excerpt of the page body. Return three judgments per page.

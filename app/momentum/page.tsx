@@ -1,3 +1,4 @@
+import { BRAND } from "@/brand/identity";
 import { sql } from "@/lib/db";
 import { getMomentum, SPIKE_MULTIPLE, BASELINE_DAYS, MIN_BASELINE_DAYS, type ChainMomentum } from "@/lib/chainMomentum";
 import { getReviewCount } from "@/lib/queries";
@@ -71,7 +72,7 @@ export default async function MomentumPage() {
                         <> and we have never mentioned it</>
                       )}
                       {r.integrated ? (
-                        <span className="text-emerald-300/70"> · Eco is live here</span>
+                        <span className="text-emerald-300/70"> · {BRAND.name} is live here</span>
                       ) : (
                         <span className="text-emerald-300/50"> · not integrated — market angle only</span>
                       )}
@@ -133,7 +134,7 @@ function MomentumRow({ r }: { r: ChainMomentum }) {
             <div className="mt-0.5 text-sm tabular-nums text-white/70">{compact(r.recentEng)}</div>
           </div>
           <div className="w-28">
-            <div className="font-mono text-[10px] uppercase tracking-wider text-white/30">Eco last posted</div>
+            <div className="font-mono text-[10px] uppercase tracking-wider text-white/30">{BRAND.name} last posted</div>
             <div className="mt-0.5 text-sm tabular-nums text-white/70">
               {r.ecoCoverDaysSince == null ? "never" : daysAgo(r.ecoCoverDaysSince)}
             </div>
@@ -167,7 +168,7 @@ function MomentumRow({ r }: { r: ChainMomentum }) {
           {r.baselineEng == null
             ? `not established yet — ${r.baselineDays} of ${MIN_BASELINE_DAYS} days needed`
             : `${compact(r.baselineEng)} engagements/day over ${r.baselineDays} days`}
-          {coverLabel && ` · Eco's last mention was a ${coverLabel}`}
+          {coverLabel && ` · ${BRAND.name}'s last mention was a ${coverLabel}`}
         </div>
       </div>
     </details>

@@ -1,4 +1,4 @@
-import type { ChainDef, PartnerDef, DmvLaneDef, DmvLaneId } from "@/lib/brand/types.ts";
+import type { ChainDef, PartnerDef, DmvLaneDef, DmvLaneId, ChainArticleDef } from "@/lib/brand/types.ts";
 
 // The platforms the company integrates with ("chains" in the schema) and the
 // companies it highlights. Three things collapse into one entry per chain:
@@ -369,3 +369,16 @@ export const DMV_LANES: Record<DmvLaneId, DmvLaneDef> = {
     staleDays: 14,
   },
 };
+
+// The articles that carried each chain integration, so the chain pillar drafts
+// from a published piece. `anchorStatusId` is the @eco status that carried the
+// X article: pasting it into the composer unfurls the article card.
+export const CHAIN_ARTICLES: ChainArticleDef[] = [
+  { chain: "bnb", slug: "eco-expands-to-bnb-chain", anchorStatusId: "2046240619530444944", xArticleId: "2046240449535004672" },
+  { chain: "hyperliquid", slug: "eco-upgrades-hyperliquid", anchorStatusId: "2037897563742908782", xArticleId: "2037897388148334592" },
+  { chain: "tron", slug: "eco-integrates-tron", anchorStatusId: "2029591573473902875", xArticleId: "2029591340669685760" },
+  { chain: "robinhood", slug: "eco-integrates-robinhood-chain", anchorStatusId: "2028478726963118287", xArticleId: "2028478534683176960" },
+  { chain: "solana", slug: "eco-powers-stablecoin-bridging-between-solana-in-seconds-not-steps" },
+  { chain: "polygon", slug: "eco-powers-next-chapter-of-polygons-stablecoin-economy" },
+  { chain: "arbitrum", slug: "arbitrum-leads-usage-across-eco" },
+];

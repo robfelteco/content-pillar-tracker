@@ -95,6 +95,8 @@ export interface BrandIdentity<Id extends string = string> {
   youtubeHandle: string;
   /** Optional. Who recurs on camera in the company's clips, for the video tagger. */
   onCamera?: string;
+  /** Optional. Speaker ids the video tagger may assign, with display labels; "third_party" and "none" are always available. */
+  speakers?: Record<string, string>;
   /**
    * What the company calls the platforms it integrates with, for the UI and
    * prompts of the platform lane: { singular: "chain", plural: "chains" },
@@ -294,4 +296,49 @@ export interface NarrativePillar {
   label: string;
   /** One line a model can match a quote against. */
   brief: string;
+}
+
+// ---------------------------------------------------------------------------
+// The market: the vocabulary of the world the account posts about. Read by
+// the quote, discovery, education and video lanes.
+// ---------------------------------------------------------------------------
+export interface LabeledBrief {
+  id: string;
+  label: string;
+  brief: string;
+}
+
+export interface MarketDef {
+  /** As it reads in a sentence: "the stablecoin market", "fintech reconciliation". */
+  name: string;
+  /** Lowercase substrings that mark an X post as being about the market, for the quote search lane. */
+  keywords: string[];
+  /** Words that mark a quote as on-domain, matched as whole words; off-domain quotes are penalised, not dropped. */
+  domainTerms: string[];
+  /** Framing that disqualifies a quote regardless of who said it, by reason. Optional. */
+  quoteDisqualifiers?: Record<string, RegExp>;
+  /** A pattern for a speaker naming their own issued asset or product ticker. Optional. */
+  ownTickerPattern?: RegExp;
+  /** Calibration examples for the quote extractor: what to take, what to skip. */
+  quoteExamples: { take: string[]; skipSelfPromo: string[]; skipPolitics: string[] };
+  /** The themes an educational post can imply about the company, picked by the intake model. */
+  themes: LabeledBrief[];
+  /** Lenses the discovery lane searches through. Each brief is a search instruction. */
+  discoveryLenses: LabeledBrief[];
+  /** Series a short-form clip can belong to. `brief` is the hint handed to the tagger. */
+  clipSeries: LabeledBrief[];
+  /** Market words too common to count as evidence when matching posts to articles. */
+  stopwords?: string[];
+  /** Example text for the angle-bank form fields. */
+  angleExamples?: { frame: string; mechanism: string };
+}
+
+// An article that carried a platform integration: blog slug plus, where one
+// exists, the own-account status that carried the X article.
+export interface ChainArticleDef {
+  chain: string;
+  /** The blog slug under <blogDomain>/blog/. */
+  slug: string;
+  anchorStatusId?: string;
+  xArticleId?: string;
 }

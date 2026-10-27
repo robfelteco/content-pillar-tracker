@@ -1,3 +1,4 @@
+import { MARKET } from "../brand/market.ts";
 import { PLATFORM } from "./brand/helpers.ts";
 import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
@@ -795,7 +796,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
             : null,
           `The copy sits ABOVE the video, so it must make someone stop and play it.`,
           `The pillar's proven shape is: a question the clip answers, then who is answering it.`,
-          `Refer to people by the exact handle given above (e.g. "@strao_", "@rynesaxe"), never by a bare id.`,
+          `Refer to people by the exact handle given above, never by a bare id.`,
           `Do not describe the clip from outside — lead with the idea inside it.`,
           video.transcript
             ? `You have the transcript, so be specific. A near-verbatim line from it is fair game.`
@@ -1045,7 +1046,8 @@ const STOP = new Set([
   "during", "every", "first", "from", "further", "having", "here", "into", "more", "most", "other", "over",
   "same", "should", "since", "some", "still", "such", "than", "that", "their", "there", "these", "they",
   "this", "those", "through", "under", "until", "very", "what", "when", "where", "which", "while", "with",
-  "would", "while", "stablecoin", "stablecoins", "crypto", "market", "markets", "report", "says", "year",
+  "would", "while", "report", "says", "year",
+  ...(MARKET.stopwords ?? []),
 ]);
 
 // Retrieval terms for a news candidate: the content words of the headline,

@@ -1,5 +1,6 @@
 "use client";
 
+import { BRAND } from "@/brand/identity";
 import { PLATFORM } from "@/lib/brand/helpers";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -109,7 +110,7 @@ export default function LaneTray({ lanes }: { lanes: PendingLane[] }) {
                   <span
                     key={t}
                     className="rounded border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono text-white/40"
-                    title="Text term — only matched on a post that also mentions Eco"
+                    title={`Text term, only matched on a post that also mentions ${BRAND.name}`}
                   >
                     {t}
                   </span>

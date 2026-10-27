@@ -109,7 +109,7 @@ export function isShortAction(kind: ActionKind): boolean {
 // The learned estimate.
 // ---------------------------------------------------------------------------
 
-const STORE_KEY = "eco-tracker:action-timings:v1";
+const STORE_KEY = "content-pillar-tracker:action-timings:v1";
 const KEEP = 7; // samples per action; a week of clicking, roughly
 const MIN_SAMPLES = 3; // below this the default is still better than the median
 

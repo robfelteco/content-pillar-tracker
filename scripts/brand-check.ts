@@ -116,3 +116,21 @@ import { VOICE } from "../brand/voice.ts";
   if (p) process.exitCode = 1;
   else console.log("rules ok: handles, slugs, partners, momentum, voice, titles");
 }
+
+// The market vocabulary.
+import { MARKET } from "../brand/market.ts";
+{
+  let p = 0;
+  if (!MARKET.name.trim()) { console.error("market: name is empty"); p++; }
+  const ids = MARKET.themes.map((t) => t.id);
+  if (new Set(ids).size !== ids.length) { console.error("market: duplicate theme ids"); p++; }
+  for (const id of ids) if (!/^[a-z][a-z0-9_]*$/.test(id)) { console.error(`market: theme id "${id}" must be snake_case`); p++; }
+  if (pillarsByModeCheck("education") && !MARKET.discoveryLenses.length) { console.error("market: a pillar drafts from education but discoveryLenses is empty"); p++; }
+  if (pillarsByModeCheck("quotes") && !MARKET.domainTerms.length) { console.error("market: a pillar drafts from quotes but domainTerms is empty"); p++; }
+  if (pillarsByModeCheck("videos") && !MARKET.clipSeries.some((s) => s.id === "third_party")) console.log(`note: clipSeries has no "third_party" series, so external clips have no home`);
+  if (p) process.exitCode = 1;
+  else console.log(`market ok: ${MARKET.name}; ${MARKET.themes.length} themes, ${MARKET.discoveryLenses.length} lenses, ${MARKET.clipSeries.length} clip series`);
+}
+function pillarsByModeCheck(mode: string): boolean {
+  return PILLAR_DEFS.some((d) => d.draftMode === mode);
+}

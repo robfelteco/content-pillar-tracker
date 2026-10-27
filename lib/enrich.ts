@@ -1,3 +1,4 @@
+import { BRAND } from "../brand/identity.ts";
 import { sql } from "./db.ts";
 import { fetchArticleCard, fetchQuotedImage } from "./twitter.ts";
 
@@ -27,7 +28,7 @@ import { fetchArticleCard, fetchQuotedImage } from "./twitter.ts";
 
 // Sites that block the scraper UA still tend to serve OG to a real browser UA.
 const SCRAPER_UAS = [
-  "facebookexternalhit/1.1 (+https://eco.com)",
+  `facebookexternalhit/1.1 (+https://${BRAND.blogDomain})`,
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
 ];
 const FETCH_TIMEOUT_MS = 10_000;

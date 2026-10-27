@@ -1149,7 +1149,7 @@ export function RecActions({
           })}
 
           {/* The PARTNER axis. Separate from products on purpose: this pillar's
-              own description names "partners integrating Eco" as one of three
+              own description names "partners integrating {BRAND.name}" as one of three
               flavours, and it was the only one with nothing to rotate on — so a
               run of partner posts kept the pillar fresh while no individual
               relationship had a clock. A partner lane has no article shelf
@@ -1158,7 +1158,7 @@ export function RecActions({
             <div className="mt-4 space-y-1.5">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[10px] uppercase tracking-wider text-white/30">
-                  Partners running Eco
+                  Partners running {BRAND.name}
                 </span>
                 <span className="text-[11px] text-white/25">
                   — coldest first. A partner with no posts is one we signed and never told anyone about.
