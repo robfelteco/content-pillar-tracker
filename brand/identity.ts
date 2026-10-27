@@ -20,6 +20,8 @@ export const BRAND: BrandIdentity<PillarId> = {
   docsOrigin: "",
   // Set youtubeHandle when a pillar drafts from videos (draftMode "videos").
   youtubeHandle: "",
+  // What you call the platforms you integrate with, if any pillar drafts from them.
+  platformNoun: { singular: "platform", plural: "platforms" },
 
   // One paragraph. What the company is, for whom, and the mechanism. This is
   // pasted into every upstream prompt, so write it the way you want models to

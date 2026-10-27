@@ -91,10 +91,11 @@ verifies it. See [brand/README.md](brand/README.md).
 
 The optional lanes read four more files in `brand/`: `entities.ts` (the
 platforms you integrate with, partners, the data-visual lanes),
-`curriculum.ts`, `channels.ts` and `quoteRoster.ts`. An empty registry
-switches its lane off. Still outside `brand/`: the colour tokens in
-`app/globals.css`, and the word "chain" in the schema and the UI, which is
-what the original brand called the platforms it integrates with.
+`curriculum.ts`, `channels.ts` and `quoteRoster.ts`. A source no pillar uses is off:
+no tab, no lanes, no nightly sweep. The platform lane calls its platforms
+whatever `platformNoun` in `brand/identity.ts` says; the schema keeps the
+column name `chains`. Still outside `brand/`: the colour tokens in
+`app/globals.css`.
 
 ## License
 

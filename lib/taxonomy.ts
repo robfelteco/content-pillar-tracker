@@ -70,3 +70,8 @@ export function pillarsForMedia(media: string): Template[] {
 
 /** Every pillar except the review bucket. */
 export const CLASSIFIED_TEMPLATES: Template[] = TEMPLATE_DEFS.filter((t) => t.id !== "other").map((t) => t.id);
+
+/** The platform lane (integrated platforms, their momentum, the platform data lanes) is on only when a pillar uses it. */
+export function platformLaneEnabled(): boolean {
+  return pillarsByMode("chains").length > 0 || pillarsByMode("dmv").length > 0;
+}

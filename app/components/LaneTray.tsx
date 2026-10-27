@@ -1,5 +1,6 @@
 "use client";
 
+import { PLATFORM } from "@/lib/brand/helpers";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { PendingLane } from "@/lib/stats";
@@ -20,7 +21,7 @@ import type { PendingLane } from "@/lib/stats";
 // usually an ordinary English word that slipped the term filter.
 
 const KIND_LABEL: Record<PendingLane["kind"], string> = {
-  chain: "Chain",
+  chain: PLATFORM.One,
   product: "Product",
   partner: "Partner",
 };

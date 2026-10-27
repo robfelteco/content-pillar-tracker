@@ -1,3 +1,4 @@
+import { PLATFORM } from "./brand/helpers.ts";
 // Single source of truth for what every column/metric on the dashboard MEANS.
 // The CMO's QA note: the numbers need to explain themselves. He specifically hit
 // "what does 90-day post mean?" — it's a cadence count, not a performance stat,
@@ -12,6 +13,6 @@ export const METRIC_DEFS = {
   avgEng: "Average engagement rate: (likes + replies + reposts + quotes + bookmarks) ÷ impressions, averaged over the pillar's posts.",
   score: "Priority score 0–100: how overdue this pillar is (vs its cadence) blended with how well it performs against the other pillars. Freshly-posted pillars score 0 and rest.",
   baseline: "Clean performance baseline — organic posts only, with the pillar's boosted launch post excluded — so a manufactured-success spike doesn't set the bar.",
-  bestAngle: "Within this pillar, the chain angle with the strongest median impressions that you haven't just posted. 'You did Solana — the next best untapped angle is Arbitrum.'",
+  bestAngle: `Within this pillar, the ${PLATFORM.one} angle with the strongest median impressions that you haven't just posted. 'You did Solana, the next best untapped angle is Arbitrum.'`,
   reAmplify: "Past top-performing posts old enough to run again without looking repetitive.",
 } as const;

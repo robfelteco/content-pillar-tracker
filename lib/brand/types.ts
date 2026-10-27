@@ -95,6 +95,13 @@ export interface BrandIdentity<Id extends string = string> {
   youtubeHandle: string;
   /** Optional. Who recurs on camera in the company's clips, for the video tagger. */
   onCamera?: string;
+  /**
+   * What the company calls the platforms it integrates with, for the UI and
+   * prompts of the platform lane: { singular: "chain", plural: "chains" },
+   * { singular: "processor", plural: "processors" }. Default "platform".
+   * The schema keeps the column name `chains` whatever this says.
+   */
+  platformNoun?: { singular: string; plural: string };
   /** One paragraph telling a model what the company is. Used by every upstream prompt. */
   oneLiner: string;
   urlRules: UrlRule<Id>[];

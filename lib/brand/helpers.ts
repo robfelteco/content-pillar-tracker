@@ -22,3 +22,9 @@ export function isOwnDomain(domain: string | null | undefined): boolean {
 export function trackedHandle(): string {
   return process.env.X_ACCOUNT_HANDLE || BRAND.handle;
 }
+
+const noun = BRAND.platformNoun ?? { singular: "platform", plural: "platforms" };
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** The platform noun in four forms: one, many, One, Many. */
+export const PLATFORM = { one: noun.singular, many: noun.plural, One: cap(noun.singular), Many: cap(noun.plural) };

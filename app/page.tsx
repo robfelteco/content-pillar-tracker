@@ -1,3 +1,4 @@
+import { PLATFORM } from "@/lib/brand/helpers";
 import {
   getInsights,
   type Recommendation,
@@ -357,7 +358,7 @@ function buildActions(
           : [{
               label: "No article",
               tone: "warn" as const,
-              title: "No integration piece has been written for this chain — drafting is blocked.",
+              title: `No integration piece has been written for this ${PLATFORM.one}, so drafting is blocked.`,
             }],
       };
     });
@@ -402,7 +403,7 @@ type DraftMode = "chains" | "products" | "articles" | "docs" | "videos" | "dmv" 
 const ANALOG_OPTIONS = ANALOG_DEFS.map((a) => ({ id: a.id, label: a.label }));
 
 const ACTION_LABEL: Record<DraftMode, string> = {
-  chains: "Pick a chain angle · draft copy",
+  chains: `Pick a ${PLATFORM.one} angle · draft copy`,
   products: "Pick a product · draft copy",
   articles: "Pick an article · draft copy",
   education: "Work the pipeline · draft copy",
@@ -519,7 +520,7 @@ function buildDmvLaneGroups(lanes: DmvLane[]): LaneGroup[] {
             {
               key: `dmv-${l.id}`,
               label: "Market-wide data visual",
-              sublabel: "Supply, volume, share shifts — no single chain as the subject",
+              sublabel: `Supply, volume, share shifts, no single ${PLATFORM.one} as the subject`,
               chain: null,
               angle: null,
               basePostText: null,
@@ -541,8 +542,8 @@ function buildDmvLaneGroups(lanes: DmvLane[]): LaneGroup[] {
           : [
               {
                 key: `dmv-${l.id}-new`,
-                label: "No chain covered in this lane yet",
-                sublabel: "Pick a chain and draft the first one",
+                label: `No ${PLATFORM.one} covered in this lane yet`,
+                sublabel: `Pick a ${PLATFORM.one} and draft the first one`,
                 chain: null,
                 angle: null,
                 basePostText: null,

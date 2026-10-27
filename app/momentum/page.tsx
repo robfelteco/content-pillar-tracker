@@ -1,7 +1,8 @@
 import { sql } from "@/lib/db";
 import { getMomentum, SPIKE_MULTIPLE, BASELINE_DAYS, MIN_BASELINE_DAYS, type ChainMomentum } from "@/lib/chainMomentum";
 import { getReviewCount } from "@/lib/queries";
-import { TEMPLATE_BY_ID, isTemplate } from "@/lib/taxonomy";
+import { TEMPLATE_BY_ID, isTemplate, platformLaneEnabled } from "@/lib/taxonomy";
+import { PLATFORM } from "@/lib/brand/helpers";
 import { Sidebar } from "@/app/components/Sidebar";
 import { Eyebrow } from "@/app/components/ui";
 import { compact, daysAgo } from "@/lib/format";
@@ -18,6 +19,20 @@ export const dynamic = "force-dynamic";
 // which is the thing the chain pillar's own clock could never tell you.
 
 export default async function MomentumPage() {
+  if (!platformLaneEnabled()) {
+    const reviewCount = await getReviewCount();
+    return (
+      <div className="mx-auto flex max-w-7xl gap-6 px-4 py-6">
+        <Sidebar reviewCount={reviewCount} />
+        <main className="min-w-0 flex-1">
+          <Eyebrow>Momentum</Eyebrow>
+          <p className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-10 text-center text-sm text-white/40">
+            The {PLATFORM.one} lane is off: no pillar drafts from {PLATFORM.many}. Give a pillar the chains or dmv source in brand/pillars.ts to turn it on.
+          </p>
+        </main>
+      </div>
+    );
+  }
   const [rows, reviewCount] = await Promise.all([getMomentum(sql), getReviewCount()]);
 
   const spiking = rows.filter((r) => r.spiking);
@@ -29,12 +44,12 @@ export default async function MomentumPage() {
       <Sidebar reviewCount={reviewCount} />
       <main className="min-w-0 flex-1">
         <Eyebrow>Momentum</Eyebrow>
-        <h1 className="mt-1.5 text-2xl font-medium tracking-[-0.02em]">Which chains are ripping</h1>
+        <h1 className="mt-1.5 text-2xl font-medium tracking-[-0.02em]">Which {PLATFORM.many} are ripping</h1>
         <p className="mt-1 max-w-2xl text-sm text-white/45">
-          Each watched chain&apos;s own account, last 7 days against its previous {BASELINE_DAYS - 7}. A chain is
-          flagged at {SPIKE_MULTIPLE}× its own baseline — never against other chains, because Base&apos;s quiet week
-          beats most chains&apos; best one. Refreshed once a day with the post sync, and it needs about{" "}
-          {MIN_BASELINE_DAYS + 7} days of those runs before any chain has enough history to be called a spike.
+          Each watched {PLATFORM.one}&apos;s own account, last 7 days against its previous {BASELINE_DAYS - 7}. A {PLATFORM.one} is
+          flagged at {SPIKE_MULTIPLE}× its own baseline, never against the others, because a big account&apos;s quiet week
+          beats a small one&apos;s best. Refreshed once a day with the post sync, and it needs about{" "}
+          {MIN_BASELINE_DAYS + 7} days of those runs before any {PLATFORM.one} has enough history to be called a spike.
         </p>
 
         {rows.length === 0 ? (
@@ -73,7 +88,7 @@ export default async function MomentumPage() {
             </div>
 
             <p className="mt-6 text-xs text-white/30">
-              Read from each chain&apos;s official account only — not mentions across all of X. That would be the
+              Read from each {PLATFORM.one}&apos;s official account only — not mentions across all of X. That would be the
               better signal and roughly fifty times the API bill; this is the version that stays cheap enough to run
               every day.
             </p>

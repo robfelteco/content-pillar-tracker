@@ -325,7 +325,7 @@ function AngleForm({
         hint="How it gets to what Eco does. The hard half — leave it blank and it'll be flagged rather than forgotten."
         value={ecoBridge}
         onChange={setEcoBridge}
-        placeholder="Prefunding is the cost. Routing across chains without prefunding each one is the product."
+        placeholder="The cost the reader already pays, then the mechanism that removes it."
       />
       <div className="flex flex-wrap gap-2">
         <label className="flex-1 min-w-[10rem]">

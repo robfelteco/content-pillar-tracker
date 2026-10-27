@@ -1,3 +1,4 @@
+import { PLATFORM } from "./brand/helpers.ts";
 import { sql } from "./db.ts";
 import { TEMPLATE_BY_ID, type Template , pillarsByMode, pillarsWith } from "./taxonomy.ts";
 import { chainLabel, entityLabel } from "./dimensions.ts";
@@ -1007,7 +1008,7 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
   const [articleCoverage, trends, dmvLanes] = await Promise.all([
     getArticleCoverage(sql),
     getTemplateTrends(sql, filter),
-    getDmvLanes(sql, filter),
+    pillarsByMode("dmv").length ? getDmvLanes(sql, filter) : Promise.resolve([] as DmvLane[]),
   ]);
   // The coldest of the three data lanes, if any is past its own cadence. Read
   // before scoring because it OVERRIDES the pillar clock — see coldestLane().
@@ -1101,7 +1102,7 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
         reasons.push(
           cold.length > 0
             ? `Cold chains: ${cold.slice(0, 4).map((c) => `${c.label} (${agoText(c.coverDaysSince)})`).join(", ")}`
-            : `Every chain we've integrated has been covered recently — a NEW chain is the only fresh angle here`,
+            : `Every ${PLATFORM.one} we've integrated has been covered recently; a NEW ${PLATFORM.one} is the only fresh angle here`,
         );
       }
 

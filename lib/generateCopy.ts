@@ -1,3 +1,4 @@
+import { PLATFORM } from "./brand/helpers.ts";
 import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import { spawn } from "child_process";
@@ -665,8 +666,8 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
   // until someone writes the piece.
   if (TEMPLATE_BY_ID[input.template].draftMode === "chains" && !article) {
     throw new Error(
-      `No integration article for ${chain ?? "this chain"} yet. A chain announcement has to argue from the ` +
-        `published piece and link to it — write the blog post first, add the chain to ` +
+      `No integration article for ${chain ?? `this ${PLATFORM.one}`} yet. A ${PLATFORM.one} announcement has to argue from the ` +
+        `published piece and link to it: write the blog post first, add the ${PLATFORM.one} to ` +
         `scripts/ingest-chain-articles.ts, and re-run it.`,
     );
   }
@@ -718,8 +719,8 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
     // IS chain integrations.
     chain
       ? TEMPLATE_BY_ID[input.template].draftMode === "chains"
-        ? `CHAIN going live in ${BRAND.name}: ${chain}. This is the subject of the post.`
-        : `Chain that may be worth naming: ${chain}. Only mention it if it genuinely sharpens the post — this pillar is not about chains.`
+        ? `${PLATFORM.One.toUpperCase()} going live in ${BRAND.name}: ${chain}. This is the subject of the post.`
+        : `${PLATFORM.One} that may be worth naming: ${chain}. Only mention it if it genuinely sharpens the post; this pillar is not about ${PLATFORM.many}.`
       : null,
 
     article

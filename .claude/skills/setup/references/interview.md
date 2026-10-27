@@ -9,7 +9,9 @@ that"). Ask a block at a time, not the whole list.
 
 Needed: company name as written in posts, X handle, other handles that count
 as "us" (CEO, founders, team accounts), company-owned domains, the blog domain,
-the docs origin, the YouTube handle, who recurs on camera.
+the docs origin, the YouTube handle, who recurs on camera, and, when a pillar
+drafts from integrated platforms, what the company calls them (`platformNoun`:
+"chain", "processor", "marketplace", "integration").
 
 Why: `name`, `ownHandles` and `domains` are how the classifier decides whether
 a post is about the company. A missing CEO handle means every CEO quote-post

@@ -3,6 +3,7 @@ import { runSync } from "@/lib/ingest";
 import { runRuleClassification, runClaudeClassification } from "@/lib/classify";
 import { runAnalogSweep } from "@/lib/analogSweep";
 import { runMomentumSweep } from "@/lib/chainMomentum";
+import { platformLaneEnabled } from "@/lib/taxonomy";
 import { sql } from "@/lib/db";
 import { attributeArticles } from "@/lib/articleAttribution";
 import { attributeEduCandidates } from "@/lib/eduIntake";
@@ -127,7 +128,7 @@ async function handle(req: NextRequest) {
       if (left < 30_000) {
         momentum = { chains: 0, days: 0, reads: 0, costUsd: 0, spikes: [], warnings: ["skipped: not enough time left"] };
       } else {
-        momentum = await runMomentumSweep(sql, { deadline: Date.now() + left });
+        momentum = platformLaneEnabled() ? await runMomentumSweep(sql, { deadline: Date.now() + left }) : null;
       }
     } catch (err) {
       momentum = {

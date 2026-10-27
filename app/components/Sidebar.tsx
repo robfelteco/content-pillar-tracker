@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { TEMPLATE_DEFS } from "@/lib/taxonomy";
+import { TEMPLATE_DEFS, platformLaneEnabled } from "@/lib/taxonomy";
+import { PLATFORM } from "@/lib/brand/helpers";
 import { SoundToggle } from "./useAction";
 
 // Left rail: Overview, one entry per template, All posts, Review queue. Preserves
@@ -39,7 +40,7 @@ export function Sidebar({ reviewCount }: { reviewCount?: number }) {
       )}
       {item(`/t/other`, "Other", pathname === `/t/other`)}
       <div className="mt-3 mb-1 px-2.5 font-mono text-[10px] uppercase tracking-wider text-white/30">Data</div>
-      {item("/momentum", "Chain momentum", pathname === "/momentum")}
+      {platformLaneEnabled() && item("/momentum", `${PLATFORM.One} momentum`, pathname === "/momentum")}
       {item("/quotes", "Quote discovery", pathname === "/quotes")}
       {item("/history", "Trend", pathname === "/history")}
       {item("/posts", "All posts", pathname === "/posts")}

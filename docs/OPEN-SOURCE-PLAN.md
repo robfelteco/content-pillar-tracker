@@ -80,8 +80,8 @@ and `docs/BROAD-ED-REDESIGN.md` are regenerated or dropped, not scrubbed.
    momentum account and live-without-article; partners with in-production;
    dmv lanes), `brand/curriculum.ts`, `brand/channels.ts`,
    `brand/quoteRoster.ts`. The angle bank is database rows and needs no
-   registry. Not extracted: the colour tokens, and the word "chain" in the
-   schema, lane code and UI.
+   registry. Not extracted: the colour tokens. The word "chain" in the UI and
+   prompts is `platformNoun` (2026-10-27); the schema keeps the column name.
 4. Module gating by env key. Smoke test with only the minimum keys against a
    fresh Neon database.
 5. Claude Code setup skill (`/setup`): interviews the adopter, writes

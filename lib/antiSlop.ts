@@ -78,7 +78,7 @@ const JARGON: { word: string; plain: string }[] = [
   { word: "navigate", plain: "handle, route, move through" },
   { word: "navigating", plain: "handling, routing, moving through" },
   { word: "unpack", plain: "explain" },
-  { word: "landscape", plain: "market, field, set of chains" },
+  { word: "landscape", plain: "market, field, segment" },
 ];
 
 // Engagement bait. A report costs -234 and a mute -58.8; nothing on the positive

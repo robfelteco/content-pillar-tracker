@@ -1,5 +1,7 @@
 "use client";
 
+import { PLATFORM } from "@/lib/brand/helpers";
+import { BRAND } from "@/brand/identity";
 import { useState, useTransition } from "react";
 import { useAction, ActionProgress } from "./useAction";
 import { NestedDisclosure } from "@/app/components/Collapse";
@@ -1039,18 +1041,18 @@ export function RecActions({
           </span>
         ) : (
           <span className="text-white/30">
-            {mode === "chains" && "Pick a chain angle and draft copy for it."}
-            {mode === "products" && "Pick the product, then the piece behind it — or a partner running Eco. Shapes show which angle has gone cold."}
+            {mode === "chains" && `Pick a ${PLATFORM.one} angle and draft copy for it.`}
+            {mode === "products" && `Pick the product, then the piece behind it, or a partner running ${BRAND.name}. Shapes show which angle has gone cold.`}
             {mode === "articles" && "One row per article, not per post — the count is how many times we've already run it."}
             {isBroadDiscovery &&
               "One queue, four states. The inbox is stocked nightly and pre-framed; you pick, fix the bridge, draft, post. (We never reshare a piece.)"}
             {isQuoteDiscovery && "Quote cards are used once, so there is nothing to re-run — this lane finds new ones."}
             {mode === "docs" &&
-              "Pick the audience, then the docs page. Every page on docs.eco.com is here — the ones you've never linked rank first."}
+              `Pick the audience, then the docs page. Every page on ${BRAND.docsOrigin.replace(/^https?:\/\//, "")} is here; the ones you've never linked rank first.`}
             {mode === "videos" &&
               "Pick a series, then a clip. The whole library is here — clips that have never run on X rank first."}
             {mode === "dmv" &&
-              "Three lanes, three clocks. Integrated chains can close on Eco; non-integrated ones are a market play; market-wide data has no chain subject at all."}
+              `Three lanes, three clocks. Integrated ${PLATFORM.many} can close on ${BRAND.name}; non-integrated ones are a market play; market-wide data has no ${PLATFORM.one} subject at all.`}
             {mode === "generic" && "Draft starting copy for this pillar."}
           </span>
         )}
@@ -1298,7 +1300,7 @@ function DocsHeadline({ meta }: { meta: DocsMeta }) {
       </div>
       <p className="text-xs text-white/60">
         <span className="text-white/85">{meta.neverUsed}</span> of{" "}
-        <span className="text-white/85">{meta.totalPages}</span> pages on docs.eco.com have never
+        <span className="text-white/85">{meta.totalPages}</span> pages on {BRAND.docsOrigin.replace(/^https?:\/\//, "")} have never
         been linked from a post.
       </p>
       {gap != null && (

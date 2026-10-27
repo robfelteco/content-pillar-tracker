@@ -13,6 +13,7 @@ export const BRAND: BrandIdentity<PillarId> = {
   blogDomain: "eco.com",
   docsOrigin: "https://docs.eco.com",
   youtubeHandle: "@ecoprotocol",
+  platformNoun: { singular: "chain", plural: "chains" },
   onCamera:
     "The people who appear on camera are Ryne Saxe (CEO, @rynesaxe), a Head of Product (@strao_), and " +
     "Shah, who fronts an educational explainer series.",

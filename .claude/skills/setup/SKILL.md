@@ -69,8 +69,7 @@ product brief with a mechanism and a date beats one with adjectives.
    guessed at and why, and every placeholder you left, so the person can grep
    for them. Then the two or three things worth refining after a week of
    real drafts. Close with the runtime steps from the README (fill `.env`,
-   migrate, first sync) and, if the integration pillar is live, the note at
-   the end of "The optional-lane registries" below about the word "chain".
+   migrate, first sync).
 
 ## Judgment calls
 
@@ -127,9 +126,9 @@ may be left empty, which switches its lane off cleanly:
 - `channels.ts`: YouTube channels the curriculum lane watches.
 - `quoteRoster.ts`: orgs, people and watch sources for quote discovery.
 
-Do these AFTER the six core files, and only for the lanes the person's
-pillars use. A parked pillar's registry stays empty. The interview reference
-has a block for each. The one thing `brand/` does not rename is the word
-"chain": it is in the schema and the UI, so a company whose "chains" are
-payment processors or marketplaces will see that word on the integration
-pillar's screens until a later change renames it.
+Do these AFTER the six core files, and only for the sources the person's
+pillars use. A source no pillar uses is off: its registry stays empty, its
+tab and lanes do not render, its nightly sweep does not run. The interview
+reference has a block for each. The platform lane calls its platforms
+whatever `platformNoun` in identity.ts says ("chain", "processor",
+"marketplace"); the schema keeps the column name `chains` regardless.
