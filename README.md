@@ -6,10 +6,8 @@ to post next. Built for a social lead who runs a company account alone, by one
 who did.
 
 > **Status: extracted from a production deployment, not yet run by a second
-> brand.** The core is generic and reads the company from `brand/`. The
-> optional lanes (curriculum, watched channels, quote roster, tracked chains)
-> still carry the original brand's registries in `lib/`. The remaining plan is
-> in [docs/OPEN-SOURCE-PLAN.md](docs/OPEN-SOURCE-PLAN.md).
+> brand.** The core and every optional lane read the company from `brand/`.
+> The remaining plan is in [docs/OPEN-SOURCE-PLAN.md](docs/OPEN-SOURCE-PLAN.md).
 
 ## What it does
 
@@ -90,10 +88,12 @@ Pillar ids must match the `content_template` enum in `db/schema.sql`;
 `node scripts/brand-check.ts` prints the SQL for any difference. See
 [brand/README.md](brand/README.md).
 
-Still hardcoded outside `brand/`: the optional lanes' registries
-(`lib/analogs.ts`, `lib/channels.ts`, `lib/quoteRoster.ts`, `lib/integratedChains.ts`,
-`lib/chainAccounts.ts`, `lib/dmvLanes.ts`, `lib/angleBank.ts`) and the brand colour tokens in
-`app/globals.css`.
+The optional lanes read four more files in `brand/`: `entities.ts` (the
+platforms you integrate with, partners, the data-visual lanes),
+`curriculum.ts`, `channels.ts` and `quoteRoster.ts`. An empty registry
+switches its lane off. Still outside `brand/`: the colour tokens in
+`app/globals.css`, and the word "chain" in the schema and the UI, which is
+what the original brand called the platforms it integrates with.
 
 ## License
 

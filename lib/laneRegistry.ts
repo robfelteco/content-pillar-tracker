@@ -1,3 +1,4 @@
+import { PARTNERS } from "../brand/entities.ts";
 import {
   CHAIN_HANDLES,
   CHAIN_KEYWORDS,
@@ -56,7 +57,7 @@ type SqlTag = <T = Record<string, unknown>>(
 ) => Promise<T[]>;
 
 // ---------------------------------------------------------------------------
-// Which entities are Eco INTEGRATION PARTNERS
+// Which entities are INTEGRATION PARTNERS (brand/entities.ts PARTNERS with inProduction set)
 //
 // lib/dimensions.ts ENTITY_LABELS is a wider set than this on purpose: it holds
 // every company worth tagging, including ones we only ever write ABOUT (Visa,
@@ -65,11 +66,9 @@ type SqlTag = <T = Record<string, unknown>>(
 // can only be drawn for companies actually running Eco in production. Listing
 // them by hand is the honest version of that distinction; the detector grows
 // the list from here.
-export const CODE_PARTNERS: Record<string, string> = {
-  circle: "Gateway + Agent Stack run Eco underneath; the most-posted partner in the pillar.",
-  para: "Shipped Permit3 in production as Transaction Permissions.",
-  lifi: "Routes @eco liquidity through LI.FI / Jumper.",
-};
+export const CODE_PARTNERS: Record<string, string> = Object.fromEntries(
+  PARTNERS.filter((p) => p.inProduction).map((p) => [p.id, p.inProduction!]),
+);
 
 // ---------------------------------------------------------------------------
 // Code seeds, shaped as registry rows so the two sources merge cleanly.

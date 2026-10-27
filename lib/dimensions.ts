@@ -10,6 +10,7 @@ import { BRAND_NAME_RE, isOwnDomain, isOwnHandle } from "./brand/helpers.ts";
 // import it. Extend the maps as new chains/partners show up in the feed.
 
 import { extractProducts, detectShape } from "./products.ts";
+import { CHAINS, PARTNERS } from "../brand/entities.ts";
 
 export interface DimensionInput {
   text: string;
@@ -26,174 +27,24 @@ export interface Dimensions {
   shape: string; // which of the seven product-post shapes this post takes
 }
 
-// --- CHAINS ---------------------------------------------------------------
-// @handle → canonical chain id. The most reliable signal.
-export const CHAIN_HANDLES: Record<string, string> = {
-  ethereum: "ethereum",
-  solana: "solana",
-  polygon: "polygon",
-  "0xpolygon": "polygon",
-  trondao: "tron",
-  bnbchain: "bnb",
-  binancechain: "bnb",
-  base: "base",
-  arbitrum: "arbitrum",
-  optimism: "optimism",
-  optimismfnd: "optimism",
-  avax: "avalanche",
-  avalancheavax: "avalanche",
-  hyperliquidx: "hyperliquid",
-  robinhoodcrypto: "robinhood",
-  tempo: "tempo",
-  plasma: "plasma",
-  sei: "sei",
-  seinetwork: "sei",
-  suinetwork: "sui",
-  aptos: "aptos",
-  aptoslabs: "aptos",
-  ton_blockchain: "ton",
-  the_open_network: "ton",
-  celo: "celo",
-  stellarorg: "stellar",
-  ripple: "xrpl",
-  nearprotocol: "near",
-  zksync: "zksync",
-  starknet: "starknet",
-  unichain: "unichain",
-  monad_xyz: "monad",
-  berachain: "berachain",
-};
+// --- CHAINS and PARTNERS ------------------------------------------------------
+// The vocabulary lives in brand/entities.ts; these maps are derived from it and
+// keep the names the rest of lib/ uses.
+export const CHAIN_HANDLES: Record<string, string> = Object.fromEntries(
+  CHAINS.flatMap((c) => c.handles.map((h) => [h.toLowerCase(), c.id])),
+);
+export const CHAIN_KEYWORDS: Record<string, string[]> = Object.fromEntries(
+  CHAINS.filter((c) => c.keywords?.length).map((c) => [c.id, c.keywords!]),
+);
+export const CHAIN_LABELS: Record<string, string> = Object.fromEntries(CHAINS.map((c) => [c.id, c.label]));
 
-// Distinctive text tokens → chain. Only unambiguous crypto-specific names.
-// Generic words that ALSO mean something in ordinary English are intentionally
-// NOT here — they'd tag posts that never mention the chain. The @handle map
-// above is the reliable signal for those. Excluded on purpose:
-//   base, tempo, ton, sei, op            — short generic words
-//   stellar, optimism, avalanche         — common English adjectives/nouns.
-//     ("stellar growth", "cautious optimism", "an avalanche of…") — these were
-//     the source of the phantom "Stellar" chip the CMO flagged: a Western Union /
-//     SoFi / MoneyGram post got tagged Stellar purely for the word "stellar".
-//   celo, monad                          — real words / names in other contexts.
-// Every excluded chain is still detected whenever its @handle is mentioned.
-export const CHAIN_KEYWORDS: Record<string, string[]> = {
-  ethereum: ["ethereum"],
-  solana: ["solana"],
-  polygon: ["polygon"],
-  tron: ["tron"],
-  bnb: ["bnb chain", "bnbchain"],
-  arbitrum: ["arbitrum"],
-  hyperliquid: ["hyperliquid"],
-  aptos: ["aptos"],
-  zksync: ["zksync"],
-  starknet: ["starknet"],
-  berachain: ["berachain"],
-};
-
-export const CHAIN_LABELS: Record<string, string> = {
-  ethereum: "Ethereum",
-  solana: "Solana",
-  polygon: "Polygon",
-  tron: "Tron",
-  bnb: "BNB Chain",
-  base: "Base",
-  arbitrum: "Arbitrum",
-  optimism: "Optimism",
-  avalanche: "Avalanche",
-  hyperliquid: "Hyperliquid",
-  robinhood: "Robinhood Chain",
-  tempo: "Tempo",
-  plasma: "Plasma",
-  sei: "Sei",
-  sui: "Sui",
-  aptos: "Aptos",
-  ton: "TON",
-  celo: "Celo",
-  stellar: "Stellar",
-  xrpl: "XRPL",
-  near: "NEAR",
-  zksync: "zkSync",
-  starknet: "Starknet",
-  unichain: "Unichain",
-  monad: "Monad",
-  berachain: "Berachain",
-};
-
-// --- ENTITIES (companies / issuers / partners we highlight) ---------------
-export const ENTITY_HANDLES: Record<string, string> = {
-  circle: "circle",
-  tether_to: "tether",
-  tether: "tether",
-  paxos: "paxos",
-  stripe: "stripe",
-  visa: "visa",
-  mastercard: "mastercard",
-  paypal: "paypal",
-  moneygram: "moneygram",
-  doordash: "doordash",
-  revolut: "revolut",
-  binance: "binance",
-  binanceresearch: "binance",
-  coinbase: "coinbase",
-  robinhoodcrypto: "robinhood",
-  citi: "citi",
-  citigroup: "citi",
-  fireblocks: "fireblocks",
-  zerohash: "zerohash",
-  getpara: "para",
-  stablecoin: "bridge", // @stablecoin is Bridge (bridge.xyz)
-  bridge_xyz: "bridge",
-  lifi: "lifi",
-  galaxyhq: "galaxy",
-  nubank: "nubank",
-  grab: "grab",
-  mercadolibre: "mercadolibre",
-  worldpay: "worldpay",
-  sphere: "sphere",
-};
-
-// Outbound domain → entity. A post linking circle.com is about Circle even if
-// the handle isn't @-mentioned.
-export const ENTITY_DOMAINS: Record<string, string> = {
-  "circle.com": "circle",
-  "stripe.com": "stripe",
-  "citigroup.com": "citi",
-  "fireblocks.com": "fireblocks",
-  "zerohash.com": "zerohash",
-  "galaxy.com": "galaxy",
-  "getpara.com": "para",
-  "blog.getpara.com": "para",
-  "li.fi": "lifi",
-  "tempo.xyz": "tempo", // tempo is both a chain and the company
-};
-
-export const ENTITY_LABELS: Record<string, string> = {
-  circle: "Circle",
-  tether: "Tether",
-  paxos: "Paxos",
-  stripe: "Stripe",
-  visa: "Visa",
-  mastercard: "Mastercard",
-  paypal: "PayPal",
-  moneygram: "MoneyGram",
-  doordash: "DoorDash",
-  revolut: "Revolut",
-  binance: "Binance",
-  coinbase: "Coinbase",
-  robinhood: "Robinhood",
-  citi: "Citi",
-  fireblocks: "Fireblocks",
-  zerohash: "Zero Hash",
-  para: "Para",
-  bridge: "Bridge",
-  lifi: "LI.FI",
-  galaxy: "Galaxy",
-  nubank: "Nubank",
-  grab: "Grab",
-  mercadolibre: "MercadoLibre",
-  worldpay: "Worldpay",
-  sphere: "Sphere",
-  tempo: "Tempo",
-};
+export const ENTITY_HANDLES: Record<string, string> = Object.fromEntries(
+  PARTNERS.flatMap((p) => p.handles.map((h) => [h.toLowerCase(), p.id])),
+);
+export const ENTITY_DOMAINS: Record<string, string> = Object.fromEntries(
+  PARTNERS.flatMap((p) => (p.domains ?? []).map((d) => [d.toLowerCase(), p.id])),
+);
+export const ENTITY_LABELS: Record<string, string> = Object.fromEntries(PARTNERS.map((p) => [p.id, p.label]));
 
 // Word-boundary keyword test that treats [a-z0-9] as "word" chars so "base" in
 // "database" never matches. Handles multi-word tokens ("bnb chain") too.

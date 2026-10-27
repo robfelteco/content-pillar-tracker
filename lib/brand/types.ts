@@ -137,3 +137,121 @@ export interface VoiceRules {
   /** A binary-contrast sentence from this brand's world and its direct rewrite. */
   contrastExample: { before: string; after: string };
 }
+
+// ---------------------------------------------------------------------------
+// Optional-lane registries. Each is read only by the lane that needs it, so an
+// empty list switches the lane off cleanly.
+// ---------------------------------------------------------------------------
+
+// An external platform the company integrates with and announces, and whose
+// momentum it watches. The schema calls these "chains" because the original
+// brand's were blockchains; for another company they are networks, processors,
+// marketplaces, whatever the integration_announcement pillar is about.
+export interface ChainDef {
+  id: string;
+  label: string;
+  /** X handles that mean this chain, lowercased, no @. The reliable signal. */
+  handles: string[];
+  /** Distinctive text tokens. Leave out any that are ordinary English words. */
+  keywords?: string[];
+  /** The X account to read momentum from (lowercased, no @). Omit to not watch it. */
+  momentumHandle?: string;
+  /** Scan momentum daily. Default false: on only for the chains worth a daily read. */
+  momentumEnabled?: boolean;
+  /** The company is live here but never published a dedicated piece. Give the reason. */
+  liveWithoutArticle?: string;
+}
+
+// A company or partner the account highlights (issuers, customers, partners).
+export interface PartnerDef {
+  id: string;
+  label: string;
+  handles: string[];
+  domains?: string[];
+  /** Set when the partner runs the company's product in production: the reason, one line. A partner lane is only drawn for these. */
+  inProduction?: string;
+}
+
+export type DmvLaneId = "integrated" | "other_chain" | "market_wide";
+
+export interface DmvLaneDef {
+  label: string;
+  hint: string;
+  staleDays: number;
+}
+
+// The analog curriculum: legacy concepts the audience already thinks in, and
+// where the company's mechanism breaks from each.
+export type AnalogTier = 1 | 2 | 3 | 4;
+export type AnalogSide = "technical" | "commercial";
+
+export interface AnalogSourceRef {
+  title: string;
+  url: string;
+}
+
+export interface AnalogDef {
+  id: string;
+  label: string;
+  tier: AnalogTier;
+  side: AnalogSide;
+  /** IcpDef ids. Who actually cares about this concept. */
+  icps: string[];
+  /** 1-3: how sharp the break is. Feeds the coverage score. */
+  breakStrength: 1 | 2 | 3;
+  /** Detection vocabulary, word-boundary matched. No ordinary English words. */
+  vocab: string[];
+  /** How the analog maps. Handed to the drafter verbatim. */
+  parallel: string;
+  /** Where the mapping FAILS. Required. This is the post. */
+  breaksWhere: string;
+  guardrail?: string;
+  sources?: AnalogSourceRef[];
+  /** Institutional index pages the sweep enumerates for this concept. */
+  hubs?: string[];
+}
+
+export interface EducationShape {
+  id: string;
+  label: string;
+  brief: string;
+}
+
+// A YouTube channel the curriculum lane watches.
+export interface ChannelDef {
+  /** YouTube channelId (UC…). Pinned, because handles can change. */
+  id: string;
+  handle: string;
+  label: string;
+  /** The publisher has a commercial position in what it explains; capped below canonical. */
+  interestedParty: boolean;
+  /** Take the channel's Shorts as targets in their own right. */
+  takeShorts: boolean;
+  /** What the channel is for, and what it is not. Handed to triage verbatim. */
+  note: string;
+}
+
+// The quote-discovery roster seeds.
+export interface OrgSeed {
+  name: string;
+  /** 1 = the most credible tier for a quote, 3 = the least. */
+  tier: 1 | 2 | 3;
+  xHandle?: string;
+  isCompetitor?: boolean;
+}
+
+export interface PersonSeed {
+  name: string;
+  title: string;
+  /** Must match an OrgSeed name. */
+  org: string;
+  /** 1 = C-suite/founder, 2 = SVP/MD/Head of, 3 = Director/PM. */
+  seniority: 1 | 2 | 3;
+  xHandle?: string;
+}
+
+export interface WatchSeed {
+  kind: "yt_channel" | "report_site" | "x_search";
+  identifier: string;
+  label: string;
+}

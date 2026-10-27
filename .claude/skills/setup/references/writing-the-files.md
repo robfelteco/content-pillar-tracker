@@ -84,3 +84,31 @@ optional there, it is optional here.
 ## After writing
 
 Run the three verification commands in SKILL.md step 5.
+
+## entities.ts
+
+- `id` snake_case; `handles` lowercase, no `@`, unique across all chains.
+- `keywords` only for names that are unambiguous in text.
+- `momentumHandle` plus `momentumEnabled: true` only for platforms worth a
+  daily read; the rest stay off and can be switched on in the database.
+- `liveWithoutArticle` carries the reason; an unexplained line is
+  indistinguishable from a mistake.
+- Partners: `inProduction` only when the partner runs the product today.
+- `DMV_LANES` keeps its three keys.
+
+## curriculum.ts
+
+- Keep the four tiers; relabel them.
+- `icps` reference `brand/audiences.ts` ids.
+- `breaksWhere` is required and specific; a placeholder is acceptable, an
+  empty string is not.
+- Keep the six `EDUCATION_SHAPES` unless asked.
+
+## channels.ts and quoteRoster.ts
+
+- Channel `id` is the YouTube channelId (UC…). Add each channel to
+  `WATCH_SEED` as well.
+- `PersonSeed.org` must match an `OrgSeed.name` exactly.
+- `WATCH_SEED.kind` is one of `yt_channel`, `report_site`, `x_search`.
+
+`brand-check` verifies all of the above.

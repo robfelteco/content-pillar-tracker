@@ -1,6 +1,7 @@
 import { chainLabel } from "./dimensions.ts";
 import { getIntegratedChains } from "./integratedChains.ts";
 import { TEMPLATE_BY_ID } from "./taxonomy.ts";
+import { DMV_LANES } from "../brand/entities.ts";
 
 // Data Motion Visual, split into three lanes.
 //
@@ -29,7 +30,8 @@ import { TEMPLATE_BY_ID } from "./taxonomy.ts";
 // never got a dedicated piece. Adding a chain to lib/dimensions.ts does not
 // silently make it "integrated".
 
-export type DmvLaneId = "integrated" | "other_chain" | "market_wide";
+export type { DmvLaneId } from "./brand/types.ts";
+import type { DmvLaneId } from "./brand/types.ts";
 
 export interface DmvLanePost {
   id: string;
@@ -61,29 +63,14 @@ type SqlTag = <T = Record<string, unknown>>(
   ...params: unknown[]
 ) => Promise<T[]>;
 
-const LANE_META: Record<DmvLaneId, { label: string; hint: string }> = {
-  integrated: {
-    label: "Integrated-chain data",
-    hint: "Data about a chain Eco is live on. These can close on routing through Eco.",
-  },
-  other_chain: {
-    label: "Non-integrated chain data",
-    hint: "Chain-specific data where Eco isn't live yet. No Eco CTA — this lane buys credibility on the market, and builds the case for integrating.",
-  },
-  market_wide: {
-    label: "Market-wide data",
-    hint: "Stablecoin supply, volume, share shifts — no single chain as the subject.",
-  },
-};
+const LANE_META: Record<DmvLaneId, { label: string; hint: string }> = DMV_LANES;
 
 // Each lane gets its own cadence. The pillar's 10 days was set when all three
 // were one number; market-wide data moves slower than a chain's own metrics,
 // and the non-integrated lane is a nice-to-have rather than an obligation.
-const LANE_STALE_DAYS: Record<DmvLaneId, number> = {
-  integrated: 10,
-  other_chain: 21,
-  market_wide: 14,
-};
+const LANE_STALE_DAYS: Record<DmvLaneId, number> = Object.fromEntries(
+  (Object.keys(DMV_LANES) as DmvLaneId[]).map((k) => [k, DMV_LANES[k].staleDays]),
+) as Record<DmvLaneId, number>;
 
 function readinessOf(daysSince: number | null, staleDays: number): DmvLane["readiness"] {
   if (daysSince == null) return "never";

@@ -141,3 +141,51 @@ case-insensitive and would flag every correct use.
 precise, institutional voice the starter's note is right. For a casual
 consumer voice, say what the tell is there instead (enthusiasm, exclamation,
 "we're so excited").
+
+## entities.ts (only if the integration or data pillars are live)
+
+Needed: the platforms the company integrates with and announces, each with
+the X handles that mean it, distinctive keywords, the account to read its
+momentum from, and whether the company is live there without ever having
+published a piece about it. Then the partners the account highlights, with
+handles and domains, and for each one that runs the product in production, a
+one-line reason.
+
+Why: handles are how a post gets tagged with a platform; the momentum account
+is what the "they're ripping, you haven't posted" nudge reads; the
+in-production flag is what lets a partner lane be drawn at all.
+
+Ask: "List the platforms you've integrated with or announced. For each: their
+X handle(s), and should we watch their account daily?" and "Which companies
+run your product in production today?" Keywords: only names that are not
+ordinary English words; the handle carries the rest. Chains that are live
+with no dedicated piece need the reason stated.
+
+The three data-visual lanes keep their ids; relabel them in the company's
+terms and set cadences. If the data pillar is parked, leave the starter.
+
+## curriculum.ts (only if the educational pillar is live)
+
+Needed: the legacy concepts the audience already thinks in, tiered, each with
+the parallel to the company's mechanism and, required, where the parallel
+breaks. Detection vocabulary per concept. Which personas care.
+
+Why: the curriculum lane scores coverage, so an empty registry means it never
+has anything to teach. The break is the post; a registry of parallels alone
+produces "we're the X of Y" copy.
+
+Ask: "What does your buyer's old world look like? Name the mechanisms,
+institutions and jargon they already know." Then for each: "Where does your
+way of doing it break from theirs?" Start with four to eight concepts; the
+registry grows. Vocabulary must be jargon, never ordinary words.
+
+## channels.ts and quoteRoster.ts (only if those lanes are live)
+
+Channels: "Which podcasts or publishers regularly cover your market's
+mechanisms?" Pin the channelId, note whether the publisher has a commercial
+position in what it explains, and whether its Shorts are worth taking.
+
+Roster: "Whose quotes would you be proud to put on a card? Which institutions
+carry the most weight with your buyers?" Aim for 40 to 60 people across three
+org tiers before expecting the lane to produce. Every person's org must be an
+org in the list.

@@ -1,4 +1,5 @@
 import { CHAIN_LABELS } from "./dimensions.ts";
+import { CHAINS } from "../brand/entities.ts";
 
 // Which chains Eco is actually LIVE on — one definition, read by every caller
 // that splits "we route through this chain" from "we don't yet".
@@ -29,10 +30,9 @@ import { CHAIN_LABELS } from "./dimensions.ts";
  * for that reason — eco.com/blog/arbitrum-leads-usage-across-eco is in
  * scripts/ingest-chain-articles.ts and marks it integrated on its own.
  */
-export const LIVE_WITHOUT_ARTICLE: Record<string, string> = {
-  base: "Routed through since Portal launch; never had a dedicated integration post.",
-  ethereum: "Origin chain for Routes; never had a dedicated integration post.",
-};
+export const LIVE_WITHOUT_ARTICLE: Record<string, string> = Object.fromEntries(
+  CHAINS.filter((c) => c.liveWithoutArticle).map((c) => [c.id, c.liveWithoutArticle!]),
+);
 
 // A typo here would silently mark a chain that does not exist as integrated,
 // which is invisible — the chain simply never appears in any lane.

@@ -69,11 +69,13 @@ and `docs/BROAD-ED-REDESIGN.md` are regenerated or dropped, not scrubbed.
 3. Extract `brand/`. DONE 2026-10-26 for identity, pillars and shapes,
    positioning, audiences, products and voice: typed TypeScript data in
    `brand/` (neutral starter) and `examples/eco/` (the real one), contract in
-   `lib/brand/types.ts`, `scripts/brand-check.ts` for the enum. Not yet
-   extracted: the optional-lane registries (analogs, curriculum, channels,
-   quote roster, integrated chains, chain accounts, dmv lanes, angle bank),
-   the colour tokens, and the Eco-specific wording inside `lib/analogs.ts`
-   and `lib/classifyRules.ts` candidate narrowing.
+   `lib/brand/types.ts`, `scripts/brand-check.ts` for the enum. Registries
+   extracted 2026-10-26 as well: `brand/entities.ts` (chains with vocabulary,
+   momentum account and live-without-article; partners with in-production;
+   dmv lanes), `brand/curriculum.ts`, `brand/channels.ts`,
+   `brand/quoteRoster.ts`. The angle bank is database rows and needs no
+   registry. Not extracted: the colour tokens, and the word "chain" in the
+   schema, lane code and UI.
 4. Module gating by env key. Smoke test with only the minimum keys against a
    fresh Neon database.
 5. Claude Code setup skill (`/setup`): interviews the adopter, writes

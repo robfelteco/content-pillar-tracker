@@ -107,13 +107,23 @@ product brief with a mechanism and a date beats one with adjectives.
   brief as much as to product briefs. The `<-` arrows in the algorithm table
   are not placeholders.
 
-## What brand/ does not cover
+## The optional-lane registries
 
-Three draft modes read registries that are still the original brand's, in
-`lib/`: `chains` (ranks `lib/integratedChains.ts` and `lib/chainAccounts.ts`),
-`dmv` (the lanes in `lib/dmvLanes.ts`), and the curriculum half of
-`discovery` (`lib/analogs.ts`, `lib/angleBank.ts`). For a company that is
-not in that market, set the pillars that use `chains` or `dmv` to `generic`
-and say in the report that those registries are the next thing to replace.
-The news half of `discovery` and the `products`, `articles`, `docs` and
-`videos` modes are fully driven by `brand/`.
+Four more files in `brand/` feed the optional lanes, and every one of them
+may be left empty, which switches its lane off cleanly:
+
+- `entities.ts`: the platforms the company integrates with (the schema calls
+  them chains), the partners it highlights, and the three data-visual lanes.
+  Needed by the `chains` and `dmv` draft modes and the chain-momentum tab.
+- `curriculum.ts`: legacy concepts the audience thinks in and where the
+  company's mechanism breaks from each. Needed by the curriculum half of
+  `discovery`, the angle bank and question mining.
+- `channels.ts`: YouTube channels the curriculum lane watches.
+- `quoteRoster.ts`: orgs, people and watch sources for quote discovery.
+
+Do these AFTER the six core files, and only for the lanes the person's
+pillars use. A parked pillar's registry stays empty. The interview reference
+has a block for each. The one thing `brand/` does not rename is the word
+"chain": it is in the schema and the UI, so a company whose "chains" are
+payment processors or marketplaces will see that word on the integration
+pillar's screens until a later change renames it.

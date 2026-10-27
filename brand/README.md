@@ -12,6 +12,12 @@ here. To see a complete, production-tested configuration, read `examples/eco/`.
 | `audiences.ts` | Personas (ICPs) and the coarser site audiences | docs and video shelves, educational lane, drafter |
 | `products.ts` | Products, their fact sheets and guardrails, and the shapes a product post takes | product dimension, drafter, prioritize |
 | `voice.ts` | Commodity phrases, substantiation-gated words, the brand's own slop risk | anti-slop scan and brief |
+| `entities.ts` | The platforms you integrate with ("chains": vocabulary, momentum account, live-without-article), the partners you highlight, the three data-visual lanes | post tagging, integration and data pillars, chain momentum, partner lanes |
+| `curriculum.ts` | The analog curriculum: legacy concepts, where your mechanism breaks from each, teaching shapes | broad educational lane, angle bank, question mining |
+| `channels.ts` | YouTube channels the curriculum lane watches | channel sweep and triage |
+| `quoteRoster.ts` | Orgs, people and watch sources for quote discovery | quote lanes |
+
+Any registry may be empty; its lane then has nothing to do and stays quiet.
 
 ## Pillar ids are special
 

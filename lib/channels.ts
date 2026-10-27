@@ -1,12 +1,16 @@
 import { sql } from "./db.ts";
 import { ANALOG_DEFS } from "./analogs.ts";
+import { CHANNEL_DEFS } from "../brand/channels.ts";
+import type { ChannelDef } from "./brand/types.ts";
 import { createHash } from "node:crypto";
 
 // The watched-channel registry for Lane 1 (Broad Educational / analog
 // curriculum), and the deterministic metadata work that happens before any
 // model or Gemini call.
 //
-// WHY A REGISTRY IN CODE, like lib/analogs.ts and unlike watch_sources.
+// The registry itself lives in brand/channels.ts.
+//
+// WHY A REGISTRY IN CODE, like the curriculum and unlike watch_sources.
 // The quote pipeline keeps its channels in watch_sources because that list is
 // operator-editable roster data. What this lane needs to know about a channel is
 // editorial judgment: is the publisher an interested party (which caps what tier
@@ -19,78 +23,8 @@ import { createHash } from "node:crypto";
 // ingest, joined through raw_documents. Nothing here should be the only place a
 // channel is named.
 
-export interface ChannelDef {
-  /** YouTube channelId. Pinned rather than resolved from the handle at runtime:
-   *  a handle can be changed by its owner, and resolveYouTubeChannel() falls
-   *  back to a search that has returned the wrong channel before (see the
-   *  Money20/20 note in lib/quoteRoster.ts). */
-  id: string;
-  handle: string;
-  label: string;
-  /**
-   * The publisher has a commercial position in the thing it is explaining.
-   * Money Code is "Presented by Stablecon; Powered by BVNK"; Tokenized is
-   * co-hosted by Visa's head of crypto. Both are excellent and neither is a
-   * mechanism authority, so an interested party can never reach the `canonical`
-   * tier in analog_sources. Enforced in code, not asked for in a prompt.
-   */
-  interestedParty: boolean;
-  /**
-   * Take this channel's Shorts as targets in their own right.
-   *
-   * The quote lane filters to durationSec >= 240 ("Shorts are never a panel or
-   * an interview") and that is right for its channels. It is wrong for these
-   * two: Money Code and Tokenized cut their own clips around the single
-   * sharpest claim in an episode and title them AS the claim ("A Tiny Stablecoin
-   * Depeg Can Cost Institutions $100,000"). That is a free editorial pick of the
-   * best 45 seconds, and it is ~60x cheaper to transcribe than the parent.
-   */
-  takeShorts: boolean;
-  /** What this channel is for, and what it is not. Handed to the triage call. */
-  note: string;
-}
-
-export const CHANNEL_DEFS: ChannelDef[] = [
-  {
-    id: "UC03s4ohGxrFSMHxGR8DMzZg",
-    handle: "@moneycodepod",
-    label: "Money Code",
-    interestedParty: true,
-    takeShorts: true,
-    note:
-      "Stablecoin operator interviews, presented by Stablecon and powered by BVNK. " +
-      "Densest fit of the three: recent episodes map almost one-for-one onto Tier 2 " +
-      "concepts (correspondent banking, prefunding and trapped liquidity, local " +
-      "liquidity, SWIFT). Guests are practitioners describing their own operations, " +
-      "so numbers are self-reported.",
-  },
-  {
-    id: "UC8SaXHFAqVHUjE2OLUFakjw",
-    handle: "@TokenizedPodcast",
-    label: "Tokenized",
-    interestedParty: true,
-    takeShorts: true,
-    note:
-      "Co-hosted by Cuy Sheffield (head of crypto, Visa) and Simon Taylor (Fintech " +
-      "Brainfood), explicitly made for regulators, bankers and payments " +
-      "professionals — the commercial door the curriculum is aimed at. Uses recent " +
-      "news to frame market structure, which is exactly the 'current' layer the " +
-      "institutional lane cannot produce.",
-  },
-  {
-    id: "UCoX2V7454TPPAhWu172lGGQ",
-    handle: "@WhatsNextwithPhilipMeissner",
-    label: "What's Next with Philip Meissner",
-    interestedParty: false,
-    takeShorts: false,
-    note:
-      "Broad technology and innovation podcast, 942k subscribers. Mostly talent, " +
-      "geopolitics, leadership and AI, with an occasional stablecoin or payments " +
-      "episode. Low hit-rate and high reach: triage should reject most of it, and " +
-      "the rejections are the cheapest thing this lane does. Shorts are aphorism " +
-      "clips ('Regret Is Worse Than Rejection') and are never curriculum material.",
-  },
-];
+export type { ChannelDef };
+export { CHANNEL_DEFS };
 
 export const CHANNEL_BY_ID: Record<string, ChannelDef> = Object.fromEntries(
   CHANNEL_DEFS.map((c) => [c.id, c]),
