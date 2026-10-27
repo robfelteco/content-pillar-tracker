@@ -1,3 +1,4 @@
+import { MARKET } from "../brand/market.ts";
 import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import type { AttributionPost, ArticleLite } from "./articleAttribution.ts";
@@ -97,8 +98,8 @@ export function makeClaudeMatcher(cost: MatchCost) {
           "",
           "Rules:",
           "- Choose ONLY from the numbered list. Never invent an article.",
-          "- Match on the SUBSTANCE of the argument, not on shared stablecoin vocabulary. Most of these",
-          "  posts share words like stablecoin, chain, liquidity, settlement; that is not evidence.",
+          `- Match on the SUBSTANCE of the argument, not on shared market vocabulary. Most of these`,
+          `  posts share the common words of ${MARKET.name}; that is not evidence.`,
           "- If the post is making its own standalone point and is not amplifying any article on file,",
           "  return null. null is a good answer — a wrong match corrupts that article's metrics.",
           "- Be conservative. Confidence below 0.75 will be discarded anyway.",

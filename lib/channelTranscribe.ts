@@ -168,7 +168,7 @@ A checkable claim is a specific number, named system, corridor, currency count, 
 RULES
 - Quote or closely paraphrase what was actually said. Never round, never infer, never add a number that is not in the text.
 - Attribute the claim's substance to the mechanism it belongs to. A claim may serve more than one; repeat it under each only if it genuinely does.
-- These speakers are usually describing their OWN operations. Keep that visible in the wording: "NALA says 96 of 100 stablecoin trades in its markets are USDT", not "96% of trades are USDT".
+- These speakers are usually describing their OWN operations. Keep that visible in the wording: "<Company> says 96 of 100 of its transactions settle same day", not "96% of transactions settle same day".
 - Return an empty array for a mechanism the segment does not actually evidence. An empty answer is correct and useful; a stretched one is not.
 - At most 5 claims per mechanism.
 

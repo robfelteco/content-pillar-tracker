@@ -24,7 +24,7 @@ export function productLabel(id: string): string {
 
 // Word-boundary test that treats [a-z0-9] as word chars, so "routes" inside
 // "reroutes" never matches. Mirrors hasToken() in lib/dimensions.ts.
-function hasToken(haystack: string, token: string): boolean {
+export function hasToken(haystack: string, token: string): boolean {
   const t = token.toLowerCase();
   let from = 0;
   for (;;) {
@@ -103,3 +103,8 @@ export function detectShape(input: ShapeInput): string {
   if (input.mediaType === "photo" || input.mediaType === "animated_gif") return "diagram";
   return "problem_mechanism";
 }
+
+// Unambiguous product tokens only, for the Stage-1 "does this post mention the
+// company" test. looseTerms are deliberately excluded: they are ordinary
+// English words that only count on a post that already mentions the company.
+export const STRICT_PRODUCT_TERMS: string[] = PRODUCT_DEFS.flatMap((p) => p.terms);

@@ -25,8 +25,8 @@ the rest for scale.
 ## The flow
 
 1. **Orient.** Read `brand/README.md`, `lib/brand/types.ts`, the eleven
-   current `brand/*.ts` files (six core, four registries, `market.ts`), and
-   the example files named below. The types are the
+   brand data files (six core, four registries, `market.ts`; `index.ts` is
+   just the re-exports), and the example files named below. The types are the
    contract, the current files are the structure you keep, the example is the
    quality bar. If `brand/identity.ts` no longer says Acme, this is a
    revision: read what is there and ask what should change rather than
@@ -96,8 +96,10 @@ the rest for scale.
   `youtubeHandle: ""` even when a channel exists, or the shelf keeps syncing
   and tagging clips nobody drafts from. Same for `docsOrigin: ""` when the
   docs pillar is parked.
-- **Unknown cadence.** Keep the starter's `staleDays` and the 4-1-1 ratio and
-  say so in the report; a week of data fixes them faster than guessing.
+- **Unknown cadence.** Keep the 4-1-1 ratio and these `staleDays` defaults by
+  source, and say so in the report: products 10, articles 14, docs 14,
+  videos 14, chains 14, dmv 10, education 3, quotes 14. A week of data fixes
+  them faster than guessing.
 - **The one-liner is pasted into every upstream prompt.** Write it the way
   they want models to describe them, in their words, with the mechanism. It
   is not a tagline.
@@ -111,8 +113,8 @@ the rest for scale.
   rules ("fintech, not FinTech") cannot live in `voice.ts`, because the
   matcher ignores case; they go in the positioning brief's voice section.
 - **Pre-announcements need both halves.** The integration pillar's description
-  excludes "coming soon" posts, AND the platform carries `announcedNotLive`
-  in entities.ts. The description steers the classifier; only the flag keeps
+  excludes "coming soon" posts (they go to `other`, where the review queue
+  sees them), AND the platform carries `announcedNotLive` in entities.ts. The description steers the classifier; only the flag keeps
   a misfiled post from marking the platform live.
 - **Reference images come from their own corpus.** `visualAnchor` tells the
   classifier to show a reference image for the pillar, drawn from posts

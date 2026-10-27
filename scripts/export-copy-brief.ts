@@ -61,10 +61,10 @@ w("| Section | Generated from |");
 w("| --- | --- |");
 w(`| Who ${BRAND.name} is, voice, guardrails | \`brand/positioning.ts\` |`);
 w("| Form and length | `lib/antiSlop.ts` |");
-w("| The nine content pillars | `lib/taxonomy.ts` + `lib/pillarShapes.ts` |");
+w(`| The ${TEMPLATE_DEFS.length} content pillars | \`brand/pillars.ts\` |`);
 w("| Who you are writing for | `lib/icp.ts` |");
 w("| Products and their guardrails | `lib/products.ts` |");
-w("| The tradfi analog curriculum | `lib/analogs.ts` |");
+w("| The analog curriculum | `brand/curriculum.ts` |");
 w("| Anti-slop standard | `lib/antiSlop.ts` (full version in `ANTI-SLOP.md`) |");
 w("| Output contract and scoring | `lib/draftContract.ts` |");
 w();
@@ -126,7 +126,7 @@ w("---");
 w();
 
 // ---------------------------------------------------------------- pillars
-w("## 3. The nine content pillars");
+w(`## 3. The ${TEMPLATE_DEFS.length} content pillars`);
 w();
 w(
   "Each pillar gets its own construction rules. `Form` is a length steer only, " +
@@ -166,7 +166,7 @@ w();
 for (const i of ICP_DEFS) {
   w(`### ${i.label}`);
   w();
-  w(`\`${i.id}\` · ${i.side} door${i.solutionsSlug ? ` · ` + [i.solutionsSlug].flat().map((s) => `${BRAND.docsOrigin}/solutions/${s}`).join(", ") : ""}`);
+  w(`\`${i.id}\` · ${i.side === "both" ? "both doors" : i.side + " door"}${i.solutionsSlug ? ` · ` + [i.solutionsSlug].flat().map((s) => `${BRAND.docsOrigin}/solutions/${s}`).join(", ") : ""}`);
   w();
   w(i.brief);
   w();
@@ -201,7 +201,7 @@ w("---");
 w();
 
 // ---------------------------------------------------------------- analogs
-w("## 6. The tradfi analog curriculum");
+w("## 6. The analog curriculum");
 w();
 w(
   "The concepts our ICP already thinks in. The rule that makes this safe is the " +
@@ -216,8 +216,8 @@ w(
 w();
 w(
   "**Structure, every time: the parallel earns the attention and the break IS the " +
-    "post.** A draft that only runs the parallel is the \"we're the Stripe of " +
-    `stablecoins\" failure this registry exists to prevent. ${BRAND.name} is not named in the ` +
+    "post.** A draft that only runs the parallel is the \"we're the X of " +
+    `Y\" failure this registry exists to prevent. ${BRAND.name} is not named in the ` +
     `body; the reader should finish smarter about the mechanism and infer the rest.`,
 );
 w();
@@ -288,8 +288,8 @@ w();
 w(SCORING_RUBRIC[SCORING_RUBRIC.length - 1]);
 w();
 w(
-  "And the question underneath all of them: **would a treasury operator or a solver " +
-    "dev paste this into a work channel?** Copy-link shares are the highest-weighted " +
+  "And the question underneath all of them: **would your reader " +
+    "paste this into a work channel?** Copy-link shares are the highest-weighted " +
     "action on the platform at 20.0, worth 40x a like. That is the only score that matters.",
 );
 w();

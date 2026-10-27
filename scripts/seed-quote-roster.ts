@@ -59,6 +59,7 @@ for (const p of PEOPLE_SEED) {
 
 let watches = 0;
 for (const w of WATCH_SEED) {
+  if (w.identifier.includes("<")) { console.log(`skipped watch source "${w.label}": identifier is a placeholder`); continue; }
   const r = await client.query(
     `INSERT INTO watch_sources (kind, identifier, label)
      VALUES ($1,$2,$3) ON CONFLICT (kind, identifier) DO NOTHING RETURNING id`,

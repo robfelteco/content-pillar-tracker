@@ -1,3 +1,4 @@
+import { MARKET } from "../brand/market.ts";
 import { pillarsByMode, type Template } from "./taxonomy.ts";
 const VIDEO_PILLARS: Template[] = pillarsByMode("videos");
 import { BRAND } from "../brand/identity.ts";
@@ -105,7 +106,7 @@ the candidate clips are about the SAME argument.
 
 Strong evidence: the post's question is the clip's thesis; both name the same speaker; both turn on
 the same specific mechanism, number or claim.
-Weak evidence: both are about stablecoins generally; both mention ${BRAND.name}; the dates are close. These
+Weak evidence: both are about ${MARKET.name} generally; both mention ${BRAND.name}; the dates are close. These
 are NOT enough on their own — every candidate shares them.
 
 If no candidate is clearly the same clip, return null. Null is the correct and expected answer for

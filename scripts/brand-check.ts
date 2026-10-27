@@ -134,3 +134,18 @@ import { MARKET } from "../brand/market.ts";
 function pillarsByModeCheck(mode: string): boolean {
   return PILLAR_DEFS.some((d) => d.draftMode === mode);
 }
+
+// Placeholders in fields the lanes consume at runtime. These are not errors
+// (a placeholder beats an invented fact), but each one is a lane that will
+// not do its job until it is filled.
+{
+  const ph = "not in the setup material";
+  const parked: string[] = [];
+  for (const w of WATCH_SEED) if (w.identifier.includes("<")) parked.push(`watch source "${w.label}" (seed script skips it)`);
+  for (const k of MARKET.keywords) if (k.includes("<")) parked.push(`market keyword "${k}" (quote search matches nothing)`);
+  for (const t of MARKET.domainTerms) if (t.includes("<")) parked.push(`market domain term "${t}" (every quote reads as off-domain)`);
+  if (MARKET.name.includes(ph) || MARKET.name.includes("<")) parked.push("market name (prompts will say the placeholder)");
+  for (const l of MARKET.discoveryLenses) if (l.brief.includes("<")) parked.push(`discovery lens "${l.id}" (the search instruction has a placeholder)`);
+  for (const list of Object.values(MARKET.quoteExamples)) for (const q of list) if (q.includes(ph)) parked.push(`quote example "${q.slice(0, 40)}…"`);
+  for (const p of parked) console.log(`parked: ${p}`);
+}

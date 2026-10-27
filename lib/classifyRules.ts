@@ -1,5 +1,6 @@
 import { BRAND_PRODUCT_TERMS, CLASSIFIED_TEMPLATES, TEMPLATE_DEFS, pillarsByMode, pillarsForMedia, pillarsWith, type Template } from "./taxonomy.ts";
 import { BRAND } from "../brand/identity.ts";
+import { hasToken } from "./products.ts";
 import { BRAND_NAME_RE, isOwnDomain, isOwnHandle } from "./brand/helpers.ts";
 
 // Stage-1 deterministic classification. Cheap, runs before any Claude call.
@@ -33,7 +34,7 @@ const NON_ARTICLE_DOMAINS = new Set(["x.com", "twitter.com", "t.co"]);
 export function mentionsBrand(input: RuleInput): boolean {
   const t = input.text.toLowerCase();
   if (BRAND_NAME_RE.test(t)) return true;
-  if (BRAND_PRODUCT_TERMS.some((term) => t.includes(term))) return true;
+  if (BRAND_PRODUCT_TERMS.some((term) => hasToken(t, term.toLowerCase()))) return true;
   if (input.domains.some((d) => isOwnDomain(d))) return true;
   if (input.mentions.some((m) => isOwnHandle(m))) return true;
   if (BRAND.ownHandles.some((h) => t.includes(`@${h.toLowerCase()}`))) return true;

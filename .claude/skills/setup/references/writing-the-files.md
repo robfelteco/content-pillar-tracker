@@ -31,7 +31,10 @@ optional there, it is optional here.
   a pillar with no `media` is never a rule candidate, only a model pick.
 - Traits are booleans, set only when true. Exactly one pillar should be
   `externalOnly` for the external-link rule to settle on its own; with
-  several, the model decides between them.
+  several, the model decides between them. Declaring `photo`, `video` or
+  `animated_gif` on a `visualAnchor` pillar also exempts posts with that
+  media from the external-link rule, so a chart or a card with a source link
+  reaches the model.
 - Descriptions: signals first, exclusions second. Say what the post looks
   like (media, link target, phrasing, who is named), then "NOT X (that is
   pillar_y)" for the neighbour it is confused with. The Eco example's
@@ -103,8 +106,9 @@ optional there, it is optional here.
 - `id` snake_case; `handles` lowercase, no `@`, unique across all chains. A
   partner may reuse a chain's handle: a feed provider is often both.
 - `keywords` only for names that are unambiguous in text.
-- `momentumHandle` plus `momentumEnabled: true` only for platforms worth a
-  daily read; the rest stay off and can be switched on in the database.
+- `momentumHandle` on every platform worth watching at all; `momentumEnabled:
+  true` only for the ones worth a daily read, the rest `false` (on demand,
+  switchable in the database). No `momentumHandle` means not watched.
 - `liveWithoutArticle` carries the reason; an unexplained line is
   indistinguishable from a mistake.
 - `announcedNotLive` for a platform that has been announced but is not live:
@@ -134,6 +138,8 @@ optional there, it is optional here.
 - `PersonSeed.org` must match an `OrgSeed.name` exactly.
 - `WATCH_SEED.kind` is one of `yt_channel`, `report_site`, `x_search`. A
   `report_site` identifier is host plus path, no scheme: `example.org/research`.
+  An identifier left as a placeholder is skipped by the seed script and
+  listed by brand-check as parked; it is better to omit the entry.
 
 `brand-check` verifies all of the above.
 
@@ -158,8 +164,10 @@ the id of the pillar that drafts from it. A pillar named `essays` on the
   case-insensitively).
 - `quoteDisqualifiers` keyed by reason, which appears in the review UI; omit
   the key when the market has none.
-- `quoteExamples` are real sentences, two to four per list; they calibrate
-  the extractor more than any rule does.
+- `quoteExamples` are sentences, two to four per list; they calibrate the
+  extractor more than any rule does. When the material describes the kind of
+  quote but quotes nothing, write illustrative sentences and say in a comment
+  that they are illustrative; the extractor reads them as shape, not as fact.
 - `themes` ids snake_case; two to eight.
 - `discoveryLenses` briefs are search instructions in the imperative.
 - `clipSeries` only matters when a pillar drafts from videos; keep

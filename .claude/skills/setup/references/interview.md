@@ -241,6 +241,9 @@ Why: these are how the lanes tell on-topic from off-topic. Left at the
 starter, the quote lane accepts nothing and the discovery lane searches for
 placeholders.
 
+Keywords are matched as substrings, so short words bite: "break" matches
+"breaking news". Prefer two-word phrases or the longer form of a term.
+
 Ask: "What words do people use when they talk about your market?" and "Which
 quotes would you be proud to card, and which would embarrass you?" Themes come
 straight from the central reframe and the ownable column: each theme is one
