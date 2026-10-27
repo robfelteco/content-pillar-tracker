@@ -101,6 +101,6 @@ export const PRODUCT_POST_SHAPES: PostShape[] = [
     id: "article_amplifier",
     label: "Article amplifier",
     brief:
-      "Push the underlying article. A tight standalone thesis in the post body that earns the click; the link goes in a reply, never in the primary post.",
+      "Push the underlying article. A tight standalone thesis in the post body that earns the click, with the link in the body.",
   },
 ];

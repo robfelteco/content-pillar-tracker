@@ -20,18 +20,20 @@ product brief with a mechanism and a date beats one with adjectives.
 
 ## The flow
 
-1. **Orient.** Read `brand/README.md`, `lib/brand/types.ts` and every file in
-   `examples/eco/`. The types are the contract; the example is the quality bar.
-   Check `git status`: if `brand/` already differs from the starter, this is a
-   revision, so read what is there and ask what should change rather than
+1. **Orient.** Read `brand/README.md`, `lib/brand/types.ts`, the six current
+   `brand/*.ts` files, and every file in `examples/eco/`. The types are the
+   contract, the current files are the structure you keep, the example is the
+   quality bar. If `brand/identity.ts` no longer says Acme, this is a
+   revision: read what is there and ask what should change rather than
    starting over.
 
 2. **Collect material.** Ask for whatever exists: positioning or messaging
    doc, boilerplate, website URL, docs URL, the X handle, a product list, any
-   written voice rules. Fetch the URLs if you have a web tool. Pull the
-   account's recent posts if the X keys are in `.env` and the database already
-   has posts (`SELECT text FROM posts ORDER BY created_at DESC LIMIT 50`).
-   Everything you learn here removes a question from the interview.
+   written voice rules. Fetch the URLs if you have a web tool. On a re-run,
+   when the database already has posts, pull the account's recent ones
+   (`SELECT text FROM posts ORDER BY created_at DESC LIMIT 50`); on a fresh
+   install there are none yet, and the vocabulary interview stands in for
+   them. Everything you learn here removes a question from the interview.
 
 3. **Interview.** Follow `references/interview.md`. It is organised by file,
    in the order the files depend on each other: identity, pillars, products,
@@ -41,27 +43,34 @@ product brief with a mechanism and a date beats one with adjectives.
    write.
 
 4. **Write the files.** Follow `references/writing-the-files.md`, one file at
-   a time, in the same order. Keep the starter's structure and comments; swap
-   the values. The pillar ids are the one thing you should keep unless the
-   person really needs a different set, because they are the database enum.
+   a time, in the same order. Keep each file's imports, exports and the
+   explanatory comments; replace the values and drop the "STARTER VALUES"
+   notes. The pillar ids are the one thing you keep unless the person really
+   needs a different set, because they are the database enum.
 
-5. **Verify.** Run, in order:
+5. **Verify.** From the repo root:
 
    ```bash
    node scripts/brand-check.ts
    npx tsc --noEmit
+   node --env-file=.env scripts/export-copy-brief.ts
    ```
 
-   `brand-check` prints `brand ok` or the SQL the database needs. If pillar
-   ids changed, show the person the `ALTER TYPE` statements, add the new ids
-   to the enum in `db/schema.sql`, and tell them to run the migration before
-   the next sync. A type error means a file does not match the contract; fix
-   it, do not loosen the types.
+   `brand-check` prints `brand ok` when the pillar ids match the database
+   enum and the audience lists are consistent, or says exactly what is off,
+   with the `ALTER TYPE` SQL when ids changed. If ids changed, show the
+   statements, add the new ids to the enum in `db/schema.sql`, and tell the
+   person to run the migration before the next sync. A type error means a
+   file does not match the contract; fix the file, do not loosen the types.
+   The last command regenerates `COPY-BRIEF.md`, the human-readable copy of
+   what the drafter reads; skip it and say so when `.env` is not filled in.
 
-6. **Report.** Say what each file now holds in one line each, name the
-   fields you guessed at (and why), and list the two or three things worth
-   refining after a week of real drafts. Then point at the runtime steps in
-   the README: fill `.env`, migrate, first sync.
+6. **Report.** One line per file on what it now holds. Then the fields you
+   guessed at and why, and every placeholder you left, so the person can grep
+   for them. Then the two or three things worth refining after a week of
+   real drafts. Close with the runtime steps from the README (fill `.env`,
+   migrate, first sync) and the warning in "What brand/ does not cover"
+   below if any of their pillars depend on it.
 
 ## Judgment calls
 
@@ -69,22 +78,42 @@ product brief with a mechanism and a date beats one with adjectives.
   "Flow" will match the ordinary word. Say so, and suggest a more specific
   `name` only if the collision would be common in their posts; otherwise the
   domain and handle checks carry it.
-- **Fewer pillars is fine.** A company with no docs site or no video sets
-  those pillars' `staleDays` to 9999 and keeps the id; the board hides
-  nothing and the enum stays valid. Do not delete ids.
-- **Draft modes are hooks, not labels.** `chains` ranks tracked entities,
-  `products` ranks products, `docs` and `videos` need those shelves, `dmv`
-  needs the data-visual lanes. A pillar with no natural shelf takes
-  `discovery` or `generic`.
+- **Parking a pillar.** A pillar the account does not post keeps its id,
+  takes `staleDays: 9999` (the board hides it), `draftMode: "generic"` (so
+  no shelf is consulted for it), and keeps a non-null `ratioBucket` (only
+  `other` is null). Never delete an id.
+- **Shelves follow pillars.** If the video pillar is parked, set
+  `youtubeHandle: ""` even when a channel exists, or the shelf keeps syncing
+  and tagging clips nobody drafts from. Same for `docsOrigin: ""` when the
+  docs pillar is parked.
+- **Unknown cadence.** Keep the starter's `staleDays` and the 4-1-1 ratio and
+  say so in the report; a week of data fixes them faster than guessing.
 - **The one-liner is pasted into every upstream prompt.** Write it the way
   they want models to describe them, in their words, with the mechanism. It
   is not a tagline.
 - **The positioning brief keeps the algorithm section.** The X ranking
   weights in the starter are public and generic; only the company sections
   change.
-- **Voice rules are soft.** Commodity phrases and gated words flag drafts for
-  the operator; they do not reject them. Start with the phrases their own
-  posts overuse, which you can see if you pulled recent posts.
-- **Do not invent facts about the product.** A brief with a `<placeholder>`
-  left in it is better than a confident wrong claim, because the drafter will
-  repeat the claim in copy. Leave the placeholder and name it in the report.
+- **Voice rules are soft and case-insensitive.** Commodity phrases and gated
+  words flag drafts for the operator; they do not reject them. Without a
+  post corpus, seed them from the vocabulary interview's "avoid" column and
+  mark them as category words, not observed overuse. Spelling and casing
+  rules ("fintech, not FinTech") cannot live in `voice.ts`, because the
+  matcher ignores case; they go in the positioning brief's voice section.
+- **Do not invent facts.** A placeholder is better than a confident wrong
+  claim, because the drafter will repeat the claim in copy. Use one form
+  everywhere, `<what is missing: not in the setup material>`, so the person
+  can grep for `not in the setup material`. This applies to the positioning
+  brief as much as to product briefs. The `<-` arrows in the algorithm table
+  are not placeholders.
+
+## What brand/ does not cover
+
+Three draft modes read registries that are still the original brand's, in
+`lib/`: `chains` (ranks `lib/integratedChains.ts` and `lib/chainAccounts.ts`),
+`dmv` (the lanes in `lib/dmvLanes.ts`), and the curriculum half of
+`discovery` (`lib/analogs.ts`, `lib/angleBank.ts`). For a company that is
+not in that market, set the pillars that use `chains` or `dmv` to `generic`
+and say in the report that those registries are the next thing to replace.
+The news half of `discovery` and the `products`, `articles`, `docs` and
+`videos` modes are fully driven by `brand/`.

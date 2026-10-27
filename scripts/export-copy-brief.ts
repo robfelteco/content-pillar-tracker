@@ -18,6 +18,7 @@
 // are different on every call. The document names them and says what to paste
 // in instead, which is the whole difference between this and the real tool.
 
+import { BRAND } from "../brand/identity.ts";
 import { writeFileSync } from "fs";
 import { BRAND_ONE_LINER, POSITIONING_BRIEF } from "../lib/positioning.ts";
 import { TEMPLATE_DEFS } from "../lib/taxonomy.ts";
@@ -165,7 +166,7 @@ w();
 for (const i of ICP_DEFS) {
   w(`### ${i.label}`);
   w();
-  w(`\`${i.id}\` · ${i.side} door${i.solutionsSlug ? ` · docs.eco.com/solutions/${i.solutionsSlug}` : ""}`);
+  w(`\`${i.id}\` · ${i.side} door${i.solutionsSlug ? ` · ` + [i.solutionsSlug].flat().map((s) => `${BRAND.docsOrigin}/solutions/${s}`).join(", ") : ""}`);
   w();
   w(i.brief);
   w();

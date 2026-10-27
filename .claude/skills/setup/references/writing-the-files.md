@@ -1,8 +1,11 @@
 # Writing the files
 
 Six files, written in this order because later ones reference earlier ones.
-Keep each file's imports, exports and comment structure from the starter;
-replace the values. The contract is `lib/brand/types.ts`; if a field is
+Keep each file's imports, exports and explanatory comments from the starter;
+replace the values and delete the "STARTER VALUES" notes.
+
+Placeholders, in any file, take one form so they can be grepped:
+`<what is missing: not in the setup material>`. The contract is `lib/brand/types.ts`; if a field is
 optional there, it is optional here.
 
 ## identity.ts
@@ -24,6 +27,9 @@ optional there, it is optional here.
   pillar_y)" for the neighbour it is confused with. The Eco example's
   `integration_announcement` is the model.
 - `staleDays` in days. `9999` hides the pillar from the staleness board.
+- A parked pillar: `staleDays: 9999`, `draftMode: "generic"`, bucket kept.
+- `draftMode` `chains` and `dmv` read registries still hardcoded in `lib/`
+  for the original brand; use `generic` unless the company is in that market.
 - `ratioBucket`: `edu` for content with the company unnamed, `soft` for
   company-in-frame but standalone, `hard` for announce or sell, `null` to
   keep out of the meter (only `other`).
@@ -42,7 +48,8 @@ optional there, it is optional here.
 ## audiences.ts
 
 - `ICP_DEFS`: `side` is `technical`, `commercial` or `both`. `solutionsSlug`
-  only when a docs page `/solutions/<slug>` defines the persona.
+  only when a docs page `/solutions/<slug>` defines the persona; a string or
+  an array of strings.
 - `SITE_AUDIENCES`: each persona id appears in exactly one audience's
   `icps`. The educational lane's prompt lists these with their briefs, so
   write each brief as what that reader wants from an educational post.
@@ -50,9 +57,10 @@ optional there, it is optional here.
 ## positioning.ts
 
 - A single template literal export, `POSITIONING_BRIEF`, `.trim()`ed.
-- Replace every `<angle bracket>` placeholder in the starter. Search for `<`
-  when done; the only ones left should be inside prose that uses the
-  character on purpose.
+- Replace every `<angle bracket>` placeholder in the starter with the
+  company's content, or with the standard placeholder when the material does
+  not say. Search for `<` when done; what remains should be standard
+  placeholders and the `<-` arrows in the algorithm table.
 - Keep X ALGORITHM RULES and VOICE MECHANICS verbatim.
 - Write the vocabulary section with the three columns and the substantiation
   rule; the voice file mirrors it.
@@ -61,7 +69,8 @@ optional there, it is optional here.
 
 ## voice.ts
 
-- `commodityPhrases` lowercase; matched as whole words.
+- `commodityPhrases` lowercase; matched as whole words, case-insensitive.
+  Casing rules therefore go in positioning.ts, not here.
 - `substantiationGated` lowercase single words.
 - `gatedExceptions` keyed by the gated word, value a case-insensitive regex.
   Omit words with no exception.
@@ -74,15 +83,4 @@ optional there, it is optional here.
 
 ## After writing
 
-```bash
-node scripts/brand-check.ts
-npx tsc --noEmit
-```
-
-Then regenerate the copy brief so the human-readable version matches:
-
-```bash
-node --env-file=.env scripts/export-copy-brief.ts
-```
-
-If `.env` is not filled in yet, skip that last step and say so.
+Run the three verification commands in SKILL.md step 5.

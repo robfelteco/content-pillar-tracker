@@ -89,8 +89,8 @@ export interface IcpDef {
   side: IcpSide;
   /** Handed to the drafter verbatim: what this reader believes, wants, and clicks. */
   brief: string;
-  /** The docs /solutions/<slug> page that defines this persona, if one exists. */
-  solutionsSlug?: string;
+  /** The docs /solutions/<slug> page(s) that define this persona, if any. */
+  solutionsSlug?: string | string[];
 }
 
 // A coarser audience list, e.g. the ones your marketing site names.

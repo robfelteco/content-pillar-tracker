@@ -22,8 +22,10 @@ are yours? Marketing site, docs, blog, app?"
 Good: `ownHandles: ["acme", "janedoe", "acmedevs"]`,
 `domains: ["acme.com", "docs.acme.com", "blog.acme.com"]`.
 
-If there is no docs site, `docsOrigin: ""`. If no YouTube, `youtubeHandle: ""`.
-Both disable their shelf cleanly.
+If there is no docs site, or the docs pillar is parked, `docsOrigin: ""`. If
+there is no YouTube channel, or the video pillar is parked, `youtubeHandle: ""`.
+Both disable their shelf cleanly; a channel nobody drafts from should not be
+synced and tagged every night.
 
 ### The one-liner
 
@@ -51,8 +53,9 @@ is named, how it's phrased?" If they pull recent posts, sort five or ten into
 pillars together; the descriptions write themselves from the sort.
 
 Then: "Roughly how often should each one appear?" That sets `staleDays`.
-Weekly is 7, twice a month is 14, daily is 1 or 2. A pillar they don't post
-keeps its id with `staleDays: 9999`.
+Weekly is 7, twice a month is 14, daily is 1 or 2. If they do not know, keep
+the starter values and say so. A pillar they don't post is parked: id kept,
+`staleDays: 9999`, `draftMode: "generic"`, bucket unchanged.
 
 Then the ratio: "Of every six posts, how many should be pure education with
 you not named, how many soft (you're in frame but it stands alone), how many
@@ -93,7 +96,7 @@ only say "you've never written for the commercial door" if the sides are set.
 Ask: "Who do you sell to? Which of them are technical readers, which are
 commercial, which both?" If the docs have a Solutions-for-X section, mirror
 its slugs as `solutionsSlug` so docs pages tag themselves without a model
-call. Each `brief` is what that reader already believes and what would make
+call; one persona that owns two solutions pages takes an array of slugs. Each `brief` is what that reader already believes and what would make
 them click. Two to nine personas; two to six site audiences; every persona
 appears in exactly one site audience's `icps`.
 
@@ -129,6 +132,10 @@ The vocabulary answer from positioning fills most of it: the "avoid" column is
 Ask one more: "Are there phrases you've decided to stop saying about
 yourselves?" and "Is there a sense of a gated word that is fine? ('trusted
 third party' as a critique, say)."
+
+Spelling and casing rules ("fintech, not FinTech", "onchain, one word") go in
+the positioning brief's voice section, not here: the matcher is
+case-insensitive and would flag every correct use.
 
 `voiceNote` is one paragraph on this account's particular slop risk. For a
 precise, institutional voice the starter's note is right. For a casual

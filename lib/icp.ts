@@ -54,7 +54,7 @@ export function icpFromSolutionsPath(path: string): string | null {
   const m = path.match(/^\/solutions\/([a-z0-9-]+)/i);
   if (!m) return null;
   const slug = m[1].toLowerCase();
-  return ICP_DEFS.find((i) => i.solutionsSlug === slug)?.id ?? null;
+  return ICP_DEFS.find((i) => (Array.isArray(i.solutionsSlug) ? i.solutionsSlug : [i.solutionsSlug]).includes(slug))?.id ?? null;
 }
 
 // Compact block for the Claude tagging prompt.

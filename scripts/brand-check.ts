@@ -42,3 +42,27 @@ if (!missingInDb.length && !extraInDb.length && !problems) {
   console.log(`brand ok: ${PILLAR_IDS.length} pillars, enum matches, ${BRAND.name} (@${BRAND.handle})`);
 }
 process.exitCode = problems ? 1 : 0;
+
+// Audience invariants the types cannot express: every persona appears in
+// exactly one site audience, every listed persona exists, and the lists are
+// in the range the prompts were written for.
+import { ICP_DEFS, SITE_AUDIENCES } from "../brand/audiences.ts";
+{
+  let audienceProblems = 0;
+  const icpIds = new Set(ICP_DEFS.map((i) => i.id));
+  const seen = new Map<string, number>();
+  for (const a of SITE_AUDIENCES) {
+    for (const id of a.icps) {
+      if (!icpIds.has(id)) { console.error(`SITE_AUDIENCES "${a.id}" lists unknown persona "${id}"`); audienceProblems++; }
+      seen.set(id, (seen.get(id) ?? 0) + 1);
+    }
+  }
+  for (const id of icpIds) {
+    const n = seen.get(id) ?? 0;
+    if (n !== 1) { console.error(`persona "${id}" appears in ${n} site audiences; it must appear in exactly one`); audienceProblems++; }
+  }
+  if (ICP_DEFS.length < 2 || ICP_DEFS.length > 9) { console.error(`ICP_DEFS has ${ICP_DEFS.length} personas; expected 2 to 9`); audienceProblems++; }
+  if (SITE_AUDIENCES.length < 2 || SITE_AUDIENCES.length > 6) { console.error(`SITE_AUDIENCES has ${SITE_AUDIENCES.length} audiences; expected 2 to 6`); audienceProblems++; }
+  if (audienceProblems) process.exitCode = 1;
+  else console.log(`audiences ok: ${ICP_DEFS.length} personas in ${SITE_AUDIENCES.length} site audiences`);
+}
