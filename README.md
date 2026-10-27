@@ -58,7 +58,9 @@ npm install
 npm run dev
 ```
 
-5. Trigger the first sync by calling `/api/sync` with
+5. Run `/setup` in Claude Code to write `brand/` for your company (or edit
+   the starter by hand; see [brand/README.md](brand/README.md)).
+6. Trigger the first sync by calling `/api/sync` with
    `Authorization: Bearer $CRON_SECRET`. Deploy to Vercel and the schedule in
    `vercel.json` takes over.
 
