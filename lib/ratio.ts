@@ -43,10 +43,10 @@ type SqlTag = <T = Record<string, unknown>>(
 const ORDER: RatioBucket[] = ["edu", "soft", "hard"];
 
 // A post's bucket. Declared on the pillar, with the one per-post exception: a
-// Data Motion Visual with no chain as its subject is market-wide data, which is
-// educational. Same rule lib/dmvLanes.ts lanes them by.
+// data-visual pillar post with no chain as its subject is market-wide data,
+// which is educational. Same rule lib/dmvLanes.ts lanes them by.
 export function bucketOf(template: Template, chainCount: number): RatioBucket | null {
-  if (template === "data_motion_visual" && chainCount === 0) return "edu";
+  if (TEMPLATE_BY_ID[template]?.draftMode === "dmv" && chainCount === 0) return "edu";
   return TEMPLATE_BY_ID[template]?.ratioBucket ?? null;
 }
 

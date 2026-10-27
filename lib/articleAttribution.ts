@@ -1,3 +1,4 @@
+import { CLASSIFIED_TEMPLATES, pillarsByMode, type Template } from "./taxonomy.ts";
 import {
   ecoBlogSlug,
   xArticleId,
@@ -82,28 +83,14 @@ export interface AttributionResult {
 // unchanged: the added pillars resolve on the free deterministic rungs (a link,
 // an X-article card, an anchor, a quoted id) and are excluded from
 // CLAUDE_MATCH_TEMPLATES below, so none of them can reach a paid call.
-export const ARTICLE_TEMPLATES = [
-  "thought_leadership",
-  "product_post",
-  "broad_educational",
-  // Chain integrations sit on articles too — an "Eco now supports X" post is
-  // usually carried by a blog piece and then re-amplified for a fortnight. The
-  // pillar still DRAFTS on chain angles, but the reuse count is worth having.
-  "integration_announcement",
-  // These three PAIR with articles rather than sitting on them — they quote-post
-  // the piece. The link is what makes "we covered this subject today, in another
-  // pillar" a fact the score can read (lib/articleCoverage.ts).
-  "data_motion_visual",
-  "quote_card",
-  "short_form_video_eco",
-];
+export const ARTICLE_TEMPLATES: Template[] = CLASSIFIED_TEMPLATES;
 
 // …but only these two are worth a paid content-match. Broad Educational points
 // at OTHER people's articles by definition, so fanning Claude out over it would
 // spend money to confirm 60-odd nulls. It stays in ARTICLE_TEMPLATES because a
 // broad-ed post can still be the ANCHOR for one of our own pieces (the "$32
 // Trillion" essay is filed there), and the free rungs must see it.
-export const CLAUDE_MATCH_TEMPLATES = ["thought_leadership", "product_post", "integration_announcement"];
+export const CLAUDE_MATCH_TEMPLATES: Template[] = [...pillarsByMode("articles"), ...pillarsByMode("products"), ...pillarsByMode("chains")];
 
 // Matches ONE GROUP of posts — all of which share an outbound link, and so are
 // all amplifying the same thing — against the registry, returning one answer.

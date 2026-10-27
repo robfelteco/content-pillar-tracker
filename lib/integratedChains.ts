@@ -1,3 +1,5 @@
+import { pillarsByMode, type Template } from "./taxonomy.ts";
+const CHAIN_PILLARS: Template[] = pillarsByMode("chains");
 import { CHAIN_LABELS } from "./dimensions.ts";
 import { CHAINS } from "../brand/entities.ts";
 
@@ -60,7 +62,7 @@ export async function getIntegratedChains(sql: SqlTag): Promise<Set<string>> {
     SELECT chain FROM articles WHERE chain IS NOT NULL AND kind = 'chain_integration'
     UNION
     SELECT unnest(chains) AS chain FROM posts
-      WHERE template = 'integration_announcement' AND is_reply = false
+      WHERE template = ANY(${CHAIN_PILLARS}::text[]) AND is_reply = false
   `;
   const live = new Set([...rows.map((r) => r.chain), ...Object.keys(LIVE_WITHOUT_ARTICLE)]);
   for (const id of ANNOUNCED_NOT_LIVE) live.delete(id);

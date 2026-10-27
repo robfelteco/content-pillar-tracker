@@ -1,3 +1,5 @@
+import { pillarsByMode, type Template } from "./taxonomy.ts";
+const VIDEO_PILLARS: Template[] = pillarsByMode("videos");
 import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import { sql } from "./db.ts";
@@ -128,7 +130,7 @@ export async function matchVideosToPosts(opts: { limit?: number } = {}): Promise
   const posts = await sql<{ id: string; text: string; createdAt: string }>`
     SELECT id, text, created_at AS "createdAt"
     FROM posts
-    WHERE template = 'short_form_video_eco'
+    WHERE template = ANY(${VIDEO_PILLARS}::text[])
       AND is_reply = false
       AND video_id IS NULL
       AND COALESCE(video_match, '') <> 'human'

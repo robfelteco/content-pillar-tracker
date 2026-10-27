@@ -46,8 +46,8 @@ product brief with a mechanism and a date beats one with adjectives.
 4. **Write the files.** Follow `references/writing-the-files.md`, one file at
    a time, in the same order. Keep each file's imports, exports and the
    explanatory comments; replace the values and drop the "STARTER VALUES"
-   notes. The pillar ids are the one thing you keep unless the person really
-   needs a different set, because they are the database enum.
+   notes. Pillar ids are free: they are stored as text and the core reads
+   the pillar's declarations, not its name.
 
 5. **Verify.** From the repo root:
 
@@ -57,11 +57,10 @@ product brief with a mechanism and a date beats one with adjectives.
    node --env-file=.env scripts/export-copy-brief.ts
    ```
 
-   `brand-check` prints `brand ok` when the pillar ids match the database
-   enum and the audience lists are consistent, or says exactly what is off,
-   with the `ALTER TYPE` SQL when ids changed. If ids changed, show the
-   statements, add the new ids to the enum in `db/schema.sql`, and tell the
-   person to run the migration before the next sync. A type error means a
+   `brand-check` prints `brand ok` when the pillar set, the audience lists
+   and the registries are consistent, or says exactly what is off. On a
+   re-run where pillar ids changed, tell the person which pillars to
+   reclassify (`scripts/reclassify.ts`). A type error means a
    file does not match the contract; fix the file, do not loosen the types.
    The last command regenerates `COPY-BRIEF.md`, the human-readable copy of
    what the drafter reads; skip it and say so when `.env` is not filled in.
@@ -79,10 +78,15 @@ product brief with a mechanism and a date beats one with adjectives.
   "Flow" will match the ordinary word. Say so, and suggest a more specific
   `name` only if the collision would be common in their posts; otherwise the
   domain and handle checks carry it.
-- **Parking a pillar.** A pillar the account does not post keeps its id,
-  takes `staleDays: 9999` (the board hides it), `draftMode: "generic"` (so
-  no shelf is consulted for it), and keeps a non-null `ratioBucket` (only
-  `other` is null). Never delete an id.
+- **Pillars are the brand's to define.** Any set, any snake_case ids, plus
+  `other`. Start from what the account actually posts: sort twenty recent
+  posts into piles with the person and the pillars fall out. Each one then
+  declares its source (`draftMode`), its media, and its traits; the core
+  reads those and never the id. A source no pillar uses is off, so there is
+  no need to park pillars for things the company does not do: leave them out.
+- **Parking a pillar** (keeping one the account posts rarely): `staleDays:
+  9999` hides it from the board, `draftMode: "generic"` keeps shelves out of
+  it, bucket stays non-null (only `other` is null).
 - **Shelves follow pillars.** If the video pillar is parked, set
   `youtubeHandle: ""` even when a channel exists, or the shelf keeps syncing
   and tagging clips nobody drafts from. Same for `docsOrigin: ""` when the

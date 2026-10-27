@@ -296,9 +296,8 @@ function buildActions(
     return { mode, targets: [], products, partners };
   }
 
-  if (mode === "discovery") {
-    if (rec.template !== "broad_educational") return { mode, targets: [] };
-    // Broad Educational is the pipeline (Phase 2 of docs/BROAD-ED-REDESIGN.md).
+  if (mode === "education") {
+    // The educational pipeline (Phase 2 of docs/BROAD-ED-REDESIGN.md).
     // The curriculum shelf no longer renders as lanes on this card; only its
     // coverage headline survives, as the read behind the "never taught" chip.
     return {
@@ -395,7 +394,7 @@ function articleTarget(a: ArticleShelfRow, product?: string): Target {
   };
 }
 
-type DraftMode = "chains" | "products" | "articles" | "discovery" | "docs" | "videos" | "dmv" | "generic";
+type DraftMode = "chains" | "products" | "articles" | "docs" | "videos" | "dmv" | "education" | "quotes" | "generic";
 
 // Flattened for the pipeline's concept dropdown. RecActions is a client component, so
 // it gets ids and labels only — never ANALOG_DEFS itself, which carries the
@@ -406,7 +405,8 @@ const ACTION_LABEL: Record<DraftMode, string> = {
   chains: "Pick a chain angle · draft copy",
   products: "Pick a product · draft copy",
   articles: "Pick an article · draft copy",
-  discovery: "Discover sources · draft copy",
+  education: "Work the pipeline · draft copy",
+  quotes: "Discover quotes · draft copy",
   docs: "Pick an audience + docs page · draft copy",
   videos: "Pick a clip · draft copy",
   dmv: "Pick a data lane · draft copy",
@@ -664,7 +664,7 @@ function shelfSummary(
     if (prods.length === 0) return { count: "no coverage", nested: false };
     return { count: `${prods.length} products \u00b7 ${total} to draft from`, nested: true };
   }
-  if (mode === "discovery") {
+  if (mode === "education" || mode === "quotes") {
     // Broad Educational's collapsed row is the pipeline's state: what is
     // waiting to be read, what is queued for the week, what is ready to post.
     // The untaught count rides along because it is the number the curriculum

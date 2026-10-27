@@ -19,21 +19,26 @@ here. To see a complete, production-tested configuration, read `examples/eco/`.
 
 Any registry may be empty; its lane then has nothing to do and stays quiet.
 
-## Pillar ids are special
+## Pillars are yours
 
-`PILLAR_IDS` in `pillars.ts` is a compile-time union the whole app codes
-against, and it must match the `content_template` enum in `db/schema.sql`.
-Labels, descriptions, thresholds, shapes and buckets change freely. To add or
-rename a pillar:
+A brand defines its own pillar set in `pillars.ts`: any snake_case ids, any
+number, plus `other` (the review bucket). Ids are stored as text, so no
+database change is needed to add, rename or remove one; renaming after posts
+are classified means `node --env-file=.env scripts/reclassify.ts <pillar>`.
 
-1. Edit `PILLAR_IDS`, `PILLAR_DEFS` and `PILLAR_SHAPES`.
-2. Run `node scripts/brand-check.ts`. It prints the `ALTER TYPE` statement for
-   any id the enum is missing and lists any enum value the brand no longer has.
-3. Apply the statement, then `node --env-file=.env scripts/reclassify.ts <pillar>`.
+The core never names a pillar. It reads what each one declares:
 
-The draft modes (`chains`, `products`, `articles`, `discovery`, `docs`,
-`videos`, `dmv`, `generic`) are the generic hooks a pillar can use. A pillar
-with no natural source shelf takes `discovery` or `generic`.
+- `draftMode`, the SOURCE it drafts from: `products`, `articles`, `docs`,
+  `videos`, `chains` (integrated platforms), `dmv` (data visuals),
+  `education` (the educational pipeline), `quotes`, or `generic` (no shelf).
+  Several pillars may share a source; a source with no pillar is off.
+- `media`, the media kinds a post in it can carry; the rule classifier
+  narrows candidates by this before any model call.
+- traits: `externalOnly` (the company is never named), `visualAnchor` (the
+  image is the identity, so the classifier is shown a reference), `teaches`
+  (explanation is the job), `easyWin`.
+
+`node scripts/brand-check.ts` verifies the set.
 
 ## Swapping in the example
 

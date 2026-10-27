@@ -46,6 +46,9 @@ export const PILLAR_DEFS: PillarDef<PillarId>[] = [
     description:
       "Animated/motion video presenting market data, charts, or stats (usually stablecoin market numbers). Media is video or GIF; content is a data visualization, not a person or a product demo.",
     draftMode: "dmv",
+    media: ["video", "animated_gif"],
+    visualAnchor: true,
+    easyWin: true,
     staleDays: 10,
     ratioBucket: "soft",
   },
@@ -55,6 +58,8 @@ export const PILLAR_DEFS: PillarDef<PillarId>[] = [
     description:
       "A new BLOCKCHAIN going live in Eco — Eco Routes expanding coverage to a chain. The chain is the subject of the announcement. Signals: 'Eco now supports @chain', 'Eco is live on @chain', 'expanding coverage to <chain>', 'Routes is live on <chain>', chain stats used to justify the integration. NOT a company/partner integrating an Eco product into their own app (that is product_post), and NOT third-party market news about a chain (that is broad_educational).",
     draftMode: "chains",
+    media: ["photo", "link-card"],
+    visualAnchor: true,
     staleDays: 14,
     ratioBucket: "hard",
   },
@@ -63,7 +68,10 @@ export const PILLAR_DEFS: PillarDef<PillarId>[] = [
     label: "Quote Card",
     description:
       "Static image containing a large pulled quote with speaker attribution (name/title/company on the card). Copy typically introduces the speaker and gestures at the quote.",
-    draftMode: "discovery",
+    draftMode: "quotes",
+    media: ["photo"],
+    visualAnchor: true,
+    easyWin: true,
     staleDays: 14,
     ratioBucket: "edu",
   },
@@ -73,6 +81,8 @@ export const PILLAR_DEFS: PillarDef<PillarId>[] = [
     description:
       "Eco product content, in three flavours: (1) PRODUCT RELEASES — a new Eco product or feature shipping; (2) PRODUCT EDUCATION — how a product works, the problem it solves, architecture diagrams, lifecycle explainers, demo footage, eco.com/blog product articles; (3) PARTNERS INTEGRATING ECO infra/products into their own apps (e.g. Para shipping Permit3, LI.FI/Jumper routing through Eco, Circle Gateway powering Eco order size). Signals: Eco product names (Routes, Verified Liquidity, Programmable Addresses, Permit3, Flash Intents, Fast Deposits), eco.com/blog product URLs, architecture diagrams, in-app demo footage, '<partner> integrated <Eco product>'. A partner/company integration belongs HERE — the chain bucket is only for new blockchains going live in Eco.",
     draftMode: "products",
+    media: ["video", "animated_gif", "photo", "link-card", "text"],
+    visualAnchor: true,
     staleDays: 10,
     ratioBucket: "hard",
   },
@@ -82,6 +92,8 @@ export const PILLAR_DEFS: PillarDef<PillarId>[] = [
     description:
       "Long-form opinion/perspective articles or posts, often from or featuring our CEO. Essay-like text or links to op-ed style pieces. Includes the many re-amplification posts that point back at an article already published — the tracker groups those by their underlying article rather than counting each as a new piece.",
     draftMode: "articles",
+    media: ["link-card", "text"],
+    teaches: true,
     staleDays: 14,
     ratioBucket: "soft",
   },
@@ -91,6 +103,8 @@ export const PILLAR_DEFS: PillarDef<PillarId>[] = [
     description:
       "Posts driving to developer documentation. Signals: links to docs.eco.com, code snippets, developer-facing language. Optional sub-tag: soft_sell vs hard_sell.",
     draftMode: "docs",
+    media: ["link-card"],
+    visualAnchor: true,
     staleDays: 14,
     ratioBucket: "soft",
   },
@@ -99,7 +113,10 @@ export const PILLAR_DEFS: PillarDef<PillarId>[] = [
     label: "Broad Educational",
     description:
       "External stablecoin-market content that never mentions Eco: external articles, external X articles, short clips about what's happening in the stablecoin space. Signals: external link domains, zero Eco/product mentions, market-commentary framing.",
-    draftMode: "discovery",
+    draftMode: "education",
+    media: ["text"],
+    externalOnly: true,
+    teaches: true,
     // At ~10 main posts a week the 4-1-1 needs six or seven of these a week,
     // so the cadence is days, not the 10 the other pillars run on.
     staleDays: 2,
@@ -111,6 +128,8 @@ export const PILLAR_DEFS: PillarDef<PillarId>[] = [
     description:
       "Short-form video featuring Eco (talking-head clips, event clips, explainers where Eco is named or shown). Distinct from data_motion_visual (data animation) and from product demo videos (which are product_post).",
     draftMode: "videos",
+    media: ["video", "animated_gif"],
+    visualAnchor: true,
     staleDays: 14,
     ratioBucket: "soft",
   },

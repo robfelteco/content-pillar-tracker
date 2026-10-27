@@ -6,6 +6,10 @@ import { useAction, ActionProgress } from "./useAction";
 import { SITE_AUDIENCES, siteAudienceLabel } from "@/lib/icp";
 import type { EduPipeline as Board, EduCandidate, CandidateStatus } from "@/lib/eduIntake";
 import type { CopyOption } from "@/lib/generateCopy";
+import { pillarsByMode } from "@/lib/taxonomy";
+
+// The pillar this pipeline drafts into: the first one on the education source.
+const EDU_PILLAR = pillarsByMode("education")[0];
 
 // Broad Educational as ONE pipeline: INBOX -> PICKED -> DRAFTED -> POSTED.
 //
@@ -124,7 +128,7 @@ export function EduPipeline({
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
-            template: "broad_educational",
+            template: EDU_PILLAR,
             eduCandidateId: c.id,
             analogId: c.analogId,
             angle: [c.frame, c.ecoBridge ? `Bridge: ${c.ecoBridge}` : null].filter(Boolean).join(" ").slice(0, 500) || null,

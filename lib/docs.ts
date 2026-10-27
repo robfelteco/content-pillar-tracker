@@ -1,3 +1,5 @@
+import { pillarsByMode, type Template } from "./taxonomy.ts";
+const DOCS_PILLARS: Template[] = pillarsByMode("docs");
 import { BRAND } from "../brand/identity.ts";
 import { sql } from "./db.ts";
 import { icpFromSolutionsPath, ICP_BY_ID, TIER_ORDER, type DocTier } from "./icp.ts";
@@ -278,7 +280,7 @@ export async function attributeDocPages(): Promise<DocAttributionResult> {
   const posts = await sql<{ id: string; linkUrl: string | null; urls: { expanded_url?: string }[] }>`
     SELECT id, link_resolved_url AS "linkUrl", urls
     FROM posts
-    WHERE template = 'dev_doc_post'
+    WHERE template = ANY(${DOCS_PILLARS}::text[])
       AND is_reply = false
       AND (doc_page_id IS NULL OR doc_page_match <> 'human')`;
 
@@ -344,7 +346,7 @@ export async function getDocShelf(): Promise<DocShelfRow[]> {
         SELECT impressions FROM metric_snapshots m
         WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
       ) s ON true
-      WHERE p.template = 'dev_doc_post' AND p.is_reply = false
+      WHERE p.template = ANY(${DOCS_PILLARS}::text[]) AND p.is_reply = false
     )
     SELECT
       d.id::int                                AS "docPageId",
@@ -380,7 +382,7 @@ export async function getDocShelf(): Promise<DocShelfRow[]> {
     LEFT JOIN LATERAL (
       SELECT impressions FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
     ) s ON true
-    WHERE p.template = 'dev_doc_post' AND p.is_reply = false
+    WHERE p.template = ANY(${DOCS_PILLARS}::text[]) AND p.is_reply = false
     ORDER BY s.impressions DESC NULLS LAST`;
 
   const usesByPage = new Map<number | null, DocUse[]>();
@@ -481,7 +483,7 @@ async function getIcpColdness(): Promise<Map<string, number | null>> {
            EXTRACT(DAY FROM now() - MAX(p.created_at))::int AS "daysSince"
     FROM posts p
     JOIN doc_pages d ON d.id = p.doc_page_id
-    WHERE p.template = 'dev_doc_post' AND p.is_reply = false AND d.icp IS NOT NULL
+    WHERE p.template = ANY(${DOCS_PILLARS}::text[]) AND p.is_reply = false AND d.icp IS NOT NULL
     GROUP BY d.icp`;
   return new Map(rows.map((r) => [r.icp, r.daysSince]));
 }
@@ -521,7 +523,7 @@ export async function getHomepagePenalty(): Promise<HomepagePenalty> {
       LEFT JOIN LATERAL (
         SELECT impressions FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
       ) s ON true
-      WHERE p.template = 'dev_doc_post' AND p.is_reply = false
+      WHERE p.template = ANY(${DOCS_PILLARS}::text[]) AND p.is_reply = false
         AND p.link_resolved_url ILIKE '%docs.eco.com%'
     )
     SELECT "isHome", COUNT(*)::int AS n,

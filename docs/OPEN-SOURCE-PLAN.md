@@ -63,6 +63,12 @@ and `docs/BROAD-ED-REDESIGN.md` are regenerated or dropped, not scrubbed.
 
 ## Phases
 
+0. Pillars are brand-defined, 2026-10-27: the core keys on each pillar's
+   declared source (`draftMode`), media and traits, never its id; the
+   `content_template` enum became text (`scripts/migrate-template-text.sql`
+   converts an older database); the starter ships a generic set of four
+   plus `other`, the Eco example keeps its nine.
+
 1. Sign-off from Eco on what ships (positioning distillation, anti-slop
    standard, pillar taxonomy as the example). PENDING.
 2. Scrub pass. DONE 2026-10-26.

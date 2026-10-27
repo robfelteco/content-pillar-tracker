@@ -1,3 +1,7 @@
+import { TEMPLATE_BY_ID, pillarsByMode, type Template } from "./taxonomy.ts";
+import { BRAND } from "../brand/identity.ts";
+const CHAIN_PILLARS: Template[] = pillarsByMode("chains");
+const PRODUCT_PILLARS: Template[] = pillarsByMode("products");
 import Anthropic from "@anthropic-ai/sdk";
 import { extractDimensions } from "./dimensions.ts";
 import {
@@ -125,8 +129,8 @@ async function candidates(sql: SqlTag, _reg: LaneRegistry): Promise<CandidateRow
     WHERE p.is_reply = false
       AND s.post_id IS NULL
       AND (
-        (p.template = 'integration_announcement' AND COALESCE(array_length(p.chains, 1), 0) = 0)
-        OR (p.template = 'product_post' AND COALESCE(array_length(p.products, 1), 0) = 0)
+        (p.template = ANY(${CHAIN_PILLARS}::text[]) AND COALESCE(array_length(p.chains, 1), 0) = 0)
+        OR (p.template = ANY(${PRODUCT_PILLARS}::text[]) AND COALESCE(array_length(p.products, 1), 0) = 0)
       )
     ORDER BY p.created_at DESC
   `;
@@ -182,12 +186,10 @@ async function keepTerms(sql: SqlTag, terms: string[]): Promise<{ kept: string[]
 }
 
 function promptFor(row: CandidateRow, reg: LaneRegistry): string {
-  const pillar =
-    row.template === "integration_announcement"
-      ? "New Chain Integrations — a blockchain going live in Eco. The subject is a CHAIN."
-      : "Product Posts — an Eco product, or a company shipping Eco infra in their own product.";
+  const def = TEMPLATE_BY_ID[row.template as Template];
+  const pillar = def ? `${def.label}: ${def.description}` : row.template;
 
-  return `You maintain the lane registry for Eco's content tracker. A "lane" is a recurring subject the team rotates through: a chain Eco routes on, an Eco product, or a partner company running Eco in production. Each lane gets its own clock, so a lane that does not exist is a subject that can go cold with nobody noticing.
+  return `You maintain the lane registry for ${BRAND.name}'s content tracker. A "lane" is a recurring subject the team rotates through: a platform ${BRAND.name} is live on, a ${BRAND.name} product, or a partner company running ${BRAND.name} in production. Each lane gets its own clock, so a lane that does not exist is a subject that can go cold with nobody noticing.
 
 This post was filed under: ${pillar}
 It carries no tag on that pillar's lane axis, which usually means either (a) it is about something not yet in the registry, or (b) it is generic and belongs to no lane at all. (b) is common — say so plainly when it is the answer.

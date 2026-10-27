@@ -12,24 +12,12 @@
 -- Apply with: psql "$DATABASE_URL" -f db/schema.sql   (idempotent)
 
 -- ---------------------------------------------------------------------------
--- Content-template taxonomy. Kept as an enum so a bad label can't be written,
--- but 'other' is a real bucket that routes to the review queue. Adding a new
--- template later = one ALTER TYPE ... ADD VALUE (see lib/taxonomy.ts, the
--- single source of truth the app codes against).
+-- Content-pillar ids are TEXT, validated by the app against brand/pillars.ts
+-- (lib/taxonomy.ts isTemplate). A brand defines its own set; 'other' is the
+-- one id every brand has, the bucket that routes to the review queue.
+-- Installations created before 2026-10-27 have a content_template ENUM here;
+-- scripts/migrate-template-text.sql converts it.
 -- ---------------------------------------------------------------------------
-DO $$ BEGIN
-  CREATE TYPE content_template AS ENUM (
-    'data_motion_visual',
-    'integration_announcement',
-    'quote_card',
-    'product_post',
-    'thought_leadership',
-    'dev_doc_post',
-    'broad_educational',
-    'short_form_video_eco',
-    'other'
-  );
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- Who/what assigned the current template. Human always wins and is never
 -- overwritten by a re-classification run.
@@ -69,7 +57,7 @@ CREATE TABLE IF NOT EXISTS posts (
   amplified         boolean NOT NULL DEFAULT false,
 
   -- Classification (current, denormalized onto the post for fast dashboard reads).
-  template          content_template,               -- null until classified
+  template          text,                           -- null until classified; a brand/pillars.ts id
   confidence        real,                           -- 0..1
   reasoning         text,                           -- one sentence from the classifier
   class_source      classification_source,          -- rule | claude | human
@@ -126,10 +114,10 @@ CREATE INDEX IF NOT EXISTS metric_snapshots_post_idx ON metric_snapshots (post_i
 CREATE TABLE IF NOT EXISTS labels (
   id            bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   post_id       text NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
-  template      content_template NOT NULL,
+  template      text NOT NULL,
   labeled_by    text NOT NULL,          -- operator email
   labeled_at    timestamptz NOT NULL DEFAULT now(),
-  prev_template content_template,       -- what the classifier had guessed (for audit)
+  prev_template text,                   -- what the classifier had guessed (for audit)
   prev_source   classification_source
 );
 CREATE INDEX IF NOT EXISTS labels_post_idx     ON labels (post_id);
@@ -216,7 +204,7 @@ CREATE INDEX IF NOT EXISTS posts_entities_idx ON posts USING gin (entities);
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS recommendation_uses (
   id                bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  template          content_template NOT NULL,        -- pillar the operator chose to act on
+  template          text NOT NULL,                   -- pillar the operator chose to act on
   chain             text,                              -- chosen chain angle (canonical id), or null
   angle             text,                              -- optional free-text topic/angle note
   score_at_use      integer,                           -- the 0..100 priority score when used (calibration)

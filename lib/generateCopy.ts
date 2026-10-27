@@ -663,7 +663,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
   // appear in no piece we ever published. Twenty of the twenty-six chains in
   // CHAIN_LABELS have nothing written behind them; those are not draftable
   // until someone writes the piece.
-  if (input.template === "integration_announcement" && !article) {
+  if (TEMPLATE_BY_ID[input.template].draftMode === "chains" && !article) {
     throw new Error(
       `No integration article for ${chain ?? "this chain"} yet. A chain announcement has to argue from the ` +
         `published piece and link to it — write the blog post first, add the chain to ` +
@@ -697,7 +697,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
     // purpose: form before content, because "earn a copy-link share" means
     // something different for a 12-second data animation than for a five-post
     // explainer of correspondent banking.
-    pillarShapeBlock(input.template, analog ? "curriculum" : input.template === "broad_educational" ? "news" : undefined),
+    pillarShapeBlock(input.template, analog ? "curriculum" : TEMPLATE_BY_ID[input.template].externalOnly ? "news" : undefined),
 
     // Placed directly after the pillar shape and phrased as an override, because
     // it contradicts what the pillars used to say. Threads are gone: The operator's rule
@@ -717,7 +717,7 @@ export async function generateCopy(input: GenerateCopyInput): Promise<CopyOption
     // A chain is only ever a colour here, never the subject — unless the pillar
     // IS chain integrations.
     chain
-      ? input.template === "integration_announcement"
+      ? TEMPLATE_BY_ID[input.template].draftMode === "chains"
         ? `CHAIN going live in ${BRAND.name}: ${chain}. This is the subject of the post.`
         : `Chain that may be worth naming: ${chain}. Only mention it if it genuinely sharpens the post — this pillar is not about chains.`
       : null,

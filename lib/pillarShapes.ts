@@ -1,4 +1,4 @@
-import type { Template } from "./taxonomy.ts";
+import { TEMPLATE_BY_ID, type Template } from "./taxonomy.ts";
 import { PILLAR_SHAPES } from "../brand/pillars.ts";
 import type { PillarShape } from "./brand/types.ts";
 
@@ -14,7 +14,7 @@ export function pillarShapeBlock(template: Template, lane?: "curriculum" | "news
   const s = PILLAR_SHAPES[template];
   if (!s) return "";
   const laneNote =
-    template === "broad_educational" && lane
+    TEMPLATE_BY_ID[template]?.externalOnly && lane
       ? lane === "curriculum"
         ? "\nLANE: analog curriculum. Long form in ONE post is usually right. Teach the mechanism, land the break, cite the source."
         : "\nLANE: market news. Tight, one post. Lead with the fact."

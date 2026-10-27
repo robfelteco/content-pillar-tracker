@@ -1,3 +1,5 @@
+import { pillarsByMode, type Template } from "./taxonomy.ts";
+const VIDEO_PILLARS: Template[] = pillarsByMode("videos");
 import { BRAND } from "../brand/identity.ts";
 import { sql } from "./db.ts";
 import { ICP_BY_ID } from "./icp.ts";
@@ -473,7 +475,7 @@ export async function getVideoShelf(): Promise<VideoShelfRow[]> {
         SELECT impressions FROM metric_snapshots m
         WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
       ) s ON true
-      WHERE p.template = 'short_form_video_eco' AND p.is_reply = false
+      WHERE p.template = ANY(${VIDEO_PILLARS}::text[]) AND p.is_reply = false
     )
     SELECT
       v.id::int,
@@ -507,7 +509,7 @@ export async function getVideoShelf(): Promise<VideoShelfRow[]> {
     LEFT JOIN LATERAL (
       SELECT impressions FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
     ) s ON true
-    WHERE p.template = 'short_form_video_eco' AND p.is_reply = false AND p.video_id IS NOT NULL
+    WHERE p.template = ANY(${VIDEO_PILLARS}::text[]) AND p.is_reply = false AND p.video_id IS NOT NULL
     ORDER BY s.impressions DESC NULLS LAST`;
 
   const usesByVideo = new Map<number, VideoUse[]>();

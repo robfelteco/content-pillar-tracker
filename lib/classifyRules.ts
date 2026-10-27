@@ -1,4 +1,4 @@
-import { BRAND_PRODUCT_TERMS, type Template } from "./taxonomy.ts";
+import { BRAND_PRODUCT_TERMS, CLASSIFIED_TEMPLATES, pillarsByMode, pillarsForMedia, pillarsWith, type Template } from "./taxonomy.ts";
 import { BRAND } from "../brand/identity.ts";
 import { BRAND_NAME_RE, isOwnDomain, isOwnHandle } from "./brand/helpers.ts";
 
@@ -72,14 +72,18 @@ function matchUrlTemplate(urls: string[]): UrlRule | null {
   return null;
 }
 
-// Media-type narrowing (from the spec's disambiguation rules).
+// Media-type narrowing: the pillars that declared this media kind in brand/pillars.ts.
 function candidatesForMedia(media: string): Template[] {
-  if (media === "video" || media === "animated_gif")
-    return ["data_motion_visual", "product_post", "short_form_video_eco"];
-  if (media === "photo") return ["quote_card", "integration_announcement", "product_post"];
-  if (media === "link-card") return ["integration_announcement", "product_post", "thought_leadership", "dev_doc_post"];
-  return ["thought_leadership", "product_post", "broad_educational"]; // plain text
+  const ids = pillarsForMedia(media || "text");
+  return ids.length ? ids : CLASSIFIED_TEMPLATES;
 }
+
+// The pillars whose posts never name the company (external content), whose
+// posts draft from platforms, products, or own articles.
+const EXTERNAL_PILLARS = pillarsWith("externalOnly");
+const PLATFORM_PILLARS = pillarsByMode("chains");
+const PRODUCT_PILLARS = pillarsByMode("products");
+const ARTICLE_PILLARS = pillarsByMode("articles");
 
 export function classifyByRules(input: RuleInput): RuleResult {
   const domains = input.domains || [];
@@ -107,12 +111,20 @@ export function classifyByRules(input: RuleInput): RuleResult {
   // Dune, Artemis) and often never names Eco, so the link says nothing about
   // the pillar — the media does, and only Stage 2 looks at it.
   const motion = input.media_type === "video" || input.media_type === "animated_gif";
-  if (external.length > 0 && !eco && !input.is_reply && !motion) {
+  if (external.length > 0 && !eco && !input.is_reply && !motion && EXTERNAL_PILLARS.length > 0) {
+    if (EXTERNAL_PILLARS.length === 1) {
+      return {
+        template: EXTERNAL_PILLARS[0],
+        confidence: 0.9,
+        reasoning: `Standalone external link (${external[0]}) with no ${BRAND.name}/product mention.`,
+        candidates: [EXTERNAL_PILLARS[0]],
+      };
+    }
     return {
-      template: "broad_educational",
-      confidence: 0.9,
-      reasoning: `Standalone external link (${external[0]}) with no ${BRAND.name}/product mention.`,
-      candidates: ["broad_educational"],
+      template: null,
+      confidence: 0,
+      reasoning: `Standalone external link (${external[0]}) with no ${BRAND.name}/product mention; several external pillars qualify.`,
+      candidates: [...EXTERNAL_PILLARS, "other" as Template],
     };
   }
 
@@ -121,14 +133,13 @@ export function classifyByRules(input: RuleInput): RuleResult {
 
   // eco.com/blog + a partner @-mention → integration vs product (Stage 2 picks).
   if (ecoBlog && input.mentions.some((m) => !isOwnHandle(m))) {
-    candidates.add("integration_announcement");
-    candidates.add("product_post");
+    for (const id of [...PLATFORM_PILLARS, ...PRODUCT_PILLARS]) candidates.add(id);
   }
 
   // No media, no link, longer prose → likely thought_leadership (still Stage 2).
   // (Any docs link already returned via the URL rule above.)
   if (input.media_type === "text" && external.length === 0 && !ecoBlog && input.text.length > 240) {
-    candidates.add("thought_leadership");
+    for (const id of ARTICLE_PILLARS) candidates.add(id);
   }
 
   // Always allow 'other' as an escape hatch at Stage 2.

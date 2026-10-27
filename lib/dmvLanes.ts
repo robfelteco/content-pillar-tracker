@@ -1,6 +1,6 @@
 import { chainLabel } from "./dimensions.ts";
 import { getIntegratedChains } from "./integratedChains.ts";
-import { TEMPLATE_BY_ID } from "./taxonomy.ts";
+import { TEMPLATE_BY_ID, pillarsByMode, type Template } from "./taxonomy.ts";
 import { DMV_LANES } from "../brand/entities.ts";
 
 // Data Motion Visual, split into three lanes.
@@ -89,6 +89,8 @@ export interface DmvFilterish {
  * does not reshuffle between loads. Ranking happens inside the card on
  * readiness; the lanes themselves are a stable frame.
  */
+const DMV_PILLARS_SQL: Template[] = pillarsByMode("dmv");
+
 export async function getDmvLanes(sql: SqlTag, filter: DmvFilterish): Promise<DmvLane[]> {
   const includeAll = filter.amplified === "all";
   const wantAmplified = filter.amplified === "amplified";
@@ -108,7 +110,7 @@ export async function getDmvLanes(sql: SqlTag, filter: DmvFilterish): Promise<Dm
     LEFT JOIN LATERAL (
       SELECT * FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
     ) s ON true
-    WHERE p.template = 'data_motion_visual'
+    WHERE p.template = ANY(${DMV_PILLARS_SQL}::text[])
       AND p.is_reply = false
       AND (${includeAll} OR p.amplified = ${wantAmplified})
       AND (${filter.since}::timestamptz IS NULL OR p.created_at >= ${filter.since}::timestamptz)
@@ -211,7 +213,8 @@ export function dmvLaneReasons(lanes: DmvLane[]): string[] {
 }
 
 /** The pillar's own staleDays, for callers that want the frame in one place. */
-export const DMV_PILLAR_STALE_DAYS = TEMPLATE_BY_ID.data_motion_visual.staleDays;
+const DMV_PILLARS: Template[] = pillarsByMode("dmv");
+export const DMV_PILLAR_STALE_DAYS = Math.min(...DMV_PILLARS.map((id) => TEMPLATE_BY_ID[id].staleDays), 10);
 
 /**
  * The lane that is furthest past its own cadence, as a (daysSince, staleDays)

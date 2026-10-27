@@ -1,3 +1,5 @@
+import { pillarsByMode, type Template } from "@/lib/taxonomy.ts";
+const EDU_PILLARS: Template[] = pillarsByMode("education");
 import { NextRequest, NextResponse } from "next/server";
 import { discover } from "@/lib/discover";
 import { sql } from "@/lib/db";
@@ -15,7 +17,7 @@ export async function POST(req: NextRequest) {
     const posted = await sql<{ title: string }>`
       SELECT COALESCE(NULLIF(link_title, ''), left(text, 120)) AS title
       FROM posts
-      WHERE template = 'broad_educational' AND is_reply = false
+      WHERE template = ANY(${EDU_PILLARS}::text[]) AND is_reply = false
       ORDER BY created_at DESC
       LIMIT 60
     `;

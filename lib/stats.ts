@@ -1,5 +1,5 @@
 import { sql } from "./db.ts";
-import { TEMPLATE_BY_ID, type Template } from "./taxonomy.ts";
+import { TEMPLATE_BY_ID, type Template , pillarsByMode, pillarsWith } from "./taxonomy.ts";
 import { chainLabel, entityLabel } from "./dimensions.ts";
 import { productLabel, SHAPE_BY_ID, PRODUCT_POST_SHAPES } from "./products.ts";
 import { getLaneRegistry, type LaneRegistry } from "./laneRegistry.ts";
@@ -466,7 +466,10 @@ export type { VideoShelfRow } from "./videos.ts";
 // Low-effort, high-frequency formats the CMO flags as "easy wins" — a quick post
 // that doesn't need a big lift ("post a quote card, that'll take 10 minutes,
 // the last 10 ripped").
-const EASY_WIN_TEMPLATES = new Set<Template>(["quote_card", "data_motion_visual"]);
+const EASY_WIN_TEMPLATES = new Set<Template>(pillarsWith("easyWin"));
+
+// The pillars on the educational pipeline.
+const EDU_PILLARS: Template[] = pillarsByMode("education");
 
 // How recent a post has to be to count as "in the feed right now" for the
 // context-aware nudge.
@@ -640,10 +643,10 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
   //
   // These rows carry no pillar stats (never announced here, so there is nothing
   // to median) and are ranked on cross-pillar coverage like every other row.
-  {
-    const list = anglesByTemplate.get("integration_announcement") ?? [];
+  for (const chainPillar of pillarsByMode("chains")) {
+    const list = anglesByTemplate.get(chainPillar) ?? [];
     const seen = new Set(list.map((c) => c.chain));
-    const def = TEMPLATE_BY_ID.integration_announcement;
+    const def = TEMPLATE_BY_ID[chainPillar];
     for (const art of chainArticleRows) {
       if (seen.has(art.chain)) continue;
       const cov = coverageByChain.get(art.chain);
@@ -667,7 +670,7 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
         priorTexts: art.priorTexts.slice(0, 6),
       });
     }
-    if (list.length) anglesByTemplate.set("integration_announcement", list);
+    if (list.length) anglesByTemplate.set(chainPillar, list);
   }
 
   // Coldest-first: an angle the audience hasn't seen in a while is the one worth
@@ -901,10 +904,10 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
   // "we signed this and have never posted it" is the single most actionable
   // state a partner lane can be in, and building the list from posts alone is
   // exactly what hid it.
-  {
-    const list = partnersByTemplate.get("product_post") ?? [];
+  for (const productPillar of pillarsByMode("products")) {
+    const list = partnersByTemplate.get(productPillar) ?? [];
     const seen = new Set(list.map((p) => p.partner));
-    const def = TEMPLATE_BY_ID.product_post;
+    const def = TEMPLATE_BY_ID[productPillar];
     for (const reg of registry.byKind.partner) {
       if (seen.has(reg.id)) continue;
       list.push({
@@ -920,7 +923,7 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
         brief: reg.brief,
       });
     }
-    if (list.length) partnersByTemplate.set("product_post", list);
+    if (list.length) partnersByTemplate.set(productPillar, list);
   }
 
   // Coldest first, ties on performance — the same ranking the chain lanes use.
@@ -1019,15 +1022,14 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
   const pairableRows = await sql<{ id: number; kind: string; chain: string | null; title: string }>`
     SELECT id::int AS id, kind, chain, title FROM articles
   `;
-  const KIND_TO_TEMPLATE: Record<string, Template> = {
-    chain_integration: "integration_announcement",
-    product: "product_post",
-    thought_leadership: "thought_leadership",
+  // Article kinds map to the pillars drafting from that source.
+  const KIND_TO_TEMPLATES: Record<string, Template[]> = {
+    chain_integration: pillarsByMode("chains"),
+    product: pillarsByMode("products"),
+    thought_leadership: pillarsByMode("articles"),
   };
   const pairablesByTemplate = new Map<Template, PairableTarget[]>();
-  for (const a of pairableRows) {
-    const tpl = KIND_TO_TEMPLATE[a.kind];
-    if (!tpl) continue;
+  for (const a of pairableRows) for (const tpl of KIND_TO_TEMPLATES[a.kind] ?? []) {
     const list = pairablesByTemplate.get(tpl) ?? [];
     // Chain pieces are named by their chain — that is how they appear on the
     // card and how the operator thinks about them ("Robinhood", not the title).
@@ -1208,9 +1210,9 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
   // shelf takes both kinds — an "Eco now supports X" post is carried by either.
   const shelfOpts = { includeAll, wantAmplified, since: filter.since };
   const [tlShelf, productShelf, chainShelf] = await Promise.all([
-    getArticleShelf(["thought_leadership"], { ...shelfOpts, kinds: ["thought_leadership"] }),
-    getArticleShelf(["product_post"], { ...shelfOpts, kinds: ["product"] }),
-    getArticleShelf(["integration_announcement"], shelfOpts),
+    getArticleShelf(pillarsByMode("articles"), { ...shelfOpts, kinds: ["thought_leadership"] }),
+    getArticleShelf(pillarsByMode("products"), { ...shelfOpts, kinds: ["product"] }),
+    getArticleShelf(pillarsByMode("chains"), shelfOpts),
   ]);
   void chainShelf;
   const thoughtLeadership = tlShelf.filter((a) => a.articleId != null || a.useCount > 0);
@@ -1246,7 +1248,7 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
     LEFT JOIN LATERAL (
       SELECT impressions FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
     ) s ON true
-    WHERE p.template = 'broad_educational' AND p.is_reply = false
+    WHERE p.template = ANY(${EDU_PILLARS}::text[]) AND p.is_reply = false
       AND (${includeAll} OR p.amplified = ${wantAmplified})
       AND (${filter.since}::timestamptz IS NULL OR p.created_at >= ${filter.since}::timestamptz)
     GROUP BY p.media_type ORDER BY "medianImpr" DESC NULLS LAST
@@ -1258,7 +1260,7 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
       LEFT JOIN LATERAL (
         SELECT impressions FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
       ) s ON true
-      WHERE p.template = 'broad_educational' AND p.is_reply = false
+      WHERE p.template = ANY(${EDU_PILLARS}::text[]) AND p.is_reply = false
         AND (${includeAll} OR p.amplified = ${wantAmplified})
         AND (${filter.since}::timestamptz IS NULL OR p.created_at >= ${filter.since}::timestamptz)
     )
@@ -1273,7 +1275,7 @@ export async function getInsights(filter: StatFilter): Promise<Insights> {
     LEFT JOIN LATERAL (
       SELECT impressions FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
     ) s ON true
-    WHERE p.template = 'broad_educational' AND p.is_reply = false
+    WHERE p.template = ANY(${EDU_PILLARS}::text[]) AND p.is_reply = false
       AND (${includeAll} OR p.amplified = ${wantAmplified})
       AND (${filter.since}::timestamptz IS NULL OR p.created_at >= ${filter.since}::timestamptz)
     ORDER BY s.impressions DESC NULLS LAST
@@ -1385,7 +1387,7 @@ export async function getTemplateDetail(template: Template, filter: StatFilter):
     LEFT JOIN LATERAL (
       SELECT * FROM metric_snapshots m WHERE m.post_id = p.id ORDER BY m.fetched_at DESC LIMIT 1
     ) s ON true
-    WHERE p.template = ${template}::content_template
+    WHERE p.template = ${template}::text
       AND p.is_reply = false
       AND (${includeAll} OR p.amplified = ${wantAmplified})
       AND (${filter.since}::timestamptz IS NULL OR p.created_at >= ${filter.since}::timestamptz)
@@ -1395,7 +1397,7 @@ export async function getTemplateDetail(template: Template, filter: StatFilter):
   const weekly = await sql<WeeklyPoint>`
     SELECT to_char(date_trunc('week', created_at), 'YYYY-MM-DD') AS week, COUNT(*)::int AS count
     FROM posts
-    WHERE template = ${template}::content_template
+    WHERE template = ${template}::text
       AND is_reply = false
       AND (${includeAll} OR amplified = ${wantAmplified})
       AND (${filter.since}::timestamptz IS NULL OR created_at >= ${filter.since}::timestamptz)

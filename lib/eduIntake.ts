@@ -1,3 +1,6 @@
+import { pillarsByMode, pillarsWith, type Template } from "./taxonomy.ts";
+const EDU_PILLARS: Template[] = pillarsByMode("education");
+const TEACHING_PILLARS: Template[] = pillarsWith("teaches");
 import { BRAND } from "../brand/identity.ts";
 import Anthropic from "@anthropic-ai/sdk";
 import { sql } from "./db.ts";
@@ -196,7 +199,7 @@ export async function getEduPipeline(): Promise<EduPipeline> {
     sql<{ analog_id: string }>`
       SELECT DISTINCT analog_id FROM posts
       WHERE analog_id IS NOT NULL AND is_reply = false
-        AND template::text IN ('broad_educational', 'thought_leadership')`,
+        AND template = ANY(${TEACHING_PILLARS}::text[])`,
     sql<NonNullable<EduPipeline["lastRun"]>>`
       SELECT started_at AS "startedAt", finished_at AS "finishedAt", trigger, added, scanned,
              deduped, scrape_failed AS "scrapeFailed", error, warnings
@@ -605,7 +608,7 @@ async function grokFeed(perLens: number, warnings: string[]): Promise<Feed[]> {
   const posted = await sql<{ title: string }>`
     SELECT COALESCE(NULLIF(link_title, ''), left(text, 120)) AS title
     FROM posts
-    WHERE template = 'broad_educational' AND is_reply = false
+    WHERE template = ANY(${EDU_PILLARS}::text[]) AND is_reply = false
     ORDER BY created_at DESC
     LIMIT 60`;
   const { items, warnings: w } = await discover(posted.map((r) => r.title).filter(Boolean), perLens);
@@ -836,7 +839,7 @@ export async function attributeEduCandidates(): Promise<{ matched: number }> {
              || CASE WHEN link_resolved_url IS NOT NULL THEN ARRAY[lower(link_resolved_url)] ELSE '{}'::text[] END
              AS urls
     FROM posts
-    WHERE is_reply = false AND template::text = 'broad_educational'
+    WHERE is_reply = false AND template = ANY(${EDU_PILLARS}::text[])
       AND created_at > now() - interval '120 days'`;
 
   let matched = 0;

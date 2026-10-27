@@ -1,7 +1,7 @@
 import { BRAND } from "../brand/identity.ts";
 import { PRODUCT_DEFS } from "./products.ts";
 import Anthropic from "@anthropic-ai/sdk";
-import { taxonomyPromptBlock, isTemplate, type Template } from "./taxonomy.ts";
+import { taxonomyPromptBlock, isTemplate, type Template , pillarsForMedia, pillarsWith } from "./taxonomy.ts";
 import type { RuleInput } from "./classifyRules.ts";
 import { pickThumb, type ThumbSource } from "./media.ts";
 
@@ -115,6 +115,20 @@ function stripFences(s: string): string {
     .trim();
 }
 
+// Rules derived from what the pillars declare, so a brand with different
+// pillars gets rules that fit them.
+function disambiguationRules(): string[] {
+  const out: string[] = [];
+  for (const r of BRAND.urlRules) out.push(`- A link containing "${r.match}" → ${r.pillar}.`);
+  const external = pillarsWith("externalOnly");
+  if (external.length) out.push(`- External link (not ${BRAND.domains.join(" or ")}) with zero company or product mention → ${external.join(" or ")}.`);
+  for (const kind of ["video", "animated_gif", "photo", "link-card", "text"]) {
+    const ids = pillarsForMedia(kind);
+    if (ids.length) out.push(`- Media ${kind}: usually one of ${ids.join(", ")}.`);
+  }
+  return out;
+}
+
 function buildSystem(): string {
   return [
     `You classify posts from ${BRAND.name}'s X (Twitter) brand account (@${BRAND.handle}) into exactly ONE content template.`,
@@ -124,17 +138,11 @@ function buildSystem(): string {
     taxonomyPromptBlock(),
     "",
     "Some messages start with REFERENCE example images, each labeled with its template.",
-    "Use them as visual anchors — a post whose image matches a reference's style is very likely that template (this is the reliable way to recognize quote_card vs other static images).",
+    "Use them as visual anchors: a post whose image matches a reference's style is very likely that template (this is the reliable way to tell image-led templates apart).",
     "",
     "Disambiguation rules:",
-    `- A link into the developer docs (${BRAND.docsOrigin}) → dev_doc_post.`,
-    `- External link (not ${BRAND.domains.join(" or ")}) with zero company or product mention → broad_educational.`,
-    `- integration_announcement is ONLY for a new platform, network or chain going live with ${BRAND.name} (the target is the subject: "${BRAND.name} now supports X", "${BRAND.name} is live on X").`,
-    `- A COMPANY/PARTNER integrating a ${BRAND.name} product into their own app → product_post, NOT integration_announcement.`,
-    `- A ${BRAND.blogDomain} blog link about a product or feature → product_post.`,
-    "- No media, no link, long essay-like text → likely thought_leadership.",
-    `- Video/GIF: data animation → data_motion_visual; ${BRAND.name} demo/talking-head/event → short_form_video_eco or product_post (product demo).`,
-    "- Static image with a big pulled quote + speaker attribution → quote_card.",
+    ...disambiguationRules(),
+    "- Each template's description says what it is NOT; when two fit, follow that.",
     "- If it truly fits nothing, use other.",
     "",
     "Return STRICT JSON only, no prose, no code fences:",

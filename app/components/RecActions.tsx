@@ -19,7 +19,7 @@ import type { EduPipeline as Board } from "@/lib/eduIntake";
 //   - Product Posts is two-level: pick the product, then the piece behind it.
 //     Shapes ride along so you can see which angle that product has gone cold on.
 
-export type DraftMode = "chains" | "products" | "articles" | "discovery" | "docs" | "videos" | "dmv" | "generic";
+export type DraftMode = "chains" | "products" | "articles" | "docs" | "videos" | "dmv" | "education" | "quotes" | "generic";
 
 // ---------------------------------------------------------------------------
 // Per-source draft keys.
@@ -311,8 +311,8 @@ export function RecActions({
   const sourcesAct = useAction("analog-sources");
   const mineAct = useAction("questions");
 
-  const isBroadDiscovery = mode === "discovery" && template === "broad_educational";
-  const isQuoteDiscovery = mode === "discovery" && template === "quote_card";
+  const isBroadDiscovery = mode === "education";
+  const isQuoteDiscovery = mode === "quotes";
   const flatTargets = targets;
 
   // One draft request, with no progress-bar bookkeeping around it. Split out of

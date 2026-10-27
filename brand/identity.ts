@@ -15,10 +15,11 @@ export const BRAND: BrandIdentity<PillarId> = {
   ownHandles: ["acme"],
   domains: ["acme.com", "docs.acme.com"],
   blogDomain: "acme.com",
-  // Leave docsOrigin empty to disable the developer-docs shelf.
-  docsOrigin: "https://docs.acme.com",
-  // Leave youtubeHandle empty to disable the short-form video shelf.
-  youtubeHandle: "@acme",
+  // Set docsOrigin when a pillar drafts from docs (draftMode "docs"); the
+  // starter set has none, so the shelf is off.
+  docsOrigin: "",
+  // Set youtubeHandle when a pillar drafts from videos (draftMode "videos").
+  youtubeHandle: "",
 
   // One paragraph. What the company is, for whom, and the mechanism. This is
   // pasted into every upstream prompt, so write it the way you want models to
@@ -28,8 +29,7 @@ export const BRAND: BrandIdentity<PillarId> = {
     "<do the job> without <the thing they used to have to build>. Teams use the Acme API to " +
     "<outcome>, with <the quality the product is known for>.",
 
-  // URL substring → pillar, when the URL alone settles the category.
-  urlRules: [
-    { match: "docs.acme.com", pillar: "dev_doc_post", confidence: 0.95, reason: "Links to the developer documentation." },
-  ],
+  // URL substring → pillar, when the URL alone settles the category, e.g.
+  // { match: "docs.acme.com", pillar: "docs", confidence: 0.95, reason: "Links to the developer documentation." }
+  urlRules: [],
 };

@@ -1,7 +1,7 @@
 import { sql } from "./db.ts";
 import { classifyByRules, type RuleInput } from "./classifyRules.ts";
 import { classifyWithClaude, encodeVisualFewShots, type ClaudeInput, type FewShot, type VisualFewShot } from "./classifyClaude.ts";
-import { REVIEW_THRESHOLD, type Template } from "./taxonomy.ts";
+import { REVIEW_THRESHOLD, type Template , pillarsWith } from "./taxonomy.ts";
 
 interface ClassifiableRow extends RuleInput {
   id: string;
@@ -52,7 +52,7 @@ export async function runRuleClassification(reRunRules = false): Promise<RuleRun
     if (res.template) {
       await sql`
         UPDATE posts SET
-          template = ${res.template}::content_template,
+          template = ${res.template}::text,
           confidence = ${res.confidence},
           reasoning = ${res.reasoning},
           class_source = 'rule',
@@ -83,16 +83,9 @@ async function getFewShots(limit = 10): Promise<FewShot[]> {
   return rows.map((r) => ({ text: r.text, template: r.template }));
 }
 
-// Templates whose identity is carried by the IMAGE, not the text — the ones
-// Claude confuses without a visual anchor (the CMO's quote-card crossover problem).
-const VISUAL_TEMPLATES: Template[] = [
-  "quote_card",
-  "data_motion_visual",
-  "integration_announcement",
-  "product_post",
-  "short_form_video_eco",
-  "dev_doc_post",
-];
+// Templates whose identity is carried by the IMAGE, not the text, the ones a
+// model confuses without a visual anchor. Declared per pillar (visualAnchor).
+const VISUAL_TEMPLATES: Template[] = pillarsWith("visualAnchor");
 
 // One canonical exemplar IMAGE per visual template, drawn from our own corpus:
 // prefer a human-verified post, else the highest-confidence one, that actually
@@ -110,7 +103,7 @@ async function getVisualFewShots(): Promise<VisualFewShot[]> {
     SELECT DISTINCT ON (template)
       template, media_type, preview_image_url, media_urls, link_image_url, quoted_image_url
     FROM posts
-    WHERE template = ANY(${VISUAL_TEMPLATES}::content_template[])
+    WHERE template = ANY(${VISUAL_TEMPLATES}::text[])
       AND is_reply = false
       AND (preview_image_url IS NOT NULL
            OR jsonb_array_length(media_urls) > 0
@@ -171,7 +164,7 @@ export async function runClaudeClassification(limit = 600): Promise<ClaudeRunRes
       }
       await sql`
         UPDATE posts SET
-          template = ${res.template}::content_template,
+          template = ${res.template}::text,
           confidence = ${res.confidence},
           reasoning = ${res.reasoning},
           class_source = 'claude',
@@ -200,11 +193,11 @@ export async function applyHumanLabel(postId: string, template: Template, by: st
   if (!prev.length) return false;
   await sql`
     INSERT INTO labels (post_id, template, labeled_by, prev_template, prev_source)
-    VALUES (${postId}, ${template}::content_template, ${by},
-            ${prev[0].template}::content_template, ${prev[0].class_source}::classification_source)`;
+    VALUES (${postId}, ${template}::text, ${by},
+            ${prev[0].template}::text, ${prev[0].class_source}::classification_source)`;
   await sql`
     UPDATE posts SET
-      template = ${template}::content_template,
+      template = ${template}::text,
       confidence = 1.0,
       class_source = 'human',
       classified_at = now(),
@@ -258,7 +251,7 @@ export interface ReclassifyResult {
 export async function reclassify(templates: Template[]): Promise<ReclassifyResult> {
   const before = await sql<{ id: string; template: Template }>`
     SELECT id, template FROM posts
-    WHERE template = ANY(${templates}::content_template[])
+    WHERE template = ANY(${templates}::text[])
       AND class_source IS DISTINCT FROM 'human'
       AND is_reply = false`;
   const prev = new Map(before.map((r) => [r.id, r.template]));

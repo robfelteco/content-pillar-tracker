@@ -3,16 +3,22 @@
 // everything that USES the data lives in lib/. Edit brand/, not this file, to
 // adapt the tracker to a different company.
 
-// How the Prioritize card builds its draft targets for a pillar.
-//   chains    — rank the tracked entities (e.g. chains) this pillar has covered
-//   products  — rank products × their source articles
+// The SOURCE a pillar drafts from, and therefore how the Prioritize card builds
+// its targets. Every source module asks "which pillars use me?" through this,
+// so a brand can have any number of pillars on a source, or none.
+//   chains    — rank the integrated platforms (brand/entities.ts CHAINS)
+//   products  — rank products × their source articles, and partners in production
 //   articles  — the article shelf, one row per underlying piece
-//   discovery — find NEW source material; nothing to re-run
 //   docs      — the docs-page shelf, grouped by audience
 //   videos    — the short-form clip library, grouped by series
 //   dmv       — the three data-visual lanes (see lib/dmvLanes.ts)
-//   generic   — a single "draft something fresh" target
-export type DraftMode = "chains" | "products" | "articles" | "discovery" | "docs" | "videos" | "dmv" | "generic";
+//   education — the educational pipeline: curriculum, angle bank, discovery
+//   quotes    — quote discovery from the roster and watched sources
+//   generic   — a single "draft something fresh" target, no shelf
+export type DraftMode = "chains" | "products" | "articles" | "docs" | "videos" | "dmv" | "education" | "quotes" | "generic";
+
+// Media a post can carry, as the ingest records it.
+export type MediaKind = "video" | "animated_gif" | "photo" | "link-card" | "text";
 
 // Which side of the educational / soft promo / hard promo ratio a pillar lands on.
 export type RatioBucket = "edu" | "soft" | "hard";
@@ -34,6 +40,20 @@ export interface PillarDef<Id extends string = string> {
   staleDays: number;
   /** null keeps the pillar out of the ratio meter. */
   ratioBucket: RatioBucket | null;
+  /**
+   * Media kinds a post in this pillar can carry. The rule classifier narrows
+   * its candidate set by the post's media before any model call, so a pillar
+   * that lists no media is never a rule candidate (the model can still pick it).
+   */
+  media?: MediaKind[];
+  /** The company is never named: external content. A standalone external link with no company mention settles here when exactly one pillar declares it. */
+  externalOnly?: boolean;
+  /** The pillar's identity is carried by the image, not the text: the classifier is shown a reference image for it. */
+  visualAnchor?: boolean;
+  /** Explanation is this pillar's job: a curriculum concept appearing here counts as taught. */
+  teaches?: boolean;
+  /** Low effort, high frequency: the nudge suggests it when the account has gone quiet. */
+  easyWin?: boolean;
 }
 
 // How a post in this pillar should be BUILT. Handed to the drafter verbatim.

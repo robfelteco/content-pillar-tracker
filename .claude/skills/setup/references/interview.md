@@ -40,17 +40,36 @@ describe you to a model. What's wrong?" Watch for: the word they refuse
 
 ## pillars.ts
 
-Needed: for each of the nine starter pillars, whether it applies, its label,
-and a classifier description that names visible signals.
+This is the question to ask first, in the person's own words: "What are
+your content pillars?" Then make each one real. Needed per pillar: an id, a
+label, a classifier description that names visible signals, the source it
+drafts from, the media it carries, its traits, cadence and ratio bucket.
+
+The starter ships four generic pillars plus `other`; the Eco example has
+nine. Neither is a template to fill in: the set is whatever the account
+actually posts. Four to nine is the usual range.
 
 Why: the description is the only thing the classifier reads about a pillar.
 "Posts about our vision" classifies nothing. "Long-form text, no media,
 often links to an essay on our blog, often quotes the CEO" classifies.
 
-Ask, pillar by pillar, with the starter description on screen: "Does your
-account post this? What does one look like: media type, where it links, who
-is named, how it's phrased?" If they pull recent posts, sort five or ten into
-pillars together; the descriptions write themselves from the sort.
+Ask for the list, then pillar by pillar: "What does one look like: media
+type, where it links, who is named, how it's phrased?" If there are recent
+posts, sort ten or twenty into piles together; the pillars and their
+descriptions fall out of the sort, and so does the `media` list.
+
+Then the source: "When you need a post in this pillar, where does the
+material come from?" Your products (`products`), your blog (`articles`),
+your docs (`docs`), your clips (`videos`), platforms you integrate with
+(`chains`), data you chart (`dmv`), outside material you find and teach
+(`education`), people you quote (`quotes`), or nothing in particular
+(`generic`). A source only exists if a pillar uses it, and the files that
+feed it (identity's docsOrigin and youtubeHandle, the registries) only
+matter for sources in use.
+
+Traits: `externalOnly` when the company is never named in the post;
+`visualAnchor` when the image is what identifies the pillar; `teaches` when
+explanation is the job; `easyWin` for the quick, high-frequency formats.
 
 Then: "Roughly how often should each one appear?" That sets `staleDays`.
 Weekly is 7, twice a month is 14, daily is 1 or 2. If they do not know, keep

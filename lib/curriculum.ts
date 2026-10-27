@@ -1,3 +1,4 @@
+import { pillarsWith } from "./taxonomy.ts";
 import { sql } from "./db.ts";
 import { ANALOG_DEFS, type AnalogDef, type AnalogTier } from "./analogs.ts";
 import { ICP_BY_ID } from "./icp.ts";
@@ -49,7 +50,7 @@ export interface CurriculumPost {
 // Broad Educational and Thought Leadership are the two pillars whose JOB is
 // explanation, so a concept appearing there is real coverage. Everywhere else
 // it is a mention: worth showing, never worth cooling the score for.
-const TEACHING_PILLARS = new Set(["broad_educational", "thought_leadership"]);
+const TEACHING_PILLARS = new Set<string>(pillarsWith("teaches"));
 
 export interface CurriculumRow {
   analogId: string;

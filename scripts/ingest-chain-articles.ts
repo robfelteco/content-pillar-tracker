@@ -1,3 +1,5 @@
+import { pillarsByMode, type Template } from "../lib/taxonomy.ts";
+const CHAIN_PILLARS: Template[] = pillarsByMode("chains");
 /**
  * Seed the chain-integration articles — the source material the chain pillar
  * was drafting without.
@@ -211,7 +213,7 @@ const linked = await client.query(
    FROM articles a
    WHERE a.chain IS NOT NULL
      AND a.chain = ANY(p.chains)
-     AND p.template = 'integration_announcement'
+     AND p.template = ANY(${CHAIN_PILLARS}::text[])
      AND p.is_reply = false
      AND (p.article_id IS NULL OR p.article_match <> 'human')`,
 );

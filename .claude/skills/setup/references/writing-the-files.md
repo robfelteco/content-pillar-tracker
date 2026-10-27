@@ -18,10 +18,16 @@ optional there, it is optional here.
 
 ## pillars.ts
 
-- Keep `PILLAR_IDS` unless the person insists. The `other` id must stay: the
-  review queue routes to it.
+- `PILLAR_IDS` is the brand's own set: snake_case, any number, `other`
+  included (the review queue routes to it).
 - Every id needs an entry in `PILLAR_DEFS` and in `PILLAR_SHAPES`; the types
   enforce this, and `brand-check` says which is missing.
+- `draftMode` is the source. `media` lists every media kind a post in the
+  pillar can carry (`video`, `animated_gif`, `photo`, `link-card`, `text`);
+  a pillar with no `media` is never a rule candidate, only a model pick.
+- Traits are booleans, set only when true. Exactly one pillar should be
+  `externalOnly` for the external-link rule to settle on its own; with
+  several, the model decides between them.
 - Descriptions: signals first, exclusions second. Say what the post looks
   like (media, link target, phrasing, who is named), then "NOT X (that is
   pillar_y)" for the neighbour it is confused with. The Eco example's

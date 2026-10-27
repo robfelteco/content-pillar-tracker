@@ -1,7 +1,7 @@
 import { PILLAR_IDS, PILLAR_DEFS, RATIO_BUCKETS as BRAND_RATIO_BUCKETS, type PillarId } from "../brand/pillars.ts";
 import { BRAND } from "../brand/identity.ts";
 import { ALL_PRODUCT_TERMS } from "./products.ts";
-import type { DraftMode, PillarDef, RatioBucket, RatioBucketDef } from "./brand/types.ts";
+import type { DraftMode, MediaKind, PillarDef, RatioBucket, RatioBucketDef } from "./brand/types.ts";
 
 // Content-pillar taxonomy, the single source of truth the app codes against.
 // The DATA lives in brand/pillars.ts; this module gives it the names the rest
@@ -10,7 +10,7 @@ import type { DraftMode, PillarDef, RatioBucket, RatioBucketDef } from "./brand/
 
 export const TEMPLATES = PILLAR_IDS;
 export type Template = PillarId;
-export type { DraftMode, RatioBucket };
+export type { DraftMode, MediaKind, RatioBucket };
 export type TemplateDef = PillarDef<Template>;
 
 export function isTemplate(v: unknown): v is Template {
@@ -40,3 +40,33 @@ export const BRAND_DOMAINS = BRAND.domains;
 export function taxonomyPromptBlock(): string {
   return TEMPLATE_DEFS.map((t) => `- ${t.id}: ${t.description}`).join("\n");
 }
+
+// ---------------------------------------------------------------------------
+// Trait and source lookups. The core never names a pillar; it asks these.
+// ---------------------------------------------------------------------------
+
+/** Pillars that draft from this source, in taxonomy order. */
+export function pillarsByMode(mode: DraftMode): Template[] {
+  return TEMPLATE_DEFS.filter((t) => t.draftMode === mode).map((t) => t.id);
+}
+
+/** The one pillar on this source, or null when there are none or several. */
+export function solePillarByMode(mode: DraftMode): Template | null {
+  const ids = pillarsByMode(mode);
+  return ids.length === 1 ? ids[0] : null;
+}
+
+type BoolTrait = "externalOnly" | "visualAnchor" | "teaches" | "easyWin";
+
+/** Pillars that declare a trait. */
+export function pillarsWith(trait: BoolTrait): Template[] {
+  return TEMPLATE_DEFS.filter((t) => t[trait]).map((t) => t.id);
+}
+
+/** Rule-classifier candidates for a media kind: the pillars that declared it. */
+export function pillarsForMedia(media: string): Template[] {
+  return TEMPLATE_DEFS.filter((t) => t.media?.includes(media as MediaKind)).map((t) => t.id);
+}
+
+/** Every pillar except the review bucket. */
+export const CLASSIFIED_TEMPLATES: Template[] = TEMPLATE_DEFS.filter((t) => t.id !== "other").map((t) => t.id);

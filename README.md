@@ -84,9 +84,10 @@ production-tested configuration it was extracted from is in `examples/eco/`.
 | `brand/products.ts` | Products, fact sheets, guardrails, product-post shapes |
 | `brand/voice.ts` | Commodity phrases and substantiation-gated words |
 
-Pillar ids must match the `content_template` enum in `db/schema.sql`;
-`node scripts/brand-check.ts` prints the SQL for any difference. See
-[brand/README.md](brand/README.md).
+A brand defines its own pillar set. Each pillar declares the source it
+drafts from, the media it carries and a few traits, and the core reads those
+rather than the pillar's name, so any set works. `node scripts/brand-check.ts`
+verifies it. See [brand/README.md](brand/README.md).
 
 The optional lanes read four more files in `brand/`: `entities.ts` (the
 platforms you integrate with, partners, the data-visual lanes),
