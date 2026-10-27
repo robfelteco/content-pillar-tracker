@@ -1,3 +1,4 @@
+import type { NarrativePillar } from "@/lib/brand/types.ts";
 // The positioning brief: the system prompt for the in-tool copy drafter.
 // STARTER VALUES: the sections in <angle brackets> are yours to write. The X
 // ALGORITHM RULES and VOICE MECHANICS sections are generic and worth keeping.
@@ -94,3 +95,7 @@ GUARDRAILS
 - <The category labels Acme refuses: "Acme is not a <X>, not a <Y>. Acme is <the layer>.">
 - Don't name-bash competitors; stay on what Acme IS.
 `.trim();
+
+// The narrative pillars as data, for the quote lane's pillar_tag. Mirror the
+// NARRATIVE PILLARS section of the brief; leave empty to skip the tag.
+export const NARRATIVE_PILLARS: NarrativePillar[] = [];

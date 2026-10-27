@@ -1,6 +1,7 @@
 # Writing the files
 
-Six files, written in this order because later ones reference earlier ones.
+Ten files, six core and four registries, written in this order because later
+ones reference earlier ones.
 Keep each file's imports, exports and explanatory comments from the starter;
 replace the values and delete the "STARTER VALUES" notes.
 
@@ -15,6 +16,9 @@ optional there, it is optional here.
 - `urlRules`: only substrings that settle the pillar on their own. The docs
   domain is the usual one. Point each at an id that exists in `PILLAR_IDS`.
 - `onCamera` is optional; omit the key when there is no video.
+- `youtubeHandle: ""` and `docsOrigin: ""` whenever no pillar drafts from
+  videos or docs, even if the channel or site exists: a shelf nobody drafts
+  from should not sync nightly.
 
 ## pillars.ts
 
@@ -64,6 +68,10 @@ optional there, it is optional here.
 
 ## positioning.ts
 
+- `NARRATIVE_PILLARS` is the data form of the brief's NARRATIVE PILLARS
+  section, for the quote lane's tag. Keep the two in step; an empty list
+  turns the tag off.
+
 - A single template literal export, `POSITIONING_BRIEF`, `.trim()`ed.
 - Replace every `<angle bracket>` placeholder in the starter with the
   company's content, or with the standard placeholder when the material does
@@ -82,7 +90,7 @@ optional there, it is optional here.
 - `substantiationGated` single words or hyphenated tokens ("real-time"),
   matched case-insensitively as whole words.
 - `gatedExceptions` keyed by the gated word, value a case-insensitive regex.
-  Omit words with no exception.
+  Omit the key entirely when there are none.
 - `substantiationTerms` nouns and verbs, matched case-insensitively; the
   engine also counts any digit. Include the mechanism words from the product briefs.
 - `voiceNote` is injected into the anti-slop brief after the test
@@ -109,6 +117,9 @@ optional there, it is optional here.
 
 - Keep the four tiers; relabel them.
 - `icps` reference `brand/audiences.ts` ids.
+- `side` is `technical` or `commercial`: the door the concept is taught
+  through. A persona marked `both` still reads each concept through one door;
+  pick the vocabulary the post would use.
 - `breaksWhere` is required and specific; a placeholder is acceptable, an
   empty string is not.
 - Keep the six `EDUCATION_SHAPES` unless asked.
@@ -121,12 +132,21 @@ optional there, it is optional here.
   it prints on a card. `xHandle` on orgs and people as the account writes
   it; case does not matter there.
 - `PersonSeed.org` must match an `OrgSeed.name` exactly.
-- `WATCH_SEED.kind` is one of `yt_channel`, `report_site`, `x_search`.
+- `WATCH_SEED.kind` is one of `yt_channel`, `report_site`, `x_search`. A
+  `report_site` identifier is host plus path, no scheme: `example.org/research`.
 
 `brand-check` verifies all of the above.
 
 ## After writing
 
 Run the three verification commands in SKILL.md step 5. Then
-`grep -rn "not in the setup material" brand/` should list only placeholders:
-keep the phrase out of comments.
+`grep -rn "not in the setup material" brand/` should list only placeholders.
+When a comment has to explain a gap, write "the material gave no X", never
+the placeholder phrase.
+
+## Things the shelves key on that are not pillar ids
+
+The article shelf groups by an article's `kind` (`product` or
+`thought_leadership`), a property of the piece set when it is ingested, not
+the id of the pillar that drafts from it. A pillar named `essays` on the
+`articles` source still reads articles of kind `thought_leadership`.

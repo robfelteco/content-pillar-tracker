@@ -1,4 +1,4 @@
-import { BRAND_PRODUCT_TERMS, CLASSIFIED_TEMPLATES, pillarsByMode, pillarsForMedia, pillarsWith, type Template } from "./taxonomy.ts";
+import { BRAND_PRODUCT_TERMS, CLASSIFIED_TEMPLATES, TEMPLATE_DEFS, pillarsByMode, pillarsForMedia, pillarsWith, type Template } from "./taxonomy.ts";
 import { BRAND } from "../brand/identity.ts";
 import { BRAND_NAME_RE, isOwnDomain, isOwnHandle } from "./brand/helpers.ts";
 
@@ -84,6 +84,11 @@ const EXTERNAL_PILLARS = pillarsWith("externalOnly");
 const PLATFORM_PILLARS = pillarsByMode("chains");
 const PRODUCT_PILLARS = pillarsByMode("products");
 const ARTICLE_PILLARS = pillarsByMode("articles");
+const VISUAL_MEDIA = new Set<string>(
+  TEMPLATE_DEFS.filter((t) => t.visualAnchor && !t.externalOnly)
+    .flatMap((t) => t.media ?? [])
+    .filter((m) => m === "video" || m === "animated_gif" || m === "photo"),
+);
 
 export function classifyByRules(input: RuleInput): RuleResult {
   const domains = input.domains || [];
@@ -110,8 +115,12 @@ export function classifyByRules(input: RuleInput): RuleResult {
   // are excluded too: a data motion visual cites its source link (ousd.fyi,
   // Dune, Artemis) and often never names Eco, so the link says nothing about
   // the pillar — the media does, and only Stage 2 looks at it.
-  const motion = input.media_type === "video" || input.media_type === "animated_gif";
-  if (external.length > 0 && !eco && !input.is_reply && !motion && EXTERNAL_PILLARS.length > 0) {
+  // Image-led media (video, GIF, photo) that some non-external pillar claims as
+  // its identity is exempt too: a chart or a quote card cites its source link
+  // and often never names the company, so the link says nothing about the
+  // pillar; the media does, and only Stage 2 looks at it.
+  const visualLed = VISUAL_MEDIA.has(input.media_type);
+  if (external.length > 0 && !eco && !input.is_reply && !visualLed && EXTERNAL_PILLARS.length > 0) {
     if (EXTERNAL_PILLARS.length === 1) {
       return {
         template: EXTERNAL_PILLARS[0],

@@ -1,3 +1,10 @@
+import { BRAND } from "../brand/identity.ts";
+
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// https://<blogDomain>/blog/<slug>/ -> "<slug>"
+const BLOG_SLUG_RE = new RegExp(`${escapeRe(BRAND.blogDomain.toLowerCase())}\\/blog\\/([a-z0-9-]+)`);
+// https://x.com/<handle>/status/<id> -> "<id>", own account only
+const STATUS_ID_RE = new RegExp(`(?:x|twitter)\\.com\\/${escapeRe(BRAND.handle.toLowerCase())}\\/status\\/(\\d+)`);
 // Pure article-identity helpers: which article does this URL / title refer to?
 //
 // Kept dependency-free (no db, no next) so lib/articles.ts, lib/ingest.ts AND the
@@ -11,9 +18,9 @@
 
 // https://eco.com/blog/<slug>/?utm=... -> "<slug>"  (utm params are stripped;
 // Buffer appends them to about half our own links.)
-export function ecoBlogSlug(url: string | null | undefined): string | null {
+export function brandBlogSlug(url: string | null | undefined): string | null {
   if (!url) return null;
-  const m = url.toLowerCase().match(/eco\.com\/blog\/([a-z0-9-]+)/);
+  const m = url.toLowerCase().match(BLOG_SLUG_RE);
   return m ? m[1] : null;
 }
 
@@ -27,9 +34,9 @@ export function xArticleId(url: string | null | undefined): string | null {
 // https://x.com/eco/status/2046240619530444944 -> "2046240619530444944".
 // Only @eco statuses: an amplifier that points at a partner's or the CEO's
 // tweet is not pointing at an article WE published on this account.
-export function ecoStatusId(url: string | null | undefined): string | null {
+export function brandStatusId(url: string | null | undefined): string | null {
   if (!url) return null;
-  const m = url.toLowerCase().match(/(?:x|twitter)\.com\/eco\/status\/(\d+)/);
+  const m = url.toLowerCase().match(STATUS_ID_RE);
   return m ? m[1] : null;
 }
 

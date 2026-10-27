@@ -43,21 +43,21 @@ Redis.
    the four `TWITTER_*` values, `X_ACCOUNT_HANDLE`, `ANTHROPIC_API_KEY`,
    `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`, `AUTH_SECRET`, `AUTH_ALLOWED_DOMAIN`,
    `CRON_SECRET`, `NEXT_PUBLIC_BRAND_NAME`.
-3. Apply the schema:
+3. Run `/setup` in Claude Code to write `brand/` for your company (or edit
+   the starter by hand; see [brand/README.md](brand/README.md)).
+4. Apply the schema:
 
 ```bash
 node --env-file=.env scripts/migrate.mjs
 ```
 
-4. Run it:
+5. Run it:
 
 ```bash
 npm install
 npm run dev
 ```
 
-5. Run `/setup` in Claude Code to write `brand/` for your company (or edit
-   the starter by hand; see [brand/README.md](brand/README.md)).
 6. Trigger the first sync by calling `/api/sync` with
    `Authorization: Bearer $CRON_SECRET`. Deploy to Vercel and the schedule in
    `vercel.json` takes over.

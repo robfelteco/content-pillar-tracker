@@ -20,7 +20,7 @@ import { execFileSync } from "node:child_process";
 import { extractProducts } from "../lib/products.ts";
 import { extractDimensions } from "../lib/dimensions.ts";
 import { getLaneRegistry } from "../lib/laneRegistry.ts";
-import { ecoBlogSlug } from "../lib/articleKeys.ts";
+import { brandBlogSlug } from "../lib/articleKeys.ts";
 
 const DEFAULT_DIRS: [string, string][] = [
   ["product", join(process.env.HOME!, "Desktop/Product Blogs")],
@@ -102,7 +102,7 @@ function parseFront(page1: string, file: string): Parsed | null {
   // 6. canonical URL from the footer
   const um = page1.match(/https?:\/\/eco\.com\/blog\/[a-z0-9-]+\/?/i);
   const canonicalUrl = um ? um[0] : null;
-  const slug = ecoBlogSlug(canonicalUrl) ?? basename(file).replace(/\.pdf$/i, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const slug = brandBlogSlug(canonicalUrl) ?? basename(file).replace(/\.pdf$/i, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
   return { title, dek, author, publishedOn, canonicalUrl, slug };
 }

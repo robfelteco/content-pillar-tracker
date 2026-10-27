@@ -9,7 +9,7 @@
 // Everything below is read out of the live modules, so re-running the script is
 // the only maintenance the document needs.
 //
-//   npx tsx scripts/export-copy-brief.ts        -> writes COPY-BRIEF.md
+//   node scripts/export-copy-brief.ts            -> writes COPY-BRIEF.md (no .env needed)
 //   npx tsx scripts/export-copy-brief.ts <path> -> writes somewhere else
 //
 // What it deliberately cannot include: the per-draft material the app pulls out
@@ -47,9 +47,9 @@ const fence = (body: string, lang = "") => {
 const today = new Date().toISOString().slice(0, 10);
 
 // ---------------------------------------------------------------- front matter
-w("# Eco copy brief");
+w(`# ${BRAND.name} copy brief`);
 w();
-w(`Everything that feeds the copy drafter in the Eco X tracker, in one document.`);
+w(`Everything that feeds the copy drafter in the ${BRAND.name} X tracker, in one document.`);
 w();
 w(
   `Generated from the live source on ${today} by \`scripts/export-copy-brief.ts\`. ` +
@@ -59,7 +59,7 @@ w(
 w();
 w("| Section | Generated from |");
 w("| --- | --- |");
-w("| Who Eco is, voice, guardrails | `lib/positioning.ts` |");
+w(`| Who ${BRAND.name} is, voice, guardrails | \`brand/positioning.ts\` |`);
 w("| Form and length | `lib/antiSlop.ts` |");
 w("| The nine content pillars | `lib/taxonomy.ts` + `lib/pillarShapes.ts` |");
 w("| Who you are writing for | `lib/icp.ts` |");
@@ -78,7 +78,7 @@ w(
     "gets you most of the way to what the tool produces.",
 );
 w();
-w("**The one-line version of Eco**, which every other prompt in the app imports:");
+w(`**The one-line version of ${BRAND.name}**, which every other prompt in the app imports:`);
 w();
 fence(BRAND_ONE_LINER);
 w("**What this document cannot give you.** The app also injects, per draft:");
@@ -209,17 +209,16 @@ w(
 );
 w();
 w(
-  "> **Borrow the vocabulary, refuse the category.** You can write a whole post " +
-    "about payment orchestration without ever implying Eco belongs to that " +
-    "category. Eco is the routing and execution layer: never an orchestrator, a " +
-    "PSP, a gateway, a prime broker or a bridge.",
+  `> **Borrow the vocabulary, refuse the category.** A post can teach a legacy ` +
+    `concept end to end without ever implying ${BRAND.name} belongs to that category. ` +
+    `The category refusals live in the GUARDRAILS section of the positioning brief.`,
 );
 w();
 w(
   "**Structure, every time: the parallel earns the attention and the break IS the " +
     "post.** A draft that only runs the parallel is the \"we're the Stripe of " +
-    "stablecoins\" failure this registry exists to prevent. Eco is not named in the " +
-    "body; the reader should finish smarter about how money moves and infer the rest.",
+    `stablecoins\" failure this registry exists to prevent. ${BRAND.name} is not named in the ` +
+    `body; the reader should finish smarter about the mechanism and infer the rest.`,
 );
 w();
 for (const tier of [1, 2, 3, 4] as AnalogTier[]) {

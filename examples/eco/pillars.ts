@@ -1,10 +1,9 @@
 import type { PillarDef, PillarShape, RatioBucket, RatioBucketDef } from "@/lib/brand/types.ts";
 
-// The content pillars. The ids are a compile-time union the whole app codes
-// against AND the `content_template` enum in db/schema.sql. Adding or renaming
-// a pillar means: edit here, run `node scripts/brand-check.ts` to get the ALTER
-// TYPE statement, apply it, then reclassify. Labels, descriptions, thresholds,
-// shapes and buckets can change freely.
+// The content pillars: Eco's nine. Ids are stored as text; each pillar declares
+// the source it drafts from (draftMode), its media and its traits, and the
+// core reads those rather than the id. Renaming an id after posts are
+// classified means reclassifying them (scripts/reclassify.ts).
 
 export const PILLAR_IDS = [
   "data_motion_visual",

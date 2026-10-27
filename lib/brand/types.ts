@@ -155,8 +155,8 @@ export interface VoiceRules {
   commodityPhrases: string[];
   /** Words allowed only when the same sentence shows the mechanism or number that makes them true. */
   substantiationGated: string[];
-  /** Senses of a gated word that are NOT the hollow claim, by word. */
-  gatedExceptions: Record<string, RegExp>;
+  /** Senses of a gated word that are NOT the hollow claim, by word. Omit when there are none. */
+  gatedExceptions?: Record<string, RegExp>;
   /** Words that count as substantiation inside the same sentence. Any digit also counts. */
   substantiationTerms: string[];
   /** One paragraph on this account's particular slop risk, appended to the anti-slop brief. */
@@ -284,4 +284,14 @@ export interface WatchSeed {
   kind: "yt_channel" | "report_site" | "x_search";
   identifier: string;
   label: string;
+}
+
+// A narrative pillar: one of the few stories the account keeps telling. The
+// quote lane tags each candidate quote with the pillar it serves.
+export interface NarrativePillar {
+  /** Short id, e.g. "A". */
+  id: string;
+  label: string;
+  /** One line a model can match a quote against. */
+  brief: string;
 }

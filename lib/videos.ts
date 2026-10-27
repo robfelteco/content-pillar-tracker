@@ -153,7 +153,7 @@ export function parseIso8601Duration(d: string | undefined): number | null {
 // it goes at ingest rather than at read time.
 export function cleanDescription(d: string): string {
   return d
-    .split(/\n\s*(?:Learn more at|Follow eco:)/i)[0]
+    .split(new RegExp(`\\n\\s*(?:Learn more at|Follow ${BRAND.handle}:)`, "i"))[0]
     .replace(/https?:\/\/\S+/g, "")
     .trim();
 }

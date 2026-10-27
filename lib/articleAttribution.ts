@@ -1,8 +1,8 @@
 import { CLASSIFIED_TEMPLATES, pillarsByMode, type Template } from "./taxonomy.ts";
 import {
-  ecoBlogSlug,
+  brandBlogSlug,
   xArticleId,
-  ecoStatusId,
+  brandStatusId,
   anyStatusUrl,
   titleSimilarity,
   TITLE_MATCH_THRESHOLD,
@@ -143,7 +143,7 @@ export async function attributeArticles(
   // --- Rung 1: a direct eco.com/blog link. --------------------------------
   for (const p of posts) {
     for (const u of p.urls) {
-      const slug = ecoBlogSlug(u);
+      const slug = brandBlogSlug(u);
       const a = slug ? bySlug.get(slug) : null;
       if (a) {
         assign.set(p.id, { articleId: a.id, rung: "url", confidence: 1 });
@@ -221,7 +221,7 @@ export async function attributeArticles(
         continue;
       }
       for (const u of p.urls) {
-        const sid = ecoStatusId(u);
+        const sid = brandStatusId(u);
         // A quote post's own media URL parses as an @eco status — its own. It
         // is not a reference to anything and must not resolve.
         if (!sid || sid === p.id) continue;

@@ -1,3 +1,4 @@
+import type { NarrativePillar } from "@/lib/brand/types.ts";
 // The positioning brief: the system prompt for the in-tool copy drafter. Who
 // the company is, the vocabulary it owns and refuses, voice, narrative pillars,
 // audiences, and the X ranking rules. Edit the WHO WE ARE section together with
@@ -146,3 +147,12 @@ GUARDRAILS
   never let Eco inherit the analog's category label. Eco is not a payment orchestrator, not a PSP, not
   a gateway, not a prime broker, not a bridge. Eco is the routing and execution layer.
 `.trim();
+
+// The narrative pillars, as data, for the quote lane's pillar_tag. The prose
+// version lives in the brief above; edit both.
+export const NARRATIVE_PILLARS: NarrativePillar[] = [
+  { id: "A", label: "Past inevitability", brief: "Stablecoins winning is settled; the argument has moved on to who connects the economy they build." },
+  { id: "B", label: "Connective layer", brief: "Primary + secondary markets: mint access, onchain liquidity, off-chain RFQ as one picture." },
+  { id: "C", label: "Execution quality", brief: "The five-layer stack (issuers, rails, orchestrators, custody/fund mgmt, apps) and where it consolidates." },
+  { id: "D", label: "Defensibility", brief: "Category creation: liquidity network effects, data and pricing superiority." },
+];

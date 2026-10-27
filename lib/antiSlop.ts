@@ -307,7 +307,7 @@ const HEDGE_BUDGET = 2;
 
 const COMMODITY_PHRASES = VOICE.commodityPhrases;
 const SUBSTANTIATION_GATED = VOICE.substantiationGated;
-const GATED_EXCEPTIONS = VOICE.gatedExceptions;
+const GATED_EXCEPTIONS = VOICE.gatedExceptions ?? {};
 const SUBSTANTIATION_RE = new RegExp(
   `\\d|\\b(${VOICE.substantiationTerms.map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`,
   "i",

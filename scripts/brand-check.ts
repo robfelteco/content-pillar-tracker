@@ -61,6 +61,7 @@ import { CHAINS, PARTNERS } from "../brand/entities.ts";
 import { ANALOG_DEFS, EDUCATION_SHAPES } from "../brand/curriculum.ts";
 import { CHANNEL_DEFS } from "../brand/channels.ts";
 import { ORG_SEED, PEOPLE_SEED, WATCH_SEED } from "../brand/quoteRoster.ts";
+import { VOICE } from "../brand/voice.ts";
 {
   let p = 0;
   const dup = (label: string, xs: string[]) => {
@@ -96,5 +97,22 @@ import { ORG_SEED, PEOPLE_SEED, WATCH_SEED } from "../brand/quoteRoster.ts";
   for (const w of WATCH_SEED) if (!kinds.has(w.kind)) { console.error(`WATCH_SEED "${w.label}": unknown kind "${w.kind}"`); p++; }
   for (const c of CHANNEL_DEFS) if (!WATCH_SEED.some((w) => w.identifier === c.id)) console.log(`note: channel "${c.label}" is not in WATCH_SEED, so the quote lane will not share its transcripts`);
   if (p) process.exitCode = 1;
-  else console.log(`registries ok: ${CHAINS.length} chains (${CHAINS.filter((c) => c.momentumHandle && c.momentumEnabled).length} read daily, ${CHAINS.filter((c) => c.momentumHandle && !c.momentumEnabled).length} on demand, ${CHAINS.filter((c) => c.announcedNotLive).length} announced not live), ${PARTNERS.length} partners (${PARTNERS.filter((x) => x.inProduction).length} in production), ${ANALOG_DEFS.length} curriculum concepts, ${CHANNEL_DEFS.length} channels, ${ORG_SEED.length} orgs / ${PEOPLE_SEED.length} people / ${WATCH_SEED.length} watch sources`);
+  else console.log(`registries ok: ${CHAINS.length} chains (${CHAINS.filter((c) => c.momentumHandle && c.momentumEnabled).length} read daily, ${CHAINS.filter((c) => c.momentumHandle && !c.momentumEnabled && !c.announcedNotLive).length} on demand, ${CHAINS.filter((c) => c.announcedNotLive).length} announced not live), ${PARTNERS.length} partners (${PARTNERS.filter((x) => x.inProduction).length} in production), ${ANALOG_DEFS.length} curriculum concepts, ${CHANNEL_DEFS.length} channels, ${ORG_SEED.length} orgs / ${PEOPLE_SEED.length} people / ${WATCH_SEED.length} watch sources`);
+}
+
+// Rules the references state that the types cannot express.
+{
+  let p = 0;
+  if (!BRAND.ownHandles.map((h) => h.toLowerCase()).includes(BRAND.handle.toLowerCase())) { console.error(`identity: ownHandles must include the tracked handle "${BRAND.handle}"`); p++; }
+  for (const r of BRAND.urlRules) if (r.match !== r.match.toLowerCase()) { console.error(`identity: urlRules match "${r.match}" must be lowercase`); p++; }
+  const slugs = ICP_DEFS.flatMap((i) => (Array.isArray(i.solutionsSlug) ? i.solutionsSlug : i.solutionsSlug ? [i.solutionsSlug] : []));
+  const seenSlug = new Set<string>();
+  for (const s of slugs) { if (seenSlug.has(s)) { console.error(`audiences: solutionsSlug "${s}" is used by more than one persona`); p++; } seenSlug.add(s); }
+  for (const x of PARTNERS) if (x.inProduction !== undefined && !x.inProduction.trim()) { console.error(`PARTNERS "${x.id}": inProduction is set but empty; give the reason or omit it`); p++; }
+  for (const c of CHAINS) if (c.momentumEnabled && !c.momentumHandle) { console.error(`CHAINS "${c.id}": momentumEnabled without a momentumHandle`); p++; }
+  for (const w of VOICE.commodityPhrases) if (w !== w.toLowerCase()) { console.error(`voice: commodity phrase "${w}" must be lowercase (matching is case-insensitive anyway)`); p++; }
+  for (const w of VOICE.substantiationGated) if (!/^[a-z][a-z-]*$/.test(w)) { console.error(`voice: gated word "${w}" must be one lowercase word, hyphens allowed`); p++; }
+  for (const person of PEOPLE_SEED) if (/^(CEO|CTO|CFO|COO|CMO|VP|SVP|EVP|GM|MD)$/.test(person.title.trim())) { console.error(`PEOPLE_SEED "${person.name}": spell the title out ("Chief Executive Officer"), it prints on a card`); p++; }
+  if (p) process.exitCode = 1;
+  else console.log("rules ok: handles, slugs, partners, momentum, voice, titles");
 }

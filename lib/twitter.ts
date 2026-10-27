@@ -139,7 +139,7 @@ async function apiGet<T>(path: string, params: Record<string, string>, attempt =
       : `Bearer ${process.env.TWITTER_BEARER_TOKEN}`;
 
   const res = await fetch(url, {
-    headers: { Authorization: authorization, "User-Agent": "eco-x-tracker/1.0" },
+    headers: { Authorization: authorization, "User-Agent": "content-pillar-tracker/1.0" },
     cache: "no-store",
   });
 

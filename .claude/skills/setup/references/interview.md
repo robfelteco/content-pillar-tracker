@@ -73,6 +73,13 @@ Traits: `externalOnly` when the company is never named in the post;
 `visualAnchor` when the image is what identifies the pillar; `teaches` when
 explanation is the job; `easyWin` for the quick, high-frequency formats.
 
+One question that changes classification: "Do your charts and quote cards
+link to an outside source and leave you unnamed?" A photo or video post with
+an external link and no company mention is left to the model when some
+non-external pillar claims that media as its identity (`visualAnchor`);
+otherwise the rule files it under the external pillar at once. Declare the
+media honestly and the rule does the right thing.
+
 Then: "Roughly how often should each one appear?" That sets `staleDays`.
 Weekly is 7, twice a month is 14, daily is 1 or 2. If they do not know, keep
 the starter values and say so. A pillar they don't post is parked: id kept,
@@ -184,7 +191,8 @@ Ask: "List the platforms you've integrated with or announced. For each: their
 X handle(s), is it live today or only announced, and should we watch their
 account daily?" and "Which companies run your product in production today?"
 Announced-but-not-live platforms get `announcedNotLive` with the reason, so a
-"coming soon" post cannot mark them integrated. Keywords: only names that are not
+"coming soon" post cannot mark them integrated. "Keep an eye on" means a
+`momentumHandle` with `momentumEnabled: false`: watched on demand, not daily. Keywords: only names that are not
 ordinary English words; the handle carries the rest. Chains that are live
 with no dedicated piece need the reason stated.
 
@@ -214,6 +222,8 @@ publisher has a commercial position in what it explains, and whether its
 Shorts are worth taking.
 
 Roster: "Whose quotes would you be proud to put on a card? Which institutions
-carry the most weight with your buyers?" Aim for 40 to 60 people across three
-org tiers before expecting the lane to produce. Every person's org must be an
-org in the list.
+carry the most weight with your buyers?" The lane wants 40 to 60 people
+across three org tiers before it produces well; an interview rarely yields
+that. Seed what the material gives, say the lane will be thin, and point at
+the roster UI where the operator adds people over time. Every person's org
+must be an org in the list.

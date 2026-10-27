@@ -3,9 +3,9 @@ import { productLabel } from "./products.ts";
 
 
 export {
-  ecoBlogSlug,
+  brandBlogSlug,
   xArticleId,
-  ecoStatusId,
+  brandStatusId,
   anyStatusUrl,
   normTitle,
   titleSimilarity,

@@ -9,5 +9,6 @@ over the starter to run the tracker exactly as the original deployment did:
 cp examples/eco/*.ts brand/
 ```
 
-The pillar ids here match the `content_template` enum in `db/schema.sql`, so no
-database change is needed to use this example.
+Pillar ids are stored as text, so no database change is needed to use this
+example; a database that already holds posts classified under a different set
+needs `scripts/reclassify.ts`.

@@ -1,3 +1,5 @@
+import { BRAND } from "../brand/identity.ts";
+import { NARRATIVE_PILLARS } from "./positioning.ts";
 // Quote extraction — spec §6.3 (two-pass) and §8 (the prompt contract).
 //
 // Gemini does all comprehension. Two passes on purpose:
@@ -442,11 +444,9 @@ const EXTRACTION_RULES = [
   "6. Extract AT MOST 5 candidates from this source. Forcing selectivity here beats filtering slop downstream.",
   "7. If nobody is identifiable as the speaker, return an empty list rather than an unattributed quote.",
   "",
-  "pillar_tag — which of Eco's four narrative pillars the quote serves, or null:",
-  '  "A" — stablecoins winning is settled; the argument has moved on to who connects the economy they build.',
-  '  "B" — primary + secondary markets: mint access, on-chain liquidity, off-chain RFQ as one picture.',
-  '  "C" — the five-layer stack (issuers, rails, orchestrators, custody/fund mgmt, apps) and where it consolidates.',
-  '  "D" — defensibility / category creation: liquidity network effects, data and pricing superiority.',
+  ...(NARRATIVE_PILLARS.length
+    ? [`pillar_tag — which of ${BRAND.name}'s narrative pillars the quote serves, or null:`, ...NARRATIVE_PILLARS.map((p) => `  "${p.id}" — ${p.label}: ${p.brief}`)]
+    : ["pillar_tag — always null (no narrative pillars are configured)."]),
   "",
   "Return JSON only, an array, no prose, no code fences:",
   '[{"quote_text":"…","speaker_name":"…|null","attribution_basis":"quoted|spoken|authored",',

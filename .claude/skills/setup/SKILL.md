@@ -8,7 +8,8 @@ description: Configure the Content Pillar Tracker for a new company by interview
 You are turning the neutral starter in `brand/` into a real configuration for
 the person in front of you. The core reads nothing else about the company, so
 when `brand/` is right the whole app is right: classification, the dashboard,
-the prioritize scoring and the copy drafter all key off these six files.
+the prioritize scoring and the copy drafter all key off these ten files, six
+core and four registries.
 
 Two things make this go well. First, write from material, not from thin air:
 a positioning doc, a boilerplate, the website, the docs site, a few months of
@@ -16,7 +17,10 @@ their posts. Ask for those before asking questions a document would answer.
 Second, quality over completeness: a pillar description that names the
 signals a classifier can see beats one that describes an aspiration, and a
 product brief with a mechanism and a date beats one with adjectives.
-`examples/eco/` is the bar. Read it once before you write anything.
+`examples/eco/` is the bar. Read `pillars.ts`, `positioning.ts`, `products.ts`
+and `identity.ts` there in full before you write anything; `curriculum.ts` and
+`quoteRoster.ts` are large, so read one entry of each for the shape and skim
+the rest for scale.
 
 ## The flow
 
@@ -54,7 +58,7 @@ product brief with a mechanism and a date beats one with adjectives.
    ```bash
    node scripts/brand-check.ts
    npx tsc --noEmit
-   node --env-file=.env scripts/export-copy-brief.ts
+   node scripts/export-copy-brief.ts
    ```
 
    `brand-check` prints `brand ok` when the pillar set, the audience lists
@@ -63,7 +67,9 @@ product brief with a mechanism and a date beats one with adjectives.
    reclassify (`scripts/reclassify.ts`). A type error means a
    file does not match the contract; fix the file, do not loosen the types.
    The last command regenerates `COPY-BRIEF.md`, the human-readable copy of
-   what the drafter reads; skip it and say so when `.env` is not filled in.
+   what the drafter reads. It needs no `.env` and no database; always run it,
+   and hand the person the file: it is the one artefact that shows them what
+   the drafter will be told.
 
 6. **Report.** One line per file on what it now holds. Then the fields you
    guessed at and why, and every placeholder you left, so the person can grep
@@ -104,6 +110,15 @@ product brief with a mechanism and a date beats one with adjectives.
   mark them as category words, not observed overuse. Spelling and casing
   rules ("fintech, not FinTech") cannot live in `voice.ts`, because the
   matcher ignores case; they go in the positioning brief's voice section.
+- **Pre-announcements need both halves.** The integration pillar's description
+  excludes "coming soon" posts, AND the platform carries `announcedNotLive`
+  in entities.ts. The description steers the classifier; only the flag keeps
+  a misfiled post from marking the platform live.
+- **Reference images come from their own corpus.** `visualAnchor` tells the
+  classifier to show a reference image for the pillar, drawn from posts
+  already classified in the database (a human-verified one when there is
+  one). A fresh brand has none until the first posts are labelled, so the
+  trait costs nothing and helps once the review queue has been worked.
 - **Do not invent facts.** A placeholder is better than a confident wrong
   claim, because the drafter will repeat the claim in copy. Use one form
   everywhere, `<what is missing: not in the setup material>`, so the person
